@@ -17,9 +17,30 @@ async function load(){
   catch(e){if(e.auth)return login(e.message);msg="Ачаалж чадсангүй: "+e.message;render()}
 }
 function login(err){
-  setBand("HR","самбар.","Үнэлгээний үр дүнг харахын тулд нууц үгээ оруулна уу.");
-  $("#view").innerHTML=`<form class="sheet stack login" id="fLogin"><label class="f">Нууц үг<input type="password" id="pw" autocomplete="current-password"></label>${err?`<div class="err">${esc(err)}</div>`:""}<button class="primary" type="submit">Нэвтрэх</button></form>`;
-  $("#fLogin").onsubmit=e=>{e.preventDefault();key=$("#pw").value;try{sessionStorage.setItem(KEY,key)}catch(e){}$("#view").innerHTML='<p class="muted">Ачаалж байна…</p>';load()};
+  setBand("HR","самбар.","Хүннү Конкрет ХХК-ийн ажилтны үнэлгээний нэгдсэн үр дүн.");
+  $("#view").innerHTML=`<div class="gate">
+    <aside class="gate-side concrete">
+      <div class="gate-kicker">Building Smarter.</div>
+      <h2>Ажилтан бүрийн<br><span>чадварыг нэг дороос.</span></h2>
+      <ol class="gate-list">
+        <li><b>01</b><div><strong>Ажилтны паспорт</strong><small>Мэдлэгийн оноо, ур чадварын радар, удирдлагын үнэлгээ</small></div></li>
+        <li><b>02</b><div><strong>Сэтгэл ханамж</strong><small>Нэргүй нэгдсэн дүн, eNPS, албаар харьцуулалт</small></div></li>
+        <li><b>03</b><div><strong>Хөгжлийн төлөвлөгөө</strong><small>Сургалтын хэрэгцээ, 6 сарын төлөвлөгөө, тэмдэглэл</small></div></li>
+      </ol>
+    </aside>
+    <form class="gate-form" id="fLogin" novalidate>
+      <div class="gate-lock" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+      <h2>Нэвтрэх</h2>
+      <p class="muted">Зөвхөн Хүний нөөцийн алба болон удирдлагад зориулсан хэсэг.</p>
+      <label class="f">Нууц үг
+        <span class="pw"><input type="password" id="pw" autocomplete="current-password" required aria-invalid="${err?"true":"false"}"${err?' aria-describedby="pwErr"':""}><button type="button" id="pwShow" aria-label="Нууц үгийг харуулах" aria-pressed="false">Харах</button></span></label>
+      ${err?`<div class="err" id="pwErr" role="alert">${esc(err)}</div>`:""}
+      <button class="primary gate-go" type="submit">Нэвтрэх <span aria-hidden="true">→</span></button>
+      <p class="gate-note">Нууц үг зөвхөн энэ таб нээлттэй байх хугацаанд хадгалагдана. Дундын компьютер дээр ажлаа дуусгаад табаа хаана уу.</p>
+    </form>
+  </div>`;
+  $("#pwShow").onclick=e=>{const i=$("#pw"),on=i.type==="password";i.type=on?"text":"password";e.target.textContent=on?"Нуух":"Харах";e.target.setAttribute("aria-pressed",String(on));i.focus()};
+  $("#fLogin").onsubmit=e=>{e.preventDefault();const v=$("#pw").value.trim();if(!v){$("#pw").focus();return}key=v;try{sessionStorage.setItem(KEY,key)}catch(e){}const b=e.target.querySelector(".gate-go");b.disabled=true;b.textContent="Шалгаж байна…";load()};
   $("#pw").focus();
 }
 function tabs(cur){
