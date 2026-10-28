@@ -1,15 +1,24 @@
 import { getStore } from "@netlify/blobs"
-import { KMAP, PULSE, COMP, MIN_GROUP, LEAVE, DEPTS } from "../../public/assets/data.mjs"
+import { PULSE, COMP, MIN_GROUP, LEAVE, DEPTS, APP_COMMON, APP_N_COMMON, APP_N_JOB, posInfo } from "../../public/assets/data.mjs"
+import { KMAP, jobPool } from "./bank.mjs"
 
 export const staffStore = () => getStore({ name: "staff", consistency: "strong" })
 // Anonymous answers: random keys, month only, nothing that ties them to a person
 export const pulseStore = () => getStore({ name: "pulse", consistency: "strong" })
+// Job applicants: application form + test, read only through the HR dashboard
+export const applicantStore = () => getStore({ name: "applicants", consistency: "strong" })
 
 export const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" } })
 
 export const clip = (v: unknown, n = 2000) => String(v ?? "").slice(0, n)
 const int = (v: unknown, lo: number, hi: number) => { const n = Number(v); return Number.isInteger(n) && n >= lo && n <= hi ? n : null }
+
+const cleanSelf = (src: any) => {
+  const self: Record<string, number> = {}
+  for (const c of COMP) { const v = int(src?.[c.id], 1, 5); if (v !== null) self[c.id] = v }
+  return self
+}
 
 export function cleanStaff(s: any) {
   const dept = clip(s?.dept, 80), position = clip(s?.position, 120)
@@ -26,8 +35,7 @@ export function cleanStaff(s: any) {
     byPart[part].t++
     if (a === KMAP[id].a) { byPart[part].c++; score++ }
   }
-  const self: Record<string, number> = {}
-  for (const c of COMP) { const v = int(s?.self?.[c.id], 1, 5); if (v !== null) self[c.id] = v }
+  const self = cleanSelf(s?.self)
   return {
     name: clip(s?.name, 80).trim(), dept, position, family: clip(s?.family, 20), tenure: clip(s?.tenure, 30),
     startedAt: Number(s?.startedAt) || null, durationSec: int(s?.durationSec, 0, 86400) ?? 0,
@@ -74,4 +82,43 @@ export function summarizePulse(rows: any[]) {
   const comments = rows.flatMap(r => [r.like && { k: "like", t: r.like }, r.change && { k: "change", t: r.change }].filter(Boolean))
   for (let i = comments.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [comments[i], comments[j]] = [comments[j], comments[i]] }
   return { n, groups, enps: enps(rows), overall: fav(rows, PULSE.map(p => p.id)), stay: fav(rows, ["h1"]), byGroup, byItem, depts, leave, comments }
+}
+
+export const STATUS = ["new", "interview", "reserve", "hire", "reject"]
+const EDU = ["Бүрэн дунд", "Мэргэжлийн (ТМС, коллеж)", "Бакалавр", "Магистр, доктор"]
+const EXP = ["Туршлагагүй", "1 жил хүртэл", "1–3 жил", "3–5 жил", "5-аас дээш жил"]
+const LIC = ["A", "B", "C", "D", "E", "M"]
+
+// The test set must be the one the server could have drawn: general items plus the position's own job pool
+export function cleanApplicant(s: any) {
+  const dept = clip(s?.dept, 80), position = clip(s?.position, 120)
+  if (!DEPTS[dept as keyof typeof DEPTS]?.some((p: any) => p[0] === position)) throw new Error("Албан тушаал буруу байна.")
+  const name = clip(s?.name, 80).trim(), phone = clip(s?.phone, 20).replace(/[^\d+ ]/g, "").trim()
+  if (name.length < 3) throw new Error("Овог нэрээ бүтэн бичнэ үү.")
+  if (phone.replace(/\D/g, "").length < 8) throw new Error("Утасны дугаараа зөв бичнэ үү.")
+  if (s?.consent !== true) throw new Error("Мэдээлэл ашиглах зөвшөөрөл шаардлагатай.")
+  const { fam, pool } = jobPool(dept, position)
+  const jobIds = new Set(pool.map((q: any) => q.id))
+  const questions: string[] = [...new Set<string>((Array.isArray(s?.questions) ? s.questions : []).map(String))]
+  const common = questions.filter(id => APP_COMMON.includes(id)), job = questions.filter(id => jobIds.has(id))
+  if (common.length !== APP_N_COMMON || job.length !== APP_N_JOB || questions.length !== APP_N_COMMON + APP_N_JOB) throw new Error("Шалгалтын асуулт буруу байна. Хуудсаа шинэчлээд дахин эхэлнэ үү.")
+  const answers: Record<string, number> = {}
+  const byPart = { common: { c: 0, t: common.length }, job: { c: 0, t: job.length } }
+  let score = 0
+  for (const id of questions) {
+    const a = int(s?.answers?.[id], 0, KMAP[id].o.length - 1)
+    if (a !== null) answers[id] = a
+    if (a === KMAP[id].a) { score++; byPart[common.includes(id) ? "common" : "job"].c++ }
+  }
+  return {
+    name, phone, email: clip(s?.email, 120).trim(), birthYear: int(s?.birthYear, 1950, 2010),
+    district: clip(s?.district, 80), dept, position, family: fam,
+    edu: EDU.includes(s?.edu) ? s.edu : "", major: clip(s?.major, 120), exp: EXP.includes(s?.exp) ? s.exp : "",
+    lastJob: clip(s?.lastJob, 200), license: (Array.isArray(s?.license) ? s.license : []).filter((x: string) => LIC.includes(x)),
+    startDate: clip(s?.startDate, 10), salary: clip(s?.salary, 40), why: clip(s?.why, 1500),
+    startedAt: Number(s?.startedAt) || null, durationSec: int(s?.durationSec, 0, 86400) ?? 0,
+    timedOut: s?.timedOut === true, away: int(s?.away, 0, 999) ?? 0,
+    questions, common, answers, score, max: questions.length, byPart, self: cleanSelf(s?.self),
+    status: "new", interview: {}, hrNote: "",
+  }
 }

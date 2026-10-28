@@ -1,9 +1,9 @@
-import {DEPTS,FAMILY,KMAP,COMP,ANCHOR,PULSE,MIN_GROUP} from "./data.mjs";
+import {DEPTS,FAMILY,COMP,ANCHOR,PULSE,MIN_GROUP} from "./data.mjs";
 import {$,esc,avg,fmtDate,mmss,lvl,initials,setBand,gauge,radarMulti} from "./ui.mjs";
 
 const KEY="hunnu-admin-key";
 let key=(()=>{try{return sessionStorage.getItem(KEY)||""}catch(e){return""}})();
-let staff=[],pulse=null,selS=null,deptFilter="",msg="",view="staff";
+let staff=[],pulse=null,apps=[],bank={},selS=null,selA=null,appFilter="",deptFilter="",msg="",view="staff";
 
 async function api(method,body){
   const res=await fetch("/api/admin",{method,headers:{"x-admin-key":key,"content-type":"application/json"},body:body?JSON.stringify(body):undefined});
@@ -13,7 +13,7 @@ async function api(method,body){
   return j;
 }
 async function load(){
-  try{const j=await api("GET");staff=j.staff;pulse=j.pulse;msg="";if(!selS&&staff.length)selS=staff[0].id;render()}
+  try{const j=await api("GET");staff=j.staff;pulse=j.pulse;apps=j.applicants||[];bank=j.bank||{};msg="";if(!selS&&staff.length)selS=staff[0].id;if(!selA&&apps.length)selA=apps[0].id;render()}
   catch(e){if(e.auth)return login(e.message);msg="Ачаалж чадсангүй: "+e.message;render()}
 }
 function login(err){
@@ -25,7 +25,7 @@ function login(err){
       <ol class="gate-list">
         <li><b>01</b><div><strong>Ажилтны паспорт</strong><small>Мэдлэгийн оноо, ур чадварын радар, удирдлагын үнэлгээ</small></div></li>
         <li><b>02</b><div><strong>Сэтгэл ханамж</strong><small>Нэргүй нэгдсэн дүн, eNPS, албаар харьцуулалт</small></div></li>
-        <li><b>03</b><div><strong>Хөгжлийн төлөвлөгөө</strong><small>Сургалтын хэрэгцээ, 6 сарын төлөвлөгөө, тэмдэглэл</small></div></li>
+        <li><b>03</b><div><strong>Горилогчид</strong><small>Ажлын анкет, мэдлэгийн шалгалт, ажилд авах шийдвэр</small></div></li>
       </ol>
     </aside>
     <form class="gate-form" id="fLogin" novalidate>
@@ -44,10 +44,10 @@ function login(err){
   if(matchMedia("(hover:hover)").matches)$("#pw").focus();
 }
 function tabs(cur){
-  return `<div class="row spread"><nav class="tabs" aria-label="Үр дүнгийн хэсэг">${[["staff","Ажилтны паспорт"],["pulse","Сэтгэл ханамж"]].map(([v,t])=>`<button type="button" data-view="${v}" ${v===cur?'aria-current="page"':""}>${t}</button>`).join("")}</nav><button type="button" id="reload">Шинэчлэх</button></div>`;
+  return `<div class="row spread"><nav class="tabs" aria-label="Үр дүнгийн хэсэг">${[["staff","Ажилтны паспорт"],["pulse","Сэтгэл ханамж"],["app","Горилогчид"+(apps.some(a=>a.status==="new")?" ("+apps.filter(a=>a.status==="new").length+")":"")]].map(([v,t])=>`<button type="button" data-view="${v}" ${v===cur?'aria-current="page"':""}>${t}</button>`).join("")}</nav><button type="button" id="reload">Шинэчлэх</button></div>`;
 }
 function render(){
-  if(view==="pulse")renderPulse();else renderStaffHr();
+  if(view==="pulse")renderPulse();else if(view==="app")renderApps();else renderStaffHr();
   document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>{view=b.dataset.view;render()});
   const r=$("#reload");if(r)r.onclick=()=>{r.disabled=true;load()};
 }
@@ -95,7 +95,7 @@ function staffPassport(s){
   const k=kPct(s);const sv=COMP.map(c=>(s.self?.[c.id]||0)/5),mv=COMP.map(c=>(s.mgr?.[c.id]||0)/5);
   const gaps=COMP.filter(c=>s.self?.[c.id]&&s.mgr?.[c.id]&&Math.abs(s.self[c.id]-s.mgr[c.id])>=2);
   const bp=s.byPart||{};const pp=x=>x&&x.t?Math.round(x.c/x.t*100):0;
-  const qids=s.questions||[];const wrong=qids.map(id=>KMAP[id]).filter(q=>q&&s.answers?.[q.id]!==q.a);
+  const qids=s.questions||[];const wrong=qids.map(id=>bank[id]).filter(q=>q&&s.answers?.[q.id]!==q.a);
   const devNeeds=COMP.filter(c=>(s.mgr?.[c.id]||s.self?.[c.id]||5)<=2).map(c=>c.t);
   return `<article class="passport">
     <header class="pp-head"><div class="pp-id"><span class="avatar">${esc(initials(s.name))}</span><div style="min-width:0"><div class="pp-kicker">Ажилтны паспорт · ${"HS-"+String(s.id).slice(-8).toUpperCase()}</div><h2>${esc(s.name)}</h2><div class="pp-meta">${esc(s.position)} · ${esc(s.dept)}</div></div></div>
@@ -129,6 +129,82 @@ function bindStaff(s){
   $("#sDel").onclick=()=>{$("#sDelRow").innerHTML=`<span style="font-size:14px">${esc(s.name)}-ийн үнэлгээг устгах уу?</span><button type="button" class="danger" id="sYes">Тийм, устгах</button><button type="button" id="sNo">Болих</button>`;
     $("#sNo").onclick=()=>renderAll();
     $("#sYes").onclick=async()=>{try{await api("POST",{action:"delete",id:s.id});staff=staff.filter(x=>x.id!==s.id);selS=null;renderAll()}catch(e){$("#sMsg").textContent="Устгаж чадсангүй: "+e.message}}};
+}
+const STATUS={new:["Шинэ","idle"],interview:["Ярилцлагад урих","warn"],reserve:["Нөөцөд","idle"],hire:["Ажилд авах","good"],reject:["Татгалзсан","bad"]};
+// Suggested next step from the test score; HR makes the decision
+const advice=k=>k>=70?{t:"Ярилцлагад урих",k:"good"}:k>=50?{t:"Ярилцлагаар тодруулах",k:"warn"}:{t:"Тэнцээгүй",k:"bad"};
+const ansWrong=a=>(a.questions||[]).map(id=>bank[id]).filter(q=>q&&a.answers?.[q.id]!==q.a);
+function renderApps(){
+  setBand("Ажил","горилогчид.","Ажлын анкет, мэдлэгийн шалгалтын дүн. Шалгалт сайн өгсөн хүнийг ярилцлагад урьж, шийдвэрээ энд тэмдэглэнэ.");
+  const list=apps.filter(a=>!appFilter||a.status===appFilter);
+  const cur=apps.find(a=>a.id===selA);
+  const cnt=k=>apps.filter(a=>a.status===k).length;
+  $("#view").innerHTML=`<div class="stack" style="gap:24px">
+    ${tabs("app")}
+    <div class="stats">
+      <div><b>${apps.length}</b><strong>Нийт анкет</strong><span>шинэ ${cnt("new")}</span></div>
+      <div><b>${apps.length?Math.round(avg(apps.map(kPct)))+"%":"—"}</b><strong>Шалгалтын дундаж</strong><span>ерөнхий + мэргэжлийн</span></div>
+      <div><b>${cnt("interview")}</b><strong>Ярилцлагад</strong><span>уригдсан</span></div>
+      <div><b>${cnt("hire")}</b><strong>Ажилд авах</strong><span>шийдвэрлэсэн</span></div>
+    </div>
+    <div class="sheet stack"><div class="tag"><b>01</b>Анкетын холбоос</div>
+      <p style="margin:0">Горилогчдод <b>hunnu-talent.netlify.app/apply</b> холбоосыг илгээнэ үү. Утаснаас ч, компьютерээс ч бөглөнө.</p></div>
+    ${msg?`<div class="err">${esc(msg)}</div>`:""}
+    <div class="hr">
+      <aside class="stack" style="gap:12px">
+        <div class="tag"><b>02</b>Горилогчид</div>
+        <label class="f">Төлөвөөр шүүх<select id="af"><option value="">Бүгд</option>${Object.entries(STATUS).map(([k,v])=>`<option value="${k}" ${k===appFilter?"selected":""}>${v[0]} (${cnt(k)})</option>`).join("")}</select></label>
+        <div class="plist">${list.length?list.map(a=>{const k=kPct(a),st=STATUS[a.status]||STATUS.new;return `<button type="button" class="pcard ${a.id===selA?"on":""}" data-aid="${esc(a.id)}">
+          <span class="pc-main"><b>${esc(a.name)}</b><small>${esc(a.position)}</small><small class="lvl">${fmtDate(a.submittedAt)}</small></span>
+          <span class="pc-score"><b>${k}%</b></span><span class="pc-pill"><span class="pill ${st[1]}">${st[0]}</span></span>
+          <span class="pc-bar"><i style="width:${k}%"></i></span></button>`}).join(""):`<div class="sheet empty">${apps.length?"Энэ төлөвт горилогч алга.":"Одоогоор анкет ирээгүй байна."}</div>`}</div>
+      </aside>
+      <div id="detail">${cur?appPassport(cur):`<div class="sheet empty">Анкетыг харах горилогчоо сонгоно уу.</div>`}</div>
+    </div></div>`;
+  $("#af").onchange=e=>{appFilter=e.target.value;renderAll()};
+  document.querySelectorAll("[data-aid]").forEach(b=>b.onclick=()=>{selA=b.dataset.aid;renderAll();if(window.innerWidth<920)$("#detail").scrollIntoView({behavior:"smooth"})});
+  if(cur)bindApp(cur);
+}
+function appPassport(a){
+  const k=kPct(a),ad=advice(k),bp=a.byPart||{},pp=x=>x&&x.t?Math.round(x.c/x.t*100):0;
+  const sv=COMP.map(c=>(a.self?.[c.id]||0)/5),iv=COMP.map(c=>(a.interview?.[c.id]||0)/5);
+  const wrong=ansWrong(a),fact=(t,v)=>`<div><dt>${t}</dt><dd>${v?esc(v):"—"}</dd></div>`;
+  const flags=[(a.durationSec||0)<300&&!a.timedOut?`<div class="flag bad">Шалгалтыг хэт богино хугацаанд (${mmss(a.durationSec||0)}) өгсөн. Таамаглан хариулсан байж болзошгүй.</div>`:"",
+    a.timedOut?`<div class="flag warn">Шалгалтын хугацаа дуусч автоматаар хаагдсан.</div>`:"",
+    a.away>=2?`<div class="flag warn">Шалгалтын үеэр өөр цонх руу ${a.away} удаа шилжсэн. Хариултыг хайж олсон байж болзошгүй.</div>`:""].join("");
+  return `<article class="passport">
+    <header class="pp-head"><div class="pp-id"><span class="avatar">${esc(initials(a.name))}</span><div style="min-width:0"><div class="pp-kicker">Ажлын анкет · ${"AP-"+String(a.id).slice(-8).toUpperCase()}</div><h2>${esc(a.name)}</h2><div class="pp-meta">${esc(a.position)} · ${esc(a.dept)}</div></div></div>
+      <div class="pp-total"><div class="big">${k}%</div><span class="pill ${ad.k}">${ad.t}</span></div></header>
+    <dl class="pp-facts">${fact("Утас",a.phone)}${fact("Төрсөн он",a.birthYear)}${fact("Боловсрол",a.edu)}${fact("Туршлага",a.exp)}</dl>
+    ${flags?`<div class="flags">${flags}</div>`:""}
+    <section class="pp-sec"><div class="tag"><b>A</b>Шийдвэр</div>
+      <div class="chips" role="radiogroup" aria-label="Шийдвэр">${Object.entries(STATUS).map(([v,[t]])=>`<button type="button" class="chip ${a.status===v?"on":""}" data-st="${v}">${t}</button>`).join("")}</div>
+      <label class="f">Тэмдэглэл (ярилцлагын дүгнэлт, санал болгосон цалин гэх мэт)<textarea id="aNote" style="min-height:70px">${esc(a.hrNote||"")}</textarea></label>
+      <div class="row"><button type="button" class="primary" id="aSave">Хадгалах</button><span id="aMsg" class="muted" style="font-size:15px" aria-live="polite"></span></div></section>
+    <section class="pp-sec"><div class="tag"><b>B</b>Мэдлэгийн шалгалт</div>
+      <div class="gauges">${gauge(pp(bp.common),(bp.common?.c||0)+"/"+(bp.common?.t||0),"Ерөнхий мэдлэг")}${gauge(pp(bp.job),(bp.job?.c||0)+"/"+(bp.job?.t||0),"Мэргэжлийн мэдлэг")}${gauge(k,a.score+"/"+a.max,"Нийт · "+mmss(a.durationSec||0))}</div>
+      <p class="muted" style="font-size:14px;margin:0">70%+ ярилцлагад урих, 50–69% ярилцлагаар тодруулах, 50%-иас доош тэнцээгүй гэж санал болгоно.</p></section>
+    <section class="pp-sec"><div class="tag"><b>C</b>Ур чадвар: өөрийн ба ярилцлагын үнэлгээ</div>
+      <div class="pp-grid"><div class="radarbox">${radarMulti(COMP.map(c=>c.t.split(/[ ,]/)[0]),[{vals:sv,fill:"var(--accent)",op:.3,stroke:"var(--fg)"},{vals:iv,fill:"none",op:0,stroke:"var(--good)",dash:1}])}
+        <div class="legend2"><span><i style="background:var(--accent)"></i>Өөрийн үнэлгээ</span><span><i style="border:2px dashed var(--good)"></i>Ярилцлагын үнэлгээ</span></div></div>
+      <div class="mgr-list">${COMP.map(c=>`<div class="mg"><div><b>${c.t}</b><small>Өөрөө: ${a.self?.[c.id]||"—"} · ${ANCHOR[a.self?.[c.id]||0]||""}</small></div><div class="score5">${[1,2,3,4,5].map(n=>`<button type="button" data-ic="${c.id}" data-n="${n}" class="${a.interview?.[c.id]===n?"on":""}" title="${ANCHOR[n]}">${n}</button>`).join("")}</div></div>`).join("")}</div></div>
+      <p class="muted" style="font-size:14px;margin:0">Ярилцлагын дараа ур чадвар бүрийг 1–5-аар үнэлнэ.</p></section>
+    <section class="pp-sec"><div class="tag"><b>D</b>Анкет</div>
+      <dl class="kv">${[["И-мэйл",a.email],["Хаяг",a.district],["Мэргэжил",a.major],["Сүүлийн ажил",a.lastJob],["Жолооны ангилал",(a.license||[]).join(", ")],["Ажиллах боломжтой",a.startDate],["Цалингийн хүлээлт",a.salary],["Ажлын бүлэг",FAMILY[a.family]],["Илгээсэн",fmtDate(a.submittedAt)]].map(([t,v])=>`<div><dt>${t}</dt><dd>${v?esc(v):"—"}</dd></div>`).join("")}</dl>
+      ${a.why?`<blockquote class="cm like"><small>Яагаад Хүннү Конкрет</small>${esc(a.why)}</blockquote>`:""}</section>
+    <details class="pp-sec"><summary>Буруу хариулсан асуултууд (${wrong.length})</summary><div class="ansl">${wrong.map(q=>{const x=a.answers?.[q.id];return `<div>${esc(q.q)}<small>Хариулт: ${x===undefined?"хариулаагүй":esc(q.o[x])}</small><small>Зөв: ${esc(q.o[q.a])}</small></div>`}).join("")||'<div class="ok">Бүгд зөв.</div>'}</div></details>
+    <div class="row pp-sec" id="aDelRow" style="flex-direction:row"><button type="button" class="danger" id="aDel">Устгах</button></div>
+  </article>`;
+}
+function bindApp(a){
+  const save=async patch=>{try{const j=await api("POST",{kind:"app",action:"update",id:a.id,patch});Object.assign(a,j.row);return true}catch(e){if(e.auth)return login(e.message);$("#aMsg").textContent="Хадгалж чадсангүй: "+e.message;return false}};
+  const redraw=()=>{const y=window.scrollY;renderAll();window.scrollTo(0,y)};
+  document.querySelectorAll("[data-st]").forEach(b=>b.onclick=async()=>{if(await save({status:b.dataset.st}))redraw()});
+  document.querySelectorAll("[data-ic]").forEach(b=>b.onclick=async()=>{if(await save({interview:{...(a.interview||{}),[b.dataset.ic]:+b.dataset.n}}))redraw()});
+  $("#aSave").onclick=async()=>{if(await save({hrNote:$("#aNote").value}))$("#aMsg").textContent="Хадгалагдлаа."};
+  $("#aDel").onclick=()=>{$("#aDelRow").innerHTML=`<span style="font-size:14px">${esc(a.name)}-ийн анкетыг устгах уу?</span><button type="button" class="danger" id="aYes">Тийм, устгах</button><button type="button" id="aNo">Болих</button>`;
+    $("#aNo").onclick=()=>renderAll();
+    $("#aYes").onclick=async()=>{try{await api("POST",{kind:"app",action:"delete",id:a.id});apps=apps.filter(x=>x.id!==a.id);selA=null;renderAll()}catch(e){$("#aMsg").textContent="Устгаж чадсангүй: "+e.message}}};
 }
 function renderPulse(){
   setBand("Сэтгэл","ханамж.","Нэргүй хариултын нэгдсэн дүн. "+MIN_GROUP+"-аас цөөн хүнтэй бүлгийг нууцлалын үүднээс харуулахгүй.");

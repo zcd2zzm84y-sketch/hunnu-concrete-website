@@ -1,19 +1,17 @@
-import {DEPTS,FAMILY,TENURE,N_COMMON,N_JOB,KQ,QS,KMAP,COMP,ANCHOR,TRAIN,PULSE,LIKERT,LEAVE,MIN_GROUP,posInfo} from "./data.mjs";
+import {DEPTS,FAMILY,TENURE,N_COMMON,N_JOB,COMP,ANCHOR,TRAIN,PULSE,LIKERT,LEAVE,MIN_GROUP,posInfo} from "./data.mjs";
 import {$,esc,shuffle,setBand} from "./ui.mjs";
 
-const LS2="hunnu-staff-draft-v1";
-const freshStaff=()=>({stage:"info",emp:null,order:[],shuffles:{},answers:{},idx:0,self:{},train:[],trainOther:"",pulse:{},enps:null,leave:"",like:"",change:"",startedAt:0,err:"",confirm:false});
+const LS2="hunnu-staff-draft-v2";
+const freshStaff=()=>({stage:"info",emp:null,order:[],qs:{},shuffles:{},answers:{},idx:0,self:{},train:[],trainOther:"",pulse:{},enps:null,leave:"",like:"",change:"",startedAt:0,err:"",confirm:false});
 let T=freshStaff();
 const saveStaff=()=>{try{localStorage.setItem(LS2,JSON.stringify(T))}catch(e){}};
 const clearStaff=()=>{try{localStorage.removeItem(LS2)}catch(e){}};
 function loadStaff(){try{const d=JSON.parse(localStorage.getItem(LS2)||"null");if(d&&d.stage&&d.stage!=="info"&&d.stage!=="done")T={...d,err:"",confirm:false}}catch(e){}}
-function drawStaff(dept,pos){
-  const [,fam,l2]=posInfo(dept,pos);
-  const common=shuffle(KQ.common.map(q=>q.id)).slice(0,N_COMMON);
-  let job;
-  if(fam==="quality"){const two=shuffle(QS.filter(q=>q.l===2)).slice(0,l2||0);job=[...two,...shuffle(QS.filter(q=>q.l===1)).slice(0,N_JOB-two.length)].map(q=>q.id)}
-  else job=shuffle(KQ[fam].map(q=>q.id)).slice(0,N_JOB);
-  return{common,job,order:[...common,...shuffle(job)]};
+async function drawStaff(dept,pos){
+  const res=await fetch("/api/quiz",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({mode:"staff",dept,position:pos})});
+  const j=await res.json().catch(()=>({}));
+  if(!res.ok)throw new Error(j.error||("HTTP "+res.status));
+  return j;
 }
 const STEPS=[["info","Мэдээлэл"],["know","Мэдлэг"],["skill","Чадвар"],["pulse","Сэтгэл ханамж"]];
 function stepper(cur){
@@ -52,18 +50,19 @@ function staffInfo(){
       <div class="row"><button class="yellow" type="submit">Эхлэх →</button></div>
     </form></div>`;
   $("#eDept").onchange=()=>{T.emp={...readEmp(),position:""};staffInfo()};
-  $("#fStaff").addEventListener("submit",ev=>{
+  $("#fStaff").addEventListener("submit",async ev=>{
     ev.preventDefault();const emp=readEmp();T.emp=emp;
     if(emp.name.length<3){T.err="Овог нэрээ бүтэн бичнэ үү.";return staffInfo()}
-    const d=drawStaff(emp.dept,emp.position);
-    T={...T,err:"",stage:"know",emp:{...emp,family:posInfo(emp.dept,emp.position)[1]},order:d.order,common:d.common,shuffles:Object.fromEntries(d.order.map(id=>[id,shuffle(KMAP[id].o.map((_,i)=>i))])),answers:{},idx:0,startedAt:Date.now()};
+    const btn=ev.target.querySelector("[type=submit]");btn.disabled=true;btn.textContent="Ачаалж байна…";
+    let d;try{d=await drawStaff(emp.dept,emp.position)}catch(e){T.err="Асуулт ачаалж чадсангүй: "+e.message+" Интернэт холболтоо шалгана уу.";return staffInfo()}
+    T={...T,err:"",stage:"know",emp:{...emp,family:posInfo(emp.dept,emp.position)[1]},order:d.order,common:d.common,qs:d.qs,shuffles:Object.fromEntries(d.order.map(id=>[id,shuffle(d.qs[id].o.map((_,i)=>i))])),answers:{},idx:0,startedAt:Date.now()};
     saveStaff();renderStaff();
   });
 }
 function readEmp(){return{name:$("#eName").value.trim(),tenure:$("#eTen").value,dept:$("#eDept").value,position:$("#ePos").value}}
 function staffKnow(){
   setBand(null);
-  const i=T.idx,total=T.order.length,q=KMAP[T.order[i]];
+  const i=T.idx,total=T.order.length,id=T.order[i],q={...T.qs[id],id};
   const answered=T.order.filter(id=>T.answers[id]!==undefined).length;
   const part=T.common.includes(q.id)?"Нийтлэг мэдлэг":"Ажлын мэдлэг · "+FAMILY[T.emp.family];
   $("#view").innerHTML=`<div class="stack">
@@ -146,11 +145,9 @@ function likert(name,val){
 let sendingStaff=false;
 async function sendStaff(){
   if(sendingStaff)return;sendingStaff=true;
-  let c=0,cc=0;const byPart={common:{c:0,t:0},job:{c:0,t:0}};
-  for(const id of T.order){const part=T.common.includes(id)?"common":"job";byPart[part].t++;if(T.answers[id]===KMAP[id].a){byPart[part].c++;c++}}
   const now=new Date();
   const staffDoc={name:T.emp.name,dept:T.emp.dept,position:T.emp.position,family:T.emp.family,tenure:T.emp.tenure,startedAt:T.startedAt,submittedAt:Date.now(),
-    durationSec:Math.round((Date.now()-T.startedAt)/1000),questions:T.order,answers:T.answers,score:c,max:T.order.length,byPart,self:T.self,train:T.train,trainOther:T.trainOther,mgr:{},hrNote:"",plan:""};
+    durationSec:Math.round((Date.now()-T.startedAt)/1000),questions:T.order,answers:T.answers,self:T.self,train:T.train,trainOther:T.trainOther,mgr:{},hrNote:"",plan:""};
   const pulseDoc={dept:T.emp.dept,tenure:T.emp.tenure,month:now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0"),items:T.pulse,enps:T.enps,leave:T.leave,like:T.like,change:T.change};
   try{
     const res=await fetch("/api/submit",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({staff:{...staffDoc,common:T.common},pulse:pulseDoc})});
