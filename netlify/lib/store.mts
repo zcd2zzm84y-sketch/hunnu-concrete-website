@@ -1,0 +1,77 @@
+import { getStore } from "@netlify/blobs"
+import { KMAP, PULSE, COMP, MIN_GROUP, LEAVE, DEPTS } from "../../public/assets/data.mjs"
+
+export const staffStore = () => getStore({ name: "staff", consistency: "strong" })
+// Anonymous answers: random keys, month only, nothing that ties them to a person
+export const pulseStore = () => getStore({ name: "pulse", consistency: "strong" })
+
+export const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" } })
+
+export const clip = (v: unknown, n = 2000) => String(v ?? "").slice(0, n)
+const int = (v: unknown, lo: number, hi: number) => { const n = Number(v); return Number.isInteger(n) && n >= lo && n <= hi ? n : null }
+
+export function cleanStaff(s: any) {
+  const dept = clip(s?.dept, 80), position = clip(s?.position, 120)
+  if (!DEPTS[dept as keyof typeof DEPTS]) throw new Error("dept")
+  const questions: string[] = (Array.isArray(s?.questions) ? s.questions : []).filter((id: string) => KMAP[id]).slice(0, 40)
+  const common = new Set((Array.isArray(s?.common) ? s.common : []).filter((id: string) => KMAP[id]))
+  const answers: Record<string, number> = {}
+  const byPart = { common: { c: 0, t: 0 }, job: { c: 0, t: 0 } }
+  let score = 0
+  for (const id of questions) {
+    const a = int(s?.answers?.[id], 0, KMAP[id].o.length - 1)
+    if (a !== null) answers[id] = a
+    const part = common.has(id) ? "common" : "job"
+    byPart[part].t++
+    if (a === KMAP[id].a) { byPart[part].c++; score++ }
+  }
+  const self: Record<string, number> = {}
+  for (const c of COMP) { const v = int(s?.self?.[c.id], 1, 5); if (v !== null) self[c.id] = v }
+  return {
+    name: clip(s?.name, 80).trim(), dept, position, family: clip(s?.family, 20), tenure: clip(s?.tenure, 30),
+    startedAt: Number(s?.startedAt) || null, durationSec: int(s?.durationSec, 0, 86400) ?? 0,
+    questions, common: [...common], answers, score, max: questions.length, byPart, self,
+    train: (Array.isArray(s?.train) ? s.train : []).slice(0, 15).map((t: unknown) => clip(t, 80)),
+    trainOther: clip(s?.trainOther, 300), mgr: {}, plan: "", hrNote: "",
+  }
+}
+
+export function cleanPulse(p: any, dept: string, tenure: string) {
+  const items: Record<string, number> = {}
+  for (const q of PULSE) { const v = int(p?.items?.[q.id], 1, 5); if (v !== null) items[q.id] = v }
+  const now = new Date()
+  return {
+    dept, tenure, month: `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`,
+    items, enps: int(p?.enps, 0, 10), leave: LEAVE.includes(p?.leave) ? p.leave : "",
+    like: clip(p?.like, 1000), change: clip(p?.change, 1000),
+  }
+}
+
+// Aggregates only; groups smaller than MIN_GROUP are never broken out
+export function summarizePulse(rows: any[]) {
+  const groups = [...new Set(PULSE.map(p => p.g))]
+  const fav = (rs: any[], ids: string[]) => {
+    const v = rs.flatMap(r => ids.map(id => r.items?.[id])).filter(Boolean)
+    return v.length ? Math.round(v.filter((x: number) => x >= 4).length / v.length * 100) : null
+  }
+  const enps = (rs: any[]) => {
+    const v = rs.map(r => r.enps).filter((x: unknown) => typeof x === "number")
+    return v.length ? Math.round((v.filter((x: number) => x >= 9).length - v.filter((x: number) => x <= 6).length) / v.length * 100) : null
+  }
+  const n = rows.length
+  if (n < MIN_GROUP) return { n, hidden: true }
+  const byGroup = groups.map(g => ({ g, v: fav(rows, PULSE.filter(p => p.g === g).map(p => p.id)) }))
+  const byItem = PULSE.map(p => ({ id: p.id, g: p.g, t: p.t, v: fav(rows, [p.id]) }))
+  const depts = Object.keys(DEPTS).map(d => {
+    const r = rows.filter(x => x.dept === d)
+    if (!r.length) return null
+    if (r.length < MIN_GROUP) return { d, n: r.length, hidden: true }
+    return { d, n: r.length, groups: groups.map(g => fav(r, PULSE.filter(p => p.g === g).map(p => p.id))), enps: enps(r) }
+  }).filter(Boolean)
+  const leave: Record<string, number> = {}
+  rows.forEach(r => { if (r.leave) leave[r.leave] = (leave[r.leave] || 0) + 1 })
+  const comments = rows.flatMap(r => [r.like && { k: "like", t: r.like }, r.change && { k: "change", t: r.change }].filter(Boolean))
+  for (let i = comments.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [comments[i], comments[j]] = [comments[j], comments[i]] }
+  return { n, groups, enps: enps(rows), overall: fav(rows, PULSE.map(p => p.id)), stay: fav(rows, ["h1"]), byGroup, byItem, depts, leave, comments }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "hunnu-unelgee",
+  "private": true,
+  "type": "module",
+  "description": "Хүннү Конкрет — ажилтны мэдлэг, ур чадвар, сэтгэл ханамжийн үнэлгээ",
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0",
+    "@netlify/functions": "^3.0.0"
+  }
+}
