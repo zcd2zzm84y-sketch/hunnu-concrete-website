@@ -19,6 +19,6 @@ export function radarMulti(labels,series){
     ${[.2,.4,.6,.8,1].map(f=>`<polygon points="${ring(f)}" fill="none" stroke="var(--line)"/>`).join("")}
     ${labels.map((_,i)=>{const[x,y]=pt(i,R);return `<line x1="${C}" y1="${C}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--line)"/>`}).join("")}
     ${series.filter(s=>s.vals.some(v=>v>0)).map(s=>`<polygon points="${s.vals.map((v,i)=>pt(i,R*Math.max(v,.02)).map(x=>x.toFixed(1)).join(",")).join(" ")}" fill="${s.fill}" fill-opacity="${s.op}" stroke="${s.stroke}" stroke-width="2" ${s.dash?'stroke-dasharray="5 4"':""}/>`).join("")}
-    ${labels.map((l,i)=>{const[x,y]=pt(i,R+22);const an=Math.abs(x-C)<8?"middle":x>C?"start":"end";return `<text x="${x.toFixed(1)}" y="${(y+4).toFixed(1)}" text-anchor="${an}" font-size="12" font-weight="700" fill="var(--fg)">${esc(l)}</text>`}).join("")}
+    ${labels.map((l,i)=>{const[x,y]=pt(i,R+22);const an=Math.abs(x-C)<8?"middle":x>C?"start":"end";return `<text x="${x.toFixed(1)}" y="${(y+4).toFixed(1)}" text-anchor="${an}" font-size="15" font-weight="700" fill="var(--fg)">${esc(l)}</text>`}).join("")}
   </svg>`;
 }

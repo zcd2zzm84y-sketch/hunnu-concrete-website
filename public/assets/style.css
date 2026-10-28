@@ -2,7 +2,7 @@
 /* Layout: HUNNU company-profile look — light concrete ground, charcoal "Building Smarter." band, numbered black section tags; one working column for candidates, two-pane register for HR */
 :root{
   --bg:#e6e6e4; --surface:#ffffff; --sunk:#efefed; --line:#cfcfcc;
-  --fg:#262626; --muted:#6e6e6c; --band:#333333; --band-fg:#ffffff; --band-dim:#9a9a98;
+  --fg:#262626; --muted:#585856; --band:#333333; --band-fg:#ffffff; --band-dim:#9a9a98;
   --accent:#f2c200; --accent-fg:#1d1d1d; --accent-soft:#fbf0c2; --sel:#262626; --sel-fg:#ffffff;
   --good:#1e7a46; --good-soft:#dcefe3; --warn:#8a5a00; --warn-soft:#f6ead2; --bad:#b3261e; --bad-soft:#f7dedb;
   --logo-filter:none;
@@ -252,3 +252,60 @@ button.db:hover{border-color:var(--line)}
 @media (max-width:760px){.gate{grid-template-columns:1fr}.gate-side{padding:26px 22px}.gate-form{padding:26px 22px}.gate-list small{display:none}}
 .hero-cards{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media (max-width:640px){.hero-cards{grid-template-columns:1fr}}
+/* readability pass: larger type, calmer letter-spacing, fewer tiny labels */
+body{font-size:16px;line-height:1.6}
+.tag{font-size:13px;letter-spacing:.12em}
+.tag b{font-size:13px}
+.band p{font-size:17px}
+label.f{font-size:14px}
+.stats b{font-size:38px}
+.stats strong{font-size:15px}
+.stats span{font-size:13px}
+.err{font-size:14px}
+.pc-main b{font-size:16px}
+.pc-main small{font-size:13px}
+.pill{font-size:13px}
+.pp-kicker{font-size:12px}
+.pp-head h2{font-size:28px}
+.pp-meta{font-size:15px}
+.pp-facts dt{font-size:12px;letter-spacing:.06em}
+.pp-facts dd{font-size:16px;font-weight:600}
+.flag{font-size:14px}
+.gauge svg{width:72px;height:72px}
+.gauge b{font-size:22px}
+.gauge span{font-size:14px}
+.pp-grid{align-items:start}
+.radarbox{position:sticky;top:16px}
+.legend2{font-size:14px}
+.mg{font-size:15px;padding:8px 0;border-top:1px solid var(--line)}
+.mg:first-child{border-top:0}
+.mg b{display:block;line-height:1.3}
+.comp small,.mg small{font-size:13px;margin-top:2px}
+.score5{display:flex;gap:4px}
+.score5 button{width:40px;padding:8px 0;font-family:var(--mono)}
+.score5 button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}
+.sw h3{font-size:13px;letter-spacing:.06em}
+.sw p{font-size:15px}
+.ansl{font-size:14px}
+.ansl small{font-size:13px}
+details summary{font-size:15px}
+.db{font-size:15px}
+.db .t{height:10px}
+.heat{font-size:14px}
+.heat th{font-size:12px;letter-spacing:.04em}
+.cm{font-size:15px}
+.cm small{font-size:12px;letter-spacing:.06em}
+.tabs a,.tabs button{font-size:15px;padding:10px 16px}
+.stepper li{font-size:13px;letter-spacing:.02em}
+.qmeta{font-size:12px;letter-spacing:.1em}
+.qtext{font-size:20px}
+.sc small{font-size:11px}
+.chip{font-size:14px}
+.note{font-size:15px}
+.legend{font-size:13px}
+footer .inner{font-size:13px}
+.since{letter-spacing:.2em;font-size:12px}
+.pc-main b{white-space:normal}
+.pc-pill{grid-column:1/-1}
+.pp-grid{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr)}
+.radarbox{max-width:480px}

@@ -73,7 +73,7 @@ function renderStaffHr(keepEdits){
       <div><b>${list.filter(s=>COMP.every(c=>s.mgr?.[c.id])).length}</b><strong>Удирдлага үнэлсэн</strong><span>${list.length} ажилтнаас</span></div>
     </div>
     ${depts.length?`<div class="sheet stack"><div class="tag"><b>01</b>Албаар</div><div class="deptbars">${depts.map(x=>`<button type="button" class="db ${deptFilter===x.d?"on":""}" data-dept="${esc(x.d)}"><span>${esc(x.d)} <small>${x.n} хүн</small></span><span class="t"><i style="width:${x.k}%"></i></span><span class="v">${x.k}%</span></button>`).join("")}</div>
-      ${topTrain.length?`<div class="muted" style="font-size:13px">Хамгийн их хүссэн сургалт: ${topTrain.map(([t,n])=>`<b style="color:var(--fg)">${esc(t)}</b> (${n})`).join(", ")}</div>`:""}</div>`:""}
+      ${topTrain.length?`<div class="muted" style="font-size:15px">Хамгийн их хүссэн сургалт: ${topTrain.map(([t,n])=>`<b style="color:var(--fg)">${esc(t)}</b> (${n})`).join(", ")}</div>`:""}</div>`:""}
     ${msg?`<div class="err">${esc(msg)}</div>`:""}
     <div class="hr">
       <aside class="stack" style="gap:12px">
@@ -81,7 +81,7 @@ function renderStaffHr(keepEdits){
         <label class="f">Албаар шүүх<select id="df"><option value="">Бүгд</option>${Object.keys(DEPTS).map(d=>`<option ${d===deptFilter?"selected":""}>${d}</option>`).join("")}</select></label>
         <div class="plist">${list.length?list.map(s=>{const k=kPct(s),L=lvl(k);return `<button type="button" class="pcard ${s.id===selS?"on":""}" data-id="${esc(s.id)}">
           <span class="pc-main"><b>${esc(s.name)}</b><small>${esc(s.position)}</small><small class="lvl">${esc(s.dept)}</small></span>
-          <span class="pc-score"><b>${k}%</b>${COMP.every(c=>s.mgr?.[c.id])?'<span class="pill good">Удирдлага үнэлсэн</span>':'<span class="pill idle">Удирдлагын үнэлгээ дутуу</span>'}</span>
+          <span class="pc-score"><b>${k}%</b></span><span class="pc-pill">${COMP.every(c=>s.mgr?.[c.id])?'<span class="pill good">Удирдлага үнэлсэн</span>':'<span class="pill idle">Удирдлагын үнэлгээ дутуу</span>'}</span>
           <span class="pc-bar"><i style="width:${k}%"></i></span></button>`}).join(""):`<div class="sheet empty">Одоогоор бөглөсөн ажилтан алга. Ажилчдад үнэлгээний холбоос эсвэл QR кодыг илгээнэ үү.</div>`}</div>
       </aside>
       <div id="detail">${cur?staffPassport(cur):`<div class="sheet empty">Паспортыг харах ажилтнаа сонгоно уу.</div>`}</div>
@@ -108,7 +108,7 @@ function staffPassport(s){
       <div class="pp-grid"><div class="radarbox">${radarMulti(COMP.map(c=>c.t.split(/[ ,]/)[0]),[{vals:sv,fill:"var(--accent)",op:.3,stroke:"var(--fg)"},{vals:mv,fill:"none",op:0,stroke:"var(--good)",dash:1}])}
         <div class="legend2"><span><i style="background:var(--accent)"></i>Өөрийн үнэлгээ</span><span><i style="border:2px dashed var(--good)"></i>Удирдлагын үнэлгээ</span></div></div>
       <div class="mgr-list">${COMP.map(c=>`<div class="mg"><div><b>${c.t}</b><small>Өөрөө: ${s.self?.[c.id]||"—"} · ${ANCHOR[s.self?.[c.id]||0]||""}</small></div><div class="score5">${[1,2,3,4,5].map(n=>`<button type="button" data-c="${c.id}" data-n="${n}" class="${s.mgr?.[c.id]===n?"on":""}" title="${ANCHOR[n]}">${n}</button>`).join("")}</div></div>`).join("")}</div></div>
-      <p class="muted" style="font-size:12px;margin:0">Баруун талын товчоор шууд удирдлагын үнэлгээг (1–5) оруулна.</p>
+      <p class="muted" style="font-size:14px;margin:0">Баруун талын товчоор шууд удирдлагын үнэлгээг (1–5) оруулна.</p>
       ${gaps.length?`<div class="flag warn">Өөрийн ба удирдлагын үнэлгээ 2-оос дээш зөрсөн: ${esc(gaps.map(c=>c.t).join(", "))}. Ярилцлагаар тодруулна уу.</div>`:""}
     </section>
     <section class="pp-sec"><div class="tag"><b>C</b>Хөгжлийн хэрэгцээ</div>
@@ -116,7 +116,7 @@ function staffPassport(s){
       <div><h3>Сул ур чадвар (≤2)</h3><p>${devNeeds.length?esc(devNeeds.join(", ")):"Алга"}</p></div></div>
       <label class="f">Хөгжлийн төлөвлөгөө (дараагийн 6 сар)<textarea id="sPlan" style="min-height:70px">${esc(s.plan||"")}</textarea></label>
       <label class="f">Тэмдэглэл<textarea id="sNote" style="min-height:60px">${esc(s.hrNote||"")}</textarea></label>
-      <div class="row"><button type="button" class="primary" id="sSave">Хадгалах</button><span id="sMsg" class="muted" style="font-size:13px" aria-live="polite"></span></div></section>
+      <div class="row"><button type="button" class="primary" id="sSave">Хадгалах</button><span id="sMsg" class="muted" style="font-size:15px" aria-live="polite"></span></div></section>
     <details class="pp-sec"><summary>Буруу хариулсан асуултууд (${wrong.length})</summary><div class="ansl">${wrong.map(q=>{const a=s.answers?.[q.id];return `<div>${esc(q.q)}<small>Хариулт: ${a===undefined?"хариулаагүй":esc(q.o[a])}</small><small>Зөв: ${esc(q.o[q.a])}</small></div>`}).join("")||'<div class="ok">Бүгд зөв.</div>'}</div></details>
     <div class="row pp-sec" id="sDelRow" style="flex-direction:row"><button type="button" class="danger" id="sDel">Устгах</button></div>
   </article>`;
@@ -143,7 +143,7 @@ function renderPulse(){
   </div>
   <div class="sheet stack"><div class="tag"><b>01</b>Чиглэлээр</div>
     <div class="deptbars">${[...P.byGroup].sort((a,b)=>a.v-b.v).map(x=>`<div class="db"><span>${esc(x.g)}</span><span class="t"><i style="width:${x.v}%;background:var(--${heat(x.v)})"></i></span><span class="v">${x.v}%</span></div>`).join("")}</div>
-    <p class="muted" style="font-size:12px;margin:0">4–5 гэж хариулсан хувь. 70%+ сайн, 50–69% анхаарах, 50%-иас доош эрсдэлтэй.</p>
+    <p class="muted" style="font-size:14px;margin:0">4–5 гэж хариулсан хувь. 70%+ сайн, 50–69% анхаарах, 50%-иас доош эрсдэлтэй.</p>
     <details><summary>Асуулт тус бүрээр</summary><div class="deptbars">${P.byItem.map(x=>`<div class="db"><span>${esc(x.t)}</span><span class="t"><i style="width:${x.v}%;background:var(--${heat(x.v)})"></i></span><span class="v">${x.v}%</span></div>`).join("")}</div></details></div>
   <div class="sheet stack"><div class="tag"><b>02</b>Алба × чиглэл</div>
     <div class="heatbox"><table class="heat"><thead><tr><th>Алба</th><th class="num">n</th>${P.groups.map(g=>`<th class="num">${esc(g.split(/[ ,]/)[0])}</th>`).join("")}<th class="num">eNPS</th></tr></thead>
