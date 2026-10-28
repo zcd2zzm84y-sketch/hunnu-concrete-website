@@ -307,7 +307,7 @@ footer .inner{font-size:13px}
 .since{letter-spacing:.2em;font-size:12px}
 .pc-main b{white-space:normal}
 .pc-pill{grid-column:1/-1}
-.pp-grid{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr)}
+@media (min-width:1100px){.pp-grid{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr)}}
 .radarbox{max-width:480px}
 /* calmer palette: slate accent; light tint where the accent sits on the charcoal band */
 .gate-kicker,.gate-list b{color:#c3cdd6}
@@ -411,3 +411,18 @@ footer .inner{border-top-color:var(--line)}
 .gate-lock{background:var(--accent-soft);color:var(--accent)}
 .pw input{border-radius:10px 0 0 10px}
 .pw button{border-radius:0 10px 10px 0}
+/* phone fixes */
+.pw{border:1px solid var(--line);border-radius:10px;background:var(--surface);overflow:hidden}
+.pw input,.pw button{border:0;border-radius:0;box-shadow:none}
+.pw button{border-left:1px solid var(--line);background:transparent;font-weight:600}
+.pw input:focus-visible,.pw button:focus-visible{outline:0}
+.pw:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 25%,transparent)}
+@media (max-width:1099px){.radarbox{position:static;max-width:440px}}
+@media (max-width:640px){
+  .mg{grid-template-columns:1fr;gap:8px;padding:12px 0}
+  .score5{width:100%;gap:6px}
+  .score5 button{flex:1;width:auto;min-width:0;padding:11px 0;font-size:16px}
+  .radarbox{max-width:100%}
+  .gate{margin-top:0}
+  .gate-side h2{font-size:24px}
+}

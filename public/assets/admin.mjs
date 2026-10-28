@@ -41,7 +41,7 @@ function login(err){
   </div>`;
   $("#pwShow").onclick=e=>{const i=$("#pw"),on=i.type==="password";i.type=on?"text":"password";e.target.textContent=on?"Нуух":"Харах";e.target.setAttribute("aria-pressed",String(on));i.focus()};
   $("#fLogin").onsubmit=e=>{e.preventDefault();const v=$("#pw").value.trim();if(!v){$("#pw").focus();return}key=v;try{sessionStorage.setItem(KEY,key)}catch(e){}const b=e.target.querySelector(".gate-go");b.disabled=true;b.textContent="Шалгаж байна…";load()};
-  $("#pw").focus();
+  if(matchMedia("(hover:hover)").matches)$("#pw").focus();
 }
 function tabs(cur){
   return `<div class="row spread"><nav class="tabs" aria-label="Үр дүнгийн хэсэг">${[["staff","Ажилтны паспорт"],["pulse","Сэтгэл ханамж"]].map(([v,t])=>`<button type="button" data-view="${v}" ${v===cur?'aria-current="page"':""}>${t}</button>`).join("")}</nav><button type="button" id="reload">Шинэчлэх</button></div>`;
