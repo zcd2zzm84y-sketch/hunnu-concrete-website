@@ -17,6 +17,7 @@ async function load(){
   try{const j=await api("GET");staff=j.staff;pulse=j.pulse;apps=j.applicants||[];bank=j.bank||{};openings=j.openings||[];msg="";if(!selS&&staff.length)selS=staff[0].id;if(!selA&&apps.length)selA=apps[0].id;render()}
   catch(e){if(e.auth)return login(e.message);msg="Ачаалж чадсангүй: "+e.message;render()}
 }
+const PRINT=`<button type="button" id="print" class="pp-print" title="Хэвлэх" aria-label="Хэвлэх"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/><path d="M17.5 12h.01"/></svg></button>`;
 // Forget the password in this tab and drop loaded data from memory
 function logout(){key="";try{sessionStorage.removeItem(KEY)}catch(e){}staff=[];pulse=null;apps=[];bank={};openings=[];editOpen=false;selS=selA=null;view="staff";login()}
 function login(err){
@@ -132,7 +133,7 @@ function deptReport(list){
       <p style="margin:0"><b>Сул тал:</b> ${weak.map(w=>esc(w.t)).join(", ")}</p>
       <p style="margin:0"><b>Сургалтын хэрэгцээ:</b> ${tt.length?tt.map(([t,n])=>`${esc(t)} (${n})`).join(", "):"—"}</p>
       ${low?`<p style="margin:0"><b>Анхаарах ажилтан (мэдлэг 50%-иас доош):</b> ${g.filter(s=>kPct(s)<50).map(s=>esc(s.name)+" "+kPct(s)+"%").join(", ")}</p>`:""}</section>`};
-  return `<article class="passport"><header class="pp-head"><button type="button" id="print" class="pp-print">Хэвлэх</button><div class="pp-id"><div><div class="pp-kicker">Албаны тайлан · ${fmtDate(Date.now())}</div><h2>Ажилтны үнэлгээний нэгдсэн тайлан</h2><div class="pp-meta">${list.length} ажилтан · ${ds.length} алба${deptFilter?" · "+esc(deptFilter):""}</div></div></div></header>
+  return `<article class="passport"><header class="pp-head">${PRINT}<div class="pp-id"><div><div class="pp-kicker">Албаны тайлан · ${fmtDate(Date.now())}</div><h2>Ажилтны үнэлгээний нэгдсэн тайлан</h2><div class="pp-meta">${list.length} ажилтан · ${ds.length} алба${deptFilter?" · "+esc(deptFilter):""}</div></div></div></header>
     ${ds.length?ds.map(sec).join(""):`<div class="pp-sec muted">Одоогоор бөглөсөн ажилтан алга.</div>`}</article>`;
 }
 function staffPassport(s){
@@ -142,7 +143,7 @@ function staffPassport(s){
   const qids=s.questions||[];const wrong=qids.map(id=>bank[id]).filter(q=>q&&s.answers?.[q.id]!==q.a);
   const devNeeds=COMP.filter(c=>(s.mgr?.[c.id]||s.self?.[c.id]||5)<=2).map(c=>c.t);
   return `<article class="passport">
-    <header class="pp-head"><button type="button" id="print" class="pp-print">Хэвлэх</button><div class="pp-id"><span class="avatar">${esc(initials(s.name))}</span><div style="min-width:0"><div class="pp-kicker">Ажилтны паспорт · ${"HS-"+String(s.id).slice(-8).toUpperCase()}</div><h2>${esc(s.name)}</h2><div class="pp-meta">${esc(s.position)} · ${esc(s.dept)}</div></div></div>
+    <header class="pp-head">${PRINT}<div class="pp-id"><span class="avatar">${esc(initials(s.name))}</span><div style="min-width:0"><div class="pp-kicker">Ажилтны паспорт · ${"HS-"+String(s.id).slice(-8).toUpperCase()}</div><h2>${esc(s.name)}</h2><div class="pp-meta">${esc(s.position)} · ${esc(s.dept)}</div></div></div>
       <div class="pp-total"><div class="big">${k}%</div><span class="pill ${lvl(k).k}">Мэдлэг: ${lvl(k).t}</span></div></header>
     <dl class="pp-facts"><div><dt>Ажилласан</dt><dd>${esc(s.tenure)}</dd></div><div><dt>Ажлын бүлэг</dt><dd>${esc(FAMILY[s.family]||"—")}</dd></div><div><dt>Огноо</dt><dd>${fmtDate(s.submittedAt)}</dd></div><div><dt>Зарцуулсан</dt><dd>${mmss(s.durationSec||0)}</dd></div></dl>
     ${(s.durationSec||0)<240?`<div class="flags"><div class="flag bad">Хэт богино хугацаанд (${mmss(s.durationSec||0)}) бөглөсөн. Хариулт бодит бус байж болзошгүй.</div></div>`:""}
@@ -242,7 +243,7 @@ function appPassport(a){
     a.timedOut?`<div class="flag warn">Шалгалтын хугацаа дуусч автоматаар хаагдсан.</div>`:"",
     a.away>=2?`<div class="flag warn">Шалгалтын үеэр өөр цонх руу ${a.away} удаа шилжсэн. Хариултыг хайж олсон байж болзошгүй.</div>`:""].join("");
   return `<article class="passport">
-    <header class="pp-head"><button type="button" id="print" class="pp-print">Хэвлэх</button><div class="pp-id"><span class="avatar">${esc(initials(a.name))}</span><div style="min-width:0"><div class="pp-kicker">Ажлын анкет · ${"AP-"+String(a.id).slice(-8).toUpperCase()}</div><h2>${esc(a.name)}</h2><div class="pp-meta">${esc(a.position)} · ${esc(a.dept)}</div></div></div>
+    <header class="pp-head">${PRINT}<div class="pp-id"><span class="avatar">${esc(initials(a.name))}</span><div style="min-width:0"><div class="pp-kicker">Ажлын анкет · ${"AP-"+String(a.id).slice(-8).toUpperCase()}</div><h2>${esc(a.name)}</h2><div class="pp-meta">${esc(a.position)} · ${esc(a.dept)}</div></div></div>
       <div class="pp-total"><div class="big">${k}%</div><span class="pill ${ad.k}">${ad.t}</span></div></header>
     <dl class="pp-facts">${fact("Утас",a.phone)}${fact("Төрсөн он",a.birthYear)}${fact("Боловсрол",a.edu)}${fact("Туршлага",a.exp)}</dl>
     ${flags?`<div class="flags">${flags}</div>`:""}

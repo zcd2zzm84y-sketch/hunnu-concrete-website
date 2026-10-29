@@ -499,8 +499,10 @@ footer .hr-link:hover{color:var(--fg)}
 .rec small{font-size:12px}
 /* print: only the open passport */
 .pp-head{position:relative}
-.pp-print{position:absolute;top:0;right:0;padding:6px 12px;font-size:13px}
-.pp-head .pp-total{margin-top:34px}
+.pp-print{position:absolute;top:14px;right:20px;display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;padding:0;border-radius:8px;color:var(--muted)}
+.pp-print:hover{color:var(--fg);border-color:var(--fg)}
+.pp-print svg{width:20px;height:20px;flex:none}
+.pp-head{padding-right:68px}
 @media print{
   :root{--bg:#fff;--surface:#fff;--sunk:#fff}
   body{background:#fff}
