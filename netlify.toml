@@ -10,3 +10,7 @@
   [headers.values]
     X-Frame-Options = "DENY"
     Referrer-Policy = "no-referrer"
+
+# Keep links relative so they work behind the hunnu.asia/talent proxy
+[build.processing.html]
+  pretty_urls = false
