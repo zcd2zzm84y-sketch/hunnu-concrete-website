@@ -1,5 +1,5 @@
 import {DEPTS,FAMILY,COMP,ANCHOR,APP_N_COMMON,APP_N_JOB,APP_MINUTES,posInfo,DISTRICTS,KHOROO} from "./data.mjs";
-import {$,esc,shuffle,setBand,mmss} from "./ui.mjs";
+import {$,esc,shuffle,setBand,mmss,ic} from "./ui.mjs";
 
 // Job application: form → timed knowledge test → self-rated skills → sent to HR
 const LS="hunnu-apply-draft-v1";
@@ -84,7 +84,7 @@ function form(){
       <label class="consent"><input type="checkbox" id="aConsent" ${f.consent?"checked":""}><span>Миний өгсөн мэдээллийг Хүннү Конкрет ХХК зөвхөн ажилд авах шалгаруулалтад ашиглахыг зөвшөөрч байна.</span></label>
       ${A.err?`<div class="err" role="alert">${esc(A.err)}</div>`:""}
       <div class="note">«Шалгалт эхлүүлэх» дармагц ${APP_MINUTES} минутын хугацаа эхэлнэ. Тайван, интернэт сайн газраас өгнө үү. Асуулт бүр нэг зөв хариулттай.</div>
-      <div class="row"><button class="yellow" type="submit">Шалгалт эхлүүлэх →</button></div>
+      <div class="row"><button class="yellow" type="submit">${ic("play")}Шалгалт эхлүүлэх</button></div>
     </form></div>`;
   document.querySelectorAll(".chip input").forEach(cb=>cb.onchange=()=>{A.f=read();save();keep(form)});
   // Thousands separators while typing: 2500000 → 2,500,000
@@ -126,9 +126,9 @@ function test(){
       <div class="qmeta">Асуулт ${i+1} / ${TOTAL} · ${part}</div>
       <div class="qtext" id="qt">${esc(q.q)}</div>
       <div class="opts" role="radiogroup" aria-labelledby="qt">${A.shuffles[id].map((oi,k)=>`<label class="opt ${A.answers[id]===oi?"sel":""}"><input type="radio" name="opt" value="${oi}" ${A.answers[id]===oi?"checked":""}><span class="k">${"АБВГ"[k]}</span><span>${esc(q.o[oi])}</span></label>`).join("")}</div>
-      <div class="row spread"><button type="button" id="prev" ${i===0?"disabled":""}>← Өмнөх</button>
-      ${i<TOTAL-1?`<button type="button" class="primary" id="next">Дараах →</button>`:`<button type="button" class="yellow" id="next">Шалгалт дуусгах →</button>`}</div>
-      ${A.confirm?`<div class="confirm stack"><div><b>${TOTAL-answered} асуулт хариултгүй байна.</b> Дуусгавал хариултыг өөрчлөх боломжгүй.</div><div class="row"><button type="button" class="primary" id="yes">Дуусгах</button><button type="button" id="no">Буцах</button></div></div>`:""}
+      <div class="row spread"><button type="button" id="prev" ${i===0?"disabled":""}>${ic("left")}Өмнөх</button>
+      ${i<TOTAL-1?`<button type="button" class="primary" id="next">Дараах${ic("right")}</button>`:`<button type="button" class="yellow" id="next">${ic("flag")}Шалгалт дуусгах</button>`}</div>
+      ${A.confirm?`<div class="confirm stack"><div><b>${TOTAL-answered} асуулт хариултгүй байна.</b> Дуусгавал хариултыг өөрчлөх боломжгүй.</div><div class="row"><button type="button" class="primary" id="yes">${ic("flag")}Дуусгах</button><button type="button" id="no">${ic("left")}Буцах</button></div></div>`:""}
     </div>
     <div class="navgrid">${A.order.map((x,k)=>`<button type="button" data-go="${k}" class="${A.answers[x]!==undefined?"ans":""} ${k===i?"cur":""}" aria-label="Асуулт ${k+1}">${k+1}</button>`).join("")}</div>
   </div>`;
@@ -150,8 +150,8 @@ function skill(){
     <div><h2>Ур чадвараа үнэлнэ үү</h2><p class="muted">Одоогийн бодит түвшнээ сонгоно уу. Ярилцлагын үеэр эдгээрийг тодруулж асууна.</p></div>
     <div class="legend">${[1,2,3,4,5].map(n=>`<span><b>${n}</b> ${ANCHOR[n]}</span>`).join("")}</div>
     ${COMP.map(c=>`<div class="sheet comp"><div><b>${c.t}</b><small>${c.d}</small></div><div class="scale" role="radiogroup">${[1,2,3,4,5].map(n=>`<label class="sc ${A.self[c.id]===n?"on":""}"><input type="radio" name="s-${c.id}" value="${n}" ${A.self[c.id]===n?"checked":""}><b>${n}</b><small>${ANCHOR[n]}</small></label>`).join("")}</div></div>`).join("")}
-    ${A.confirm?`<div class="confirm stack"><div><b>Анкетаа илгээх үү?</b> Илгээсний дараа өөрчлөх боломжгүй.</div>${A.err?`<div class="err">${esc(A.err)}</div>`:""}<div class="row"><button type="button" class="primary" id="send">Илгээх</button><button type="button" id="no">Буцах</button></div></div>`:(A.err?`<div class="err">${esc(A.err)}</div>`:"")}
-    <div class="row"><button type="button" class="yellow" id="fin">Дуусгах</button></div>
+    ${A.confirm?`<div class="confirm stack"><div><b>Анкетаа илгээх үү?</b> Илгээсний дараа өөрчлөх боломжгүй.</div>${A.err?`<div class="err">${esc(A.err)}</div>`:""}<div class="row"><button type="button" class="primary" id="send">${ic("send")}Илгээх</button><button type="button" id="no">${ic("left")}Буцах</button></div></div>`:(A.err?`<div class="err">${esc(A.err)}</div>`:"")}
+    <div class="row"><button type="button" class="yellow" id="fin">${ic("flag")}Дуусгах</button></div>
   </div>`;
   COMP.forEach(c=>document.querySelectorAll(`input[name="s-${c.id}"]`).forEach(r=>r.onchange=()=>{A.self[c.id]=+r.value;save();keep(skill)}));
   $("#fin").onclick=()=>{if(COMP.some(c=>!A.self[c.id])){A.err="Бүх ур чадварыг үнэлнэ үү.";A.confirm=false;return keep(skill)}A.err="";A.confirm=true;keep(skill)};

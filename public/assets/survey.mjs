@@ -1,5 +1,5 @@
 import {DEPTS,FAMILY,TENURE,N_COMMON,N_JOB,COMP,ANCHOR,TRAIN,PULSE,LIKERT,LEAVE,MIN_GROUP,posInfo,migrateRole} from "./data.mjs";
-import {$,esc,shuffle,setBand} from "./ui.mjs";
+import {$,esc,shuffle,setBand,ic} from "./ui.mjs";
 
 const LS2="hunnu-staff-draft-v2";
 const freshStaff=()=>({stage:"info",emp:null,order:[],qs:{},shuffles:{},answers:{},idx:0,self:{},train:[],trainOther:"",pulse:{},enps:null,leave:"",like:"",change:"",startedAt:0,err:"",confirm:false});
@@ -54,7 +54,7 @@ function staffInfo(){
       </div>
       <div class="note">Мэдлэг, ур чадварын хэсэг таны нэртэй хадгалагдаж, сургалт, хөгжлийн төлөвлөгөөнд ашиглагдана. Сэтгэл ханамжийн хэсэг <b>таны нэргүйгээр</b>, зөвхөн алба, ажилласан хугацаатай тусад нь хадгалагдана.</div>
       ${T.err?`<div class="err" role="alert">${esc(T.err)}</div>`:""}
-      <div class="row"><button class="yellow" type="submit">Эхлэх →</button></div>
+      <div class="row"><button class="yellow" type="submit">${ic("play")}Эхлэх</button></div>
     </form></div>`;
   $("#eDept").onchange=()=>{T.emp={...readEmp(),position:""};staffInfo()};
   $("#fStaff").addEventListener("submit",async ev=>{
@@ -80,8 +80,8 @@ function staffKnow(){
       <div class="qmeta">Асуулт ${i+1} / ${total} · ${part}</div>
       <div class="qtext" id="qt">${esc(q.q)}</div>
       <div class="opts" role="radiogroup" aria-labelledby="qt">${T.shuffles[q.id].map((oi,k)=>`<label class="opt ${T.answers[q.id]===oi?"sel":""}"><input type="radio" name="opt" id="sopt-${q.id}-${oi}" value="${oi}" ${T.answers[q.id]===oi?"checked":""}><span class="k">${"АБВГ"[k]}</span><span>${esc(q.o[oi])}</span></label>`).join("")}</div>
-      <div class="row spread"><button type="button" id="prev" ${i===0?"disabled":""}>← Өмнөх</button>
-      ${i<total-1?`<button type="button" class="primary" id="next">Дараах →</button>`:`<button type="button" class="yellow" id="next">Ур чадвар руу →</button>`}</div>
+      <div class="row spread"><button type="button" id="prev" ${i===0?"disabled":""}>${ic("left")}Өмнөх</button>
+      ${i<total-1?`<button type="button" class="primary" id="next">Дараах${ic("right")}</button>`:`<button type="button" class="yellow" id="next">Ур чадвар руу${ic("right")}</button>`}</div>
     </div>
     <div class="navgrid">${T.order.map((id,k)=>`<button type="button" data-go="${k}" class="${T.answers[id]!==undefined?"ans":""} ${k===i?"cur":""}" aria-label="Асуулт ${k+1}">${k+1}</button>`).join("")}</div>
   </div>`;
@@ -105,7 +105,7 @@ function staffSkill(){
       <div class="chips">${TRAIN.map((t,i)=>`<label class="chip ${T.train.includes(t)?"on":""}"><input type="checkbox" id="tr-${i}" value="${esc(t)}" ${T.train.includes(t)?"checked":""}>${esc(t)}</label>`).join("")}</div>
       <label class="f">Бусад<input type="text" id="trO" value="${esc(T.trainOther)}"></label></div>
     ${T.err?`<div class="err">${esc(T.err)}</div>`:""}
-    <div class="row spread"><button type="button" id="back">← Мэдлэг</button><button type="button" class="yellow" id="next">Сэтгэл ханамж руу → <span class="muted" style="color:inherit;font-weight:400">(${done}/${COMP.length})</span></button></div>
+    <div class="row spread"><button type="button" id="back">${ic("left")}Мэдлэг</button><button type="button" class="yellow" id="next">Сэтгэл ханамж руу${ic("right")}<span class="muted" style="color:inherit;font-weight:400">(${done}/${COMP.length})</span></button></div>
   </div>`;
   COMP.forEach(c=>document.querySelectorAll(`input[name="s-${c.id}"]`).forEach(r=>r.onchange=()=>{T.self[c.id]=+r.value;saveStaff();keep(staffSkill)}));
   document.querySelectorAll(".chip input").forEach(cb=>cb.onchange=()=>{T.train=[...document.querySelectorAll(".chip input")].filter(x=>x.checked).map(x=>x.value);saveStaff();keep(staffSkill)});
@@ -133,8 +133,8 @@ function staffPulse(){
       <label class="f">Нэн тэргүүнд өөрчлөх ёстой нэг зүйл<textarea id="pChange" style="min-height:70px">${esc(T.change)}</textarea></label>
     </div>
     ${T.needRole?roleBox():""}
-    ${T.confirm?`<div class="confirm stack"><div><b>Илгээх үү?</b> Илгээсний дараа өөрчлөх боломжгүй.</div>${T.err?`<div class="err">${esc(T.err)}</div>`:""}<div class="row"><button type="button" class="primary" id="send">Илгээх</button><button type="button" id="noSend">Буцах</button></div></div>`:(T.err?`<div class="err">${esc(T.err)}</div>`:"")}
-    <div class="row spread"><button type="button" id="back">← Ур чадвар</button><button type="button" class="yellow" id="fin">Дуусгах</button></div>
+    ${T.confirm?`<div class="confirm stack"><div><b>Илгээх үү?</b> Илгээсний дараа өөрчлөх боломжгүй.</div>${T.err?`<div class="err">${esc(T.err)}</div>`:""}<div class="row"><button type="button" class="primary" id="send">${ic("send")}Илгээх</button><button type="button" id="noSend">${ic("left")}Буцах</button></div></div>`:(T.err?`<div class="err">${esc(T.err)}</div>`:"")}
+    <div class="row spread"><button type="button" id="back">${ic("left")}Ур чадвар</button><button type="button" class="yellow" id="fin">${ic("flag")}Дуусгах</button></div>
   </div>`;
   PULSE.forEach(p=>document.querySelectorAll(`input[name="p-${p.id}"]`).forEach(r=>r.onchange=()=>{T.pulse[p.id]=+r.value;saveStaff();keep(staffPulse)}));
   document.querySelectorAll('input[name="enps"]').forEach(r=>r.onchange=()=>{T.enps=+r.value;saveStaff();keep(staffPulse)});
@@ -171,7 +171,7 @@ async function sendStaff(){
 function staffDone(){
   setBand("Баярлалаа,",(T.emp?.name||"")+".","");
   $("#view").innerHTML=`<div class="sheet stack"><p>Таны үнэлгээ хадгалагдлаа. Сэтгэл ханамжийн хариулт нэргүйгээр тусад нь хадгалагдсан. Үр дүнгээр сургалт, хөгжлийн төлөвлөгөө гаргаж танд мэдэгдэнэ.</p>
-    <div class="row"><button type="button" class="primary" id="again">Дараагийн ажилтан</button></div></div>`;
+    <div class="row"><button type="button" class="primary" id="again">${ic("userPlus")}Дараагийн ажилтан</button></div></div>`;
   $("#again").onclick=()=>{T=freshStaff();renderStaff()};
 }
 

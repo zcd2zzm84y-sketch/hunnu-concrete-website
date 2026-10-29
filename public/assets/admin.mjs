@@ -1,6 +1,6 @@
 import {DEPTS,FAMILY,COMP,ANCHOR,PULSE,MIN_GROUP,PROX,proximity} from "./data.mjs";
 import {interviewGuide,stageGuide,REJECT,assess} from "./interview.mjs";
-import {$,esc,avg,fmtDate,mmss,lvl,initials,setBand,gauge,radarMulti} from "./ui.mjs";
+import {$,esc,avg,fmtDate,mmss,lvl,initials,setBand,gauge,radarMulti,ic} from "./ui.mjs";
 
 const KEY="hunnu-admin-key";
 let key=(()=>{try{return sessionStorage.getItem(KEY)||""}catch(e){return""}})();
@@ -17,7 +17,7 @@ async function load(){
   try{const j=await api("GET");staff=j.staff;pulse=j.pulse;apps=j.applicants||[];bank=j.bank||{};openings=j.openings||[];msg="";if(!selS&&staff.length)selS=staff[0].id;if(!selA&&apps.length)selA=apps[0].id;render()}
   catch(e){if(e.auth)return login(e.message);msg="Ачаалж чадсангүй: "+e.message;render()}
 }
-const PRINT=`<button type="button" id="print" class="pp-print" title="Хэвлэх" aria-label="Хэвлэх"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/><path d="M17.5 12h.01"/></svg></button>`;
+const PRINT=`<button type="button" id="print" class="pp-print" title="Хэвлэх" aria-label="Хэвлэх">${ic("printer")}</button>`;
 // Forget the password in this tab and drop loaded data from memory
 function logout(){key="";try{sessionStorage.removeItem(KEY)}catch(e){}staff=[];pulse=null;apps=[];bank={};openings=[];editOpen=false;selS=selA=null;view="staff";login()}
 function login(err){
@@ -37,18 +37,18 @@ function login(err){
       <h2>Нэвтрэх</h2>
       <p class="muted">Зөвхөн Хүний нөөцийн алба болон удирдлагад зориулсан хэсэг.</p>
       <label class="f">Нууц үг
-        <span class="pw"><input type="password" id="pw" autocomplete="current-password" required aria-invalid="${err?"true":"false"}"${err?' aria-describedby="pwErr"':""}><button type="button" id="pwShow" aria-label="Нууц үгийг харуулах" aria-pressed="false">Харах</button></span></label>
+        <span class="pw"><input type="password" id="pw" autocomplete="current-password" required aria-invalid="${err?"true":"false"}"${err?' aria-describedby="pwErr"':""}><button type="button" id="pwShow" aria-label="Нууц үгийг харуулах" aria-pressed="false">${ic("eye")}Харах</button></span></label>
       ${err?`<div class="err" id="pwErr" role="alert">${esc(err)}</div>`:""}
-      <button class="primary gate-go" type="submit">Нэвтрэх <span aria-hidden="true">→</span></button>
+      <button class="primary gate-go" type="submit">${ic("login")}Нэвтрэх</button>
       <p class="gate-note">Нууц үг зөвхөн энэ таб нээлттэй байх хугацаанд хадгалагдана. Дундын компьютер дээр ажлаа дуусгаад табаа хаана уу.</p>
     </form>
   </div>`;
-  $("#pwShow").onclick=e=>{const i=$("#pw"),on=i.type==="password";i.type=on?"text":"password";e.target.textContent=on?"Нуух":"Харах";e.target.setAttribute("aria-pressed",String(on));i.focus()};
+  $("#pwShow").onclick=e=>{const i=$("#pw"),on=i.type==="password";i.type=on?"text":"password";e.currentTarget.innerHTML=on?ic("eyeOff")+"Нуух":ic("eye")+"Харах";e.currentTarget.setAttribute("aria-pressed",String(on));i.focus()};
   $("#fLogin").onsubmit=e=>{e.preventDefault();const v=$("#pw").value.trim();if(!v){$("#pw").focus();return}key=v;try{sessionStorage.setItem(KEY,key)}catch(e){}const b=e.target.querySelector(".gate-go");b.disabled=true;b.textContent="Шалгаж байна…";load()};
   if(matchMedia("(hover:hover)").matches)$("#pw").focus();
 }
 function tabs(cur){
-  return `<div class="row spread"><nav class="tabs" aria-label="Үр дүнгийн хэсэг">${[["staff","Ажилтны паспорт"],["pulse","Сэтгэл ханамж"],["app","Горилогчид"+(apps.some(a=>a.status==="new")?" ("+apps.filter(a=>a.status==="new").length+")":"")]].map(([v,t])=>`<button type="button" data-view="${v}" ${v===cur?'aria-current="page"':""}>${t}</button>`).join("")}</nav><div class="row">${cur!=="pulse"?`<button type="button" id="xls">Excel татах</button>`:""}<button type="button" id="reload">Шинэчлэх</button><button type="button" id="logout">Гарах</button></div></div>`;
+  return `<div class="row spread"><nav class="tabs" aria-label="Үр дүнгийн хэсэг">${[["staff","Ажилтны паспорт","users"],["pulse","Сэтгэл ханамж","heart"],["app","Горилогчид"+(apps.some(a=>a.status==="new")?" ("+apps.filter(a=>a.status==="new").length+")":""),"userPlus"]].map(([v,t,i])=>`<button type="button" data-view="${v}" ${v===cur?'aria-current="page"':""}>${ic(i)}${t}</button>`).join("")}</nav><div class="row">${cur!=="pulse"?`<button type="button" id="xls">${ic("download")}Excel татах</button>`:""}<button type="button" id="reload">${ic("refresh")}Шинэчлэх</button><button type="button" id="logout">${ic("logout")}Гарах</button></div></div>`;
 }
 function render(){
   if(view==="pulse")renderPulse();else if(view==="app")renderApps();else renderStaffHr();
@@ -101,7 +101,7 @@ function renderStaffHr(keepEdits){
     ${msg?`<div class="err">${esc(msg)}</div>`:""}
     <div class="hr">
       <aside class="stack" style="gap:12px">
-        <button type="button" id="rpt" class="${selS==="report"?"primary":""}">${selS==="report"?"Тайланг хаах":"Албаны тайлан"}</button>
+        <button type="button" id="rpt" class="${selS==="report"?"primary":""}">${selS==="report"?ic("x")+"Тайланг хаах":ic("report")+"Албаны тайлан"}</button>
         <div class="tag"><b>02</b>Ажилтнууд</div>
         <label class="f">Албаар шүүх<select id="df"><option value="">Бүгд</option>${Object.keys(DEPTS).map(d=>`<option ${d===deptFilter?"selected":""}>${d}</option>`).join("")}</select></label>
         <div class="plist">${list.length?list.map(s=>{const k=kPct(s),L=lvl(k);return `<button type="button" class="pcard ${s.id===selS?"on":""}" data-id="${esc(s.id)}">
@@ -161,9 +161,9 @@ function staffPassport(s){
       <div><h3>Сул ур чадвар (≤2)</h3><p>${devNeeds.length?esc(devNeeds.join(", ")):"Алга"}</p></div></div>
       <label class="f">Хөгжлийн төлөвлөгөө (дараагийн 6 сар)<textarea id="sPlan" style="min-height:70px">${esc(s.plan||"")}</textarea></label>
       <label class="f">Тэмдэглэл<textarea id="sNote" style="min-height:60px">${esc(s.hrNote||"")}</textarea></label>
-      <div class="row"><button type="button" class="primary" id="sSave">Хадгалах</button><span id="sMsg" class="muted" style="font-size:15px" aria-live="polite"></span></div></section>
+      <div class="row"><button type="button" class="primary" id="sSave">${ic("check")}Хадгалах</button><span id="sMsg" class="muted" style="font-size:15px" aria-live="polite"></span></div></section>
     <details class="pp-sec"><summary>Буруу хариулсан асуултууд (${wrong.length})</summary><div class="ansl">${wrong.map(q=>{const a=s.answers?.[q.id];return `<div>${esc(q.q)}<small>Хариулт: ${a===undefined?"хариулаагүй":esc(q.o[a])}</small><small>Зөв: ${esc(q.o[q.a])}</small></div>`}).join("")||'<div class="ok">Бүгд зөв.</div>'}</div></details>
-    <div class="row pp-sec" id="sDelRow" style="flex-direction:row"><button type="button" class="danger" id="sDel">Устгах</button></div>
+    <div class="row pp-sec" id="sDelRow" style="flex-direction:row"><button type="button" class="danger" id="sDel">${ic("trash")}Устгах</button></div>
   </article>`;
 }
 
@@ -171,10 +171,11 @@ function bindStaff(s){
   const save=async patch=>{try{const j=await api("POST",{action:"update",id:s.id,patch});Object.assign(s,j.row);return true}catch(e){if(e.auth)return login(e.message);$("#sMsg").textContent="Хадгалж чадсангүй: "+e.message;return false}};
   document.querySelectorAll(".mgr-list [data-c]").forEach(b=>b.onclick=async()=>{if(await save({mgr:{...(s.mgr||{}),[b.dataset.c]:+b.dataset.n}})){const y=window.scrollY;renderAll();window.scrollTo(0,y)}});
   $("#sSave").onclick=async()=>{if(await save({plan:$("#sPlan").value,hrNote:$("#sNote").value}))$("#sMsg").textContent="Хадгалагдлаа."};
-  $("#sDel").onclick=()=>{$("#sDelRow").innerHTML=`<span style="font-size:14px">${esc(s.name)}-ийн үнэлгээг устгах уу?</span><button type="button" class="danger" id="sYes">Тийм, устгах</button><button type="button" id="sNo">Болих</button>`;
+  $("#sDel").onclick=()=>{$("#sDelRow").innerHTML=`<span style="font-size:14px">${esc(s.name)}-ийн үнэлгээг устгах уу?</span><button type="button" class="danger" id="sYes">${ic("trash")}Тийм, устгах</button><button type="button" id="sNo">${ic("x")}Болих</button>`;
     $("#sNo").onclick=()=>renderAll();
     $("#sYes").onclick=async()=>{try{await api("POST",{action:"delete",id:s.id});staff=staff.filter(x=>x.id!==s.id);selS=null;renderAll()}catch(e){$("#sMsg").textContent="Устгаж чадсангүй: "+e.message}}};
 }
+const SICON={new:"inbox",interview:"chat",reserve:"archive",hire:"userCheck",reject:"userX"};
 const STATUS={new:["Шинэ","idle"],interview:["Ярилцлагад урих","warn"],reserve:["Нөөцөд","idle"],hire:["Ажилд авах","good"],reject:["Татгалзсан","bad"]};
 // Suggested next step from the test score; HR makes the decision
 const advice=k=>k>=70?{t:"Ярилцлагад урих",k:"good"}:k>=50?{t:"Ярилцлагаар тодруулах",k:"warn"}:{t:"Тэнцээгүй",k:"bad"};
@@ -217,12 +218,12 @@ function renderApps(){
 // HR ticks which positions take applications; /apply lists only these
 function openingsCard(){
   const open=new Set(openings);
-  if(!editOpen)return `<div class="sheet stack"><div class="row spread"><div class="tag"><b>01</b>Нээлттэй ажлын байр (${openings.length})</div><button type="button" id="opEdit">Засах</button></div>
+  if(!editOpen)return `<div class="sheet stack"><div class="row spread"><div class="tag"><b>01</b>Нээлттэй ажлын байр (${openings.length})</div><button type="button" id="opEdit">${ic("edit")}Засах</button></div>
     ${openings.length?`<div class="chips">${openings.map(k=>`<span class="chip on">${esc(k.split("|")[1])}</span>`).join("")}</div>`:`<p style="margin:0">Одоогоор нээлттэй ажлын байр алга. Анкетын хуудас «нээлттэй ажлын байр алга» гэж харуулна. «Засах» дарж ажилд авах албан тушаалаа чагтална уу.</p>`}
     <p class="muted" style="margin:0;font-size:14px">Анкетын холбоос: <b style="color:var(--fg)">${esc(location.host+location.pathname.replace(/admin(\.html)?$/,"")+"apply")}</b></p></div>`;
   return `<div class="sheet stack"><div class="tag"><b>01</b>Ажилд авах албан тушаалаа чагтална уу</div>
     <div class="opgrid">${Object.entries(DEPTS).map(([d,ps])=>`<fieldset class="opdept"><legend>${esc(d)}</legend>${ps.map(p=>{const k=d+"|"+p[0];return `<label class="opchk"><input type="checkbox" value="${esc(k)}" ${open.has(k)?"checked":""}><span>${esc(p[0])}</span></label>`}).join("")}</fieldset>`).join("")}</div>
-    <div class="row"><button type="button" class="primary" id="opSave">Хадгалах</button><button type="button" id="opCancel">Болих</button><span id="opMsg" class="muted" aria-live="polite"></span></div></div>`;
+    <div class="row"><button type="button" class="primary" id="opSave">${ic("check")}Хадгалах</button><button type="button" id="opCancel">${ic("x")}Болих</button><span id="opMsg" class="muted" aria-live="polite"></span></div></div>`;
 }
 function bindOpenings(){
   const redraw=()=>{const y=window.scrollY;renderAll();window.scrollTo(0,y)};
@@ -249,10 +250,10 @@ function appPassport(a){
     ${flags?`<div class="flags">${flags}</div>`:""}
     <section class="pp-sec"><div class="tag"><b>A</b>Шийдвэр</div>
       ${recBlock(a)}
-      <div class="chips" role="radiogroup" aria-label="Шийдвэр">${Object.entries(STATUS).map(([v,[t]])=>`<button type="button" class="chip ${a.status===v?"on":""}" data-st="${v}">${t}</button>`).join("")}</div>
+      <div class="chips" role="radiogroup" aria-label="Шийдвэр">${Object.entries(STATUS).map(([v,[t]])=>`<button type="button" class="chip ${a.status===v?"on":""}" data-st="${v}">${ic(SICON[v])}${t}</button>`).join("")}</div>
       ${a.status==="interview"?iqBlock(a,wrong):stageBlock(a)}
       <label class="f">Тэмдэглэл (ярилцлагын дүгнэлт, санал болгосон цалин гэх мэт)<textarea id="aNote" style="min-height:70px">${esc(a.hrNote||"")}</textarea></label>
-      <div class="row"><button type="button" class="primary" id="aSave">Хадгалах</button><span id="aMsg" class="muted" style="font-size:15px" aria-live="polite"></span></div></section>
+      <div class="row"><button type="button" class="primary" id="aSave">${ic("check")}Хадгалах</button><span id="aMsg" class="muted" style="font-size:15px" aria-live="polite"></span></div></section>
     <section class="pp-sec"><div class="tag"><b>B</b>Мэдлэгийн шалгалт</div>
       <div class="gauges">${gauge(pp(bp.common),(bp.common?.c||0)+"/"+(bp.common?.t||0),"Ерөнхий мэдлэг")}${gauge(pp(bp.job),(bp.job?.c||0)+"/"+(bp.job?.t||0),"Мэргэжлийн мэдлэг")}${gauge(k,a.score+"/"+a.max,"Нийт · "+mmss(a.durationSec||0))}</div>
       <p class="muted" style="font-size:14px;margin:0">70%+ ярилцлагад урих, 50–69% ярилцлагаар тодруулах, 50%-иас доош тэнцээгүй гэж санал болгоно.</p></section>
@@ -265,7 +266,7 @@ function appPassport(a){
       <dl class="kv">${[["И-мэйл",a.email],["Гэрийн хаяг",[a.district,a.khoroo?a.khoroo+"-р хороо":"",a.area].filter(Boolean).join(", ")],["Мэргэжил",a.major],["Сүүлийн ажил",a.lastJob],["Жолооны ангилал",(a.license||[]).join(", ")],["Ажиллах боломжтой",a.startDate],["Цалингийн хүлээлт",/^[\d,\s.]+$/.test(a.salary||"")&&/\d/.test(a.salary)?Number(a.salary.replace(/\D/g,"")).toLocaleString("en-US")+" ₮":a.salary],["Ажлын бүлэг",FAMILY[a.family]],["Илгээсэн",fmtDate(a.submittedAt)]].map(([t,v])=>`<div><dt>${t}</dt><dd>${v?esc(v):"—"}</dd></div>`).join("")}</dl>
       ${a.why?`<blockquote class="cm like"><small>Яагаад Хүннү Конкрет</small>${esc(a.why)}</blockquote>`:""}</section>
     <details class="pp-sec"><summary>Буруу хариулсан асуултууд (${wrong.length})</summary><div class="ansl">${wrong.map(q=>{const x=a.answers?.[q.id];return `<div>${esc(q.q)}<small>Хариулт: ${x===undefined?"хариулаагүй":esc(q.o[x])}</small><small>Зөв: ${esc(q.o[q.a])}</small></div>`}).join("")||'<div class="ok">Бүгд зөв.</div>'}</div></details>
-    <div class="row pp-sec" id="aDelRow" style="flex-direction:row"><button type="button" class="danger" id="aDel">Устгах</button></div>
+    <div class="row pp-sec" id="aDelRow" style="flex-direction:row"><button type="button" class="danger" id="aDel">${ic("trash")}Устгах</button></div>
   </article>`;
 }
 // Interview questions with a good-answer hint, a 3-step rating and a short note per question
@@ -288,7 +289,7 @@ function stageBlock(a){
   return `<div class="iq"><div class="iq-head"><b>${esc(g.t)}</b><span class="muted">${done}/${g.items.length} хийсэн</span></div>
     ${g.reasons?`<div class="chips" style="margin-top:10px">${REJECT.map(r=>`<button type="button" class="chip ${c.reason===r?"on":""}" data-rj="${esc(r)}">${esc(r)}</button>`).join("")}</div>`:""}
     <ul class="ck-list">${g.items.map(([k,t,h])=>`<li><label><input type="checkbox" data-ck="${k}" ${c[k]?"checked":""}><span><b>${esc(t)}</b><small>${esc(h)}</small></span></label></li>`).join("")}</ul>
-    <div class="tpl"><div class="row spread"><small class="muted">Илгээх мессежийн загвар ([…] хэсгийг бөглөнө)</small><button type="button" id="tplCopy">Хуулах</button></div><textarea id="tplText">${esc(g.msg)}</textarea></div>
+    <div class="tpl"><div class="row spread"><small class="muted">Илгээх мессежийн загвар ([…] хэсгийг бөглөнө)</small><button type="button" id="tplCopy">${ic("copy")}Хуулах</button></div><textarea id="tplText">${esc(g.msg)}</textarea></div>
     ${a.status==="new"?`<p class="muted" style="margin:10px 0 0;font-size:14px">«Ярилцлагад урих» дарахад ярилцлагын асуултууд гарна.</p>`:""}</div>`;
 }
 function bindApp(a){
@@ -302,9 +303,9 @@ function bindApp(a){
   const setChk=v=>save({chk:{...(a.chk||{}),...v}});
   document.querySelectorAll("[data-ck]").forEach(i=>i.onchange=async()=>{if(await setChk({[i.dataset.ck]:i.checked}))redraw()});
   document.querySelectorAll("[data-rj]").forEach(b=>b.onclick=async()=>{const r=b.dataset.rj;if(await setChk({reason:a.chk?.reason===r?"":r,j1:a.chk?.reason!==r}))redraw()});
-  if($("#tplCopy"))$("#tplCopy").onclick=async()=>{const t=$("#tplText");try{await navigator.clipboard.writeText(t.value)}catch(e){t.select();document.execCommand("copy")}$("#tplCopy").textContent="Хуулсан"};
+  if($("#tplCopy"))$("#tplCopy").onclick=async()=>{const t=$("#tplText");try{await navigator.clipboard.writeText(t.value)}catch(e){t.select();document.execCommand("copy")}$("#tplCopy").innerHTML=ic("check")+"Хуулсан"};
   $("#aSave").onclick=async()=>{if(await save({hrNote:$("#aNote").value}))$("#aMsg").textContent="Хадгалагдлаа."};
-  $("#aDel").onclick=()=>{$("#aDelRow").innerHTML=`<span style="font-size:14px">${esc(a.name)}-ийн анкетыг устгах уу?</span><button type="button" class="danger" id="aYes">Тийм, устгах</button><button type="button" id="aNo">Болих</button>`;
+  $("#aDel").onclick=()=>{$("#aDelRow").innerHTML=`<span style="font-size:14px">${esc(a.name)}-ийн анкетыг устгах уу?</span><button type="button" class="danger" id="aYes">${ic("trash")}Тийм, устгах</button><button type="button" id="aNo">${ic("x")}Болих</button>`;
     $("#aNo").onclick=()=>renderAll();
     $("#aYes").onclick=async()=>{try{await api("POST",{kind:"app",action:"delete",id:a.id});apps=apps.filter(x=>x.id!==a.id);selA=null;renderAll()}catch(e){$("#aMsg").textContent="Устгаж чадсангүй: "+e.message}}};
 }
@@ -332,9 +333,9 @@ function renderPulse(){
     <div class="comments">${P.comments.map(c=>`<blockquote class="cm ${c.k}"><small>${c.k==="like"?"Таалагддаг":"Өөрчлөх"}</small>${esc(c.t)}</blockquote>`).join("")||'<span class="muted">Санал алга</span>'}</div></div>`}
   <div class="sheet stack"><div class="tag"><b>!</b>Туршилтын өгөгдөл цэвэрлэх</div>
     <p class="muted" style="margin:0;font-size:14px">Хариулт нэргүй тул нэг нэгээр нь устгах боломжгүй. Жинхэнэ судалгаа эхлэхээс өмнө туршилтын бүх хариултыг энд нэг дор устгана. Буцаах боломжгүй.</p>
-    <div class="row" id="pgRow"><button type="button" class="danger" id="pg">Бүх хариултыг устгах (${pulse?.n||0})</button></div></div>
+    <div class="row" id="pgRow"><button type="button" class="danger" id="pg">${ic("trash")}Бүх хариултыг устгах (${pulse?.n||0})</button></div></div>
   </div>`;
-  $("#pg").onclick=()=>{$("#pgRow").innerHTML=`<label class="f" style="flex:1 1 260px">Баталгаажуулахын тулд УСТГАХ гэж бичнэ үү<input type="text" id="pgTxt" autocomplete="off"></label><button type="button" class="danger" id="pgYes">Устгах</button><button type="button" id="pgNo">Болих</button><span id="pgMsg" class="muted"></span>`;
+  $("#pg").onclick=()=>{$("#pgRow").innerHTML=`<label class="f" style="flex:1 1 260px">Баталгаажуулахын тулд УСТГАХ гэж бичнэ үү<input type="text" id="pgTxt" autocomplete="off"></label><button type="button" class="danger" id="pgYes">${ic("trash")}Устгах</button><button type="button" id="pgNo">${ic("x")}Болих</button><span id="pgMsg" class="muted"></span>`;
     $("#pgNo").onclick=()=>render();
     $("#pgYes").onclick=async()=>{if($("#pgTxt").value.trim()!=="УСТГАХ"){$("#pgMsg").textContent="УСТГАХ гэж бичнэ үү.";return}
       try{const j=await api("POST",{action:"purgePulse"});$("#pgMsg").textContent=j.deleted+" хариулт устгагдлаа.";await load()}catch(e){if(e.auth)return login(e.message);$("#pgMsg").textContent="Устгаж чадсангүй: "+e.message}}};
