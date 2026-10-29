@@ -3,7 +3,7 @@ import {$,esc,avg,fmtDate,mmss,lvl,initials,setBand,gauge,radarMulti} from "./ui
 
 const KEY="hunnu-admin-key";
 let key=(()=>{try{return sessionStorage.getItem(KEY)||""}catch(e){return""}})();
-let staff=[],pulse=null,apps=[],bank={},selS=null,selA=null,appFilter="",deptFilter="",msg="",view="staff";
+let staff=[],pulse=null,apps=[],bank={},selS=null,selA=null,appFilter="",deptFilter="",msg="",view=["staff","pulse","app"].includes(location.hash.slice(1))?location.hash.slice(1):"staff";
 
 async function api(method,body){
   const res=await fetch("/api/admin",{method,headers:{"x-admin-key":key,"content-type":"application/json"},body:body?JSON.stringify(body):undefined});
@@ -50,7 +50,7 @@ function tabs(cur){
 }
 function render(){
   if(view==="pulse")renderPulse();else if(view==="app")renderApps();else renderStaffHr();
-  document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>{view=b.dataset.view;render()});
+  document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>{view=b.dataset.view;history.replaceState(null,"","#"+view);render()});
   const r=$("#reload");if(r)r.onclick=()=>{r.disabled=true;load()};
   const o=$("#logout");if(o)o.onclick=logout;
 }
