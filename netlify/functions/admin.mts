@@ -38,6 +38,11 @@ export default async (req: Request) => {
     await settingsStore().setJSON("openings", list)
     return json({ ok: true, openings: list })
   }
+  if (body?.action === "purgePulse") {
+    const store = pulseStore(), { blobs } = await store.list()
+    await Promise.all(blobs.map(b => store.delete(b.key)))
+    return json({ ok: true, deleted: blobs.length })
+  }
   const store = body?.kind === "app" ? applicantStore() : staffStore()
   const id = clip(body?.id, 80)
   const cur: any = await store.get(id, { type: "json" })
