@@ -16,6 +16,8 @@ async function load(){
   try{const j=await api("GET");staff=j.staff;pulse=j.pulse;apps=j.applicants||[];bank=j.bank||{};msg="";if(!selS&&staff.length)selS=staff[0].id;if(!selA&&apps.length)selA=apps[0].id;render()}
   catch(e){if(e.auth)return login(e.message);msg="Ачаалж чадсангүй: "+e.message;render()}
 }
+// Forget the password in this tab and drop loaded data from memory
+function logout(){key="";try{sessionStorage.removeItem(KEY)}catch(e){}staff=[];pulse=null;apps=[];bank={};selS=selA=null;view="staff";login()}
 function login(err){
   setBand("HR","самбар.","Хүннү Конкрет ХХК-ийн ажилтны үнэлгээний нэгдсэн үр дүн.");
   $("#view").innerHTML=`<div class="gate">
@@ -24,7 +26,7 @@ function login(err){
       <h2>Ажилтан бүрийн<br><span>чадварыг нэг дороос.</span></h2>
       <ol class="gate-list">
         <li><b>01</b><div><strong>Ажилтны паспорт</strong><small>Мэдлэгийн оноо, ур чадварын радар, удирдлагын үнэлгээ</small></div></li>
-        <li><b>02</b><div><strong>Сэтгэл ханамж</strong><small>Нэргүй нэгдсэн дүн, eNPS, албаар харьцуулалт</small></div></li>
+        <li><b>02</b><div><strong>Сэтгэл ханамж</strong><small>Нэргүй нэгдсэн дүн, компанийг санал болгох индекс, албадын харьцуулалт</small></div></li>
         <li><b>03</b><div><strong>Горилогчид</strong><small>Ажлын анкет, мэдлэгийн шалгалт, ажилд авах шийдвэр</small></div></li>
       </ol>
     </aside>
@@ -44,12 +46,13 @@ function login(err){
   if(matchMedia("(hover:hover)").matches)$("#pw").focus();
 }
 function tabs(cur){
-  return `<div class="row spread"><nav class="tabs" aria-label="Үр дүнгийн хэсэг">${[["staff","Ажилтны паспорт"],["pulse","Сэтгэл ханамж"],["app","Горилогчид"+(apps.some(a=>a.status==="new")?" ("+apps.filter(a=>a.status==="new").length+")":"")]].map(([v,t])=>`<button type="button" data-view="${v}" ${v===cur?'aria-current="page"':""}>${t}</button>`).join("")}</nav><button type="button" id="reload">Шинэчлэх</button></div>`;
+  return `<div class="row spread"><nav class="tabs" aria-label="Үр дүнгийн хэсэг">${[["staff","Ажилтны паспорт"],["pulse","Сэтгэл ханамж"],["app","Горилогчид"+(apps.some(a=>a.status==="new")?" ("+apps.filter(a=>a.status==="new").length+")":"")]].map(([v,t])=>`<button type="button" data-view="${v}" ${v===cur?'aria-current="page"':""}>${t}</button>`).join("")}</nav><div class="row"><button type="button" id="reload">Шинэчлэх</button><button type="button" id="logout">Гарах</button></div></div>`;
 }
 function render(){
   if(view==="pulse")renderPulse();else if(view==="app")renderApps();else renderStaffHr();
   document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>{view=b.dataset.view;render()});
   const r=$("#reload");if(r)r.onclick=()=>{r.disabled=true;load()};
+  const o=$("#logout");if(o)o.onclick=logout;
 }
 const renderAll=render;
 
@@ -213,7 +216,7 @@ function renderPulse(){
   ${P.hidden?`<div class="sheet empty">Одоогоор ${P.n} хариулт ирсэн. ${MIN_GROUP}-аас дээш хариулт ирмэгц нэгдсэн дүн гарна.</div>`:`
   <div class="stats">
     <div><b>${P.n}</b><strong>Хариулт</strong><span>нэргүй</span></div>
-    <div><b>${P.enps>0?"+":""}${P.enps}</b><strong>eNPS</strong><span>санал болгох индекс (−100…+100)</span></div>
+    <div><b>${P.enps>0?"+":""}${P.enps}</b><strong>Санал болгох индекс (eNPS)</strong><span>«найздаа санал болгох уу?» −100…+100</span></div>
     <div><b>${P.overall}%</b><strong>Ерөнхий ханамж</strong><span>4–5 гэж хариулсан хувь</span></div>
     <div><b>${P.stay}%</b><strong>Үлдэх хүсэл</strong><span>1 жилийн дараа ч энд</span></div>
   </div>
