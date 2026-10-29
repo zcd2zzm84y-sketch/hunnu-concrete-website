@@ -1,4 +1,4 @@
-import {DEPTS,FAMILY,COMP,ANCHOR,APP_N_COMMON,APP_N_JOB,APP_MINUTES,posInfo,DISTRICTS} from "./data.mjs";
+import {DEPTS,FAMILY,COMP,ANCHOR,APP_N_COMMON,APP_N_JOB,APP_MINUTES,posInfo,DISTRICTS,KHOROO} from "./data.mjs";
 import {$,esc,shuffle,setBand,mmss} from "./ui.mjs";
 
 // Job application: form → timed knowledge test → self-rated skills → sent to HR
@@ -59,7 +59,7 @@ function form(){
         </div>
         <div class="grid2">
           <label class="f">Гэрийн хаяг: дүүрэг *<select id="aDistrict"><option value="">— Сонгох —</option>${opt(DISTRICTS,f.district)}</select></label>
-          <label class="f">Хороо<input type="number" id="aKhoroo" value="${esc(f.khoroo)}" min="1" max="45" inputmode="numeric"></label>
+          <label class="f">Хороо<select id="aKhoroo" ${KHOROO[f.district]?"":"disabled"}><option value="">${KHOROO[f.district]?"— Сонгох —":"—"}</option>${Array.from({length:KHOROO[f.district]||0},(_,i)=>`<option value="${i+1}" ${String(f.khoroo)===String(i+1)?"selected":""}>${i+1}-р хороо</option>`).join("")}</select></label>
         </div>
         <label class="f">Байршил, ойролцоох газар<input type="text" id="aArea" value="${esc(f.area)}" placeholder="Жишээ: Яармаг, 5-р гудамж"></label>
         <div class="muted" style="font-size:13px">Манай Үйлдвэр 2.0 Хан-Уул дүүрэгт, Яармаг, Нисэхийн орчимд байрладаг.</div>
@@ -86,6 +86,7 @@ function form(){
       <div class="row"><button class="yellow" type="submit">Шалгалт эхлүүлэх →</button></div>
     </form></div>`;
   document.querySelectorAll(".chip input").forEach(cb=>cb.onchange=()=>{A.f=read();save();keep(form)});
+  $("#aDistrict").onchange=()=>{A.f={...read(),khoroo:""};save();keep(form)};
   $("#fApp").addEventListener("input",()=>{A.f=read();save()});
   $("#fApp").addEventListener("submit",start);
 }
