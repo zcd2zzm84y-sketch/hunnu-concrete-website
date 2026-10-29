@@ -22,9 +22,10 @@
     <p id="bandSub"></p>
   </div></section>
   <main><div class="inner" id="view"><p class="muted">Ачаалж байна…</p></div></main>
-  <footer><div class="inner"><span>© 2026 Хүннү Конкрет ХХК · ISO 9001 · ISO 45001</span><span>7575 4040 · info@hunnu.asia · www.hunnu.asia · <a class="hr-link" href="/admin.html">HR нэвтрэх</a></span></div></footer>
+  <footer><div class="inner"><span><span id="hrk">©</span> 2026 Хүннү Конкрет ХХК · ISO 9001 · ISO 45001</span><span>7575 4040 · info@hunnu.asia · www.hunnu.asia</span></div></footer>
 </div>
 <noscript><p style="padding:16px">Энэ хуудсыг ашиглахын тулд JavaScript-ийг идэвхжүүлнэ үү.</p></noscript>
 <script type="module" src="/assets/survey.mjs"></script>
+<script>(()=>{let n=0,t=0;const k=document.getElementById("hrk");if(k)k.addEventListener("click",()=>{const now=Date.now();n=now-t<700?n+1:1;t=now;if(n>=3)location.href="/admin.html"})})();</script>
 </body>
 </html>
