@@ -1,5 +1,5 @@
 import {DEPTS,FAMILY,COMP,ANCHOR,PULSE,MIN_GROUP,PROX,proximity} from "./data.mjs";
-import {interviewGuide} from "./interview.mjs";
+import {interviewGuide,stageGuide,REJECT} from "./interview.mjs";
 import {$,esc,avg,fmtDate,mmss,lvl,initials,setBand,gauge,radarMulti} from "./ui.mjs";
 
 const KEY="hunnu-admin-key";
@@ -208,7 +208,7 @@ function appPassport(a){
     ${flags?`<div class="flags">${flags}</div>`:""}
     <section class="pp-sec"><div class="tag"><b>A</b>Шийдвэр</div>
       <div class="chips" role="radiogroup" aria-label="Шийдвэр">${Object.entries(STATUS).map(([v,[t]])=>`<button type="button" class="chip ${a.status===v?"on":""}" data-st="${v}">${t}</button>`).join("")}</div>
-      ${iqBlock(a,wrong)}
+      ${a.status==="interview"?iqBlock(a,wrong):stageBlock(a)}
       <label class="f">Тэмдэглэл (ярилцлагын дүгнэлт, санал болгосон цалин гэх мэт)<textarea id="aNote" style="min-height:70px">${esc(a.hrNote||"")}</textarea></label>
       <div class="row"><button type="button" class="primary" id="aSave">Хадгалах</button><span id="aMsg" class="muted" style="font-size:15px" aria-live="polite"></span></div></section>
     <section class="pp-sec"><div class="tag"><b>B</b>Мэдлэгийн шалгалт</div>
@@ -236,6 +236,14 @@ function iqBlock(a,wrong){
     <ol class="iq-list">${g.map(q=>{const x=ans[q.id]||{};return `<li><div class="iq-q"><small>${esc(q.src)}</small>${esc(q.q)}</div><div class="iq-good">Сайн хариулт: ${esc(q.good)}</div>
       <div class="iq-row"><span class="iq-r">${IQR.map(([v,t,c])=>`<button type="button" class="${c} ${x.r===v?"on":""}" data-iq="${q.id}" data-r="${v}">${t}</button>`).join("")}</span><input type="text" data-iqt="${q.id}" maxlength="500" placeholder="Хариултын товч тэмдэглэл" value="${esc(x.t||"")}"></div></li>`}).join("")}</ol></details>`;
 }
+function stageBlock(a){
+  const g=stageGuide(a),c=a.chk||{},done=g.items.filter(([k])=>c[k]).length;
+  return `<div class="iq"><div class="iq-head"><b>${esc(g.t)}</b><span class="muted">${done}/${g.items.length} хийсэн</span></div>
+    ${g.reasons?`<div class="chips" style="margin-top:10px">${REJECT.map(r=>`<button type="button" class="chip ${c.reason===r?"on":""}" data-rj="${esc(r)}">${esc(r)}</button>`).join("")}</div>`:""}
+    <ul class="ck-list">${g.items.map(([k,t,h])=>`<li><label><input type="checkbox" data-ck="${k}" ${c[k]?"checked":""}><span><b>${esc(t)}</b><small>${esc(h)}</small></span></label></li>`).join("")}</ul>
+    <div class="tpl"><div class="row spread"><small class="muted">Илгээх мессежийн загвар ([…] хэсгийг бөглөнө)</small><button type="button" id="tplCopy">Хуулах</button></div><textarea id="tplText">${esc(g.msg)}</textarea></div>
+    ${a.status==="new"?`<p class="muted" style="margin:10px 0 0;font-size:14px">«Ярилцлагад урих» дарахад ярилцлагын асуултууд гарна.</p>`:""}</div>`;
+}
 function bindApp(a){
   const save=async patch=>{try{const j=await api("POST",{kind:"app",action:"update",id:a.id,patch});Object.assign(a,j.row);return true}catch(e){if(e.auth)return login(e.message);$("#aMsg").textContent="Хадгалж чадсангүй: "+e.message;return false}};
   const redraw=()=>{const y=window.scrollY;renderAll();window.scrollTo(0,y)};
@@ -244,6 +252,10 @@ function bindApp(a){
   const setIq=(id,v)=>save({iAns:{...(a.iAns||{}),[id]:{...(a.iAns?.[id]||{}),...v}}});
   document.querySelectorAll("[data-iq]").forEach(b=>b.onclick=async()=>{const id=b.dataset.iq,r=+b.dataset.r;if(await setIq(id,{r:a.iAns?.[id]?.r===r?0:r}))redraw()});
   document.querySelectorAll("[data-iqt]").forEach(i=>i.onchange=()=>setIq(i.dataset.iqt,{t:i.value}));
+  const setChk=v=>save({chk:{...(a.chk||{}),...v}});
+  document.querySelectorAll("[data-ck]").forEach(i=>i.onchange=async()=>{if(await setChk({[i.dataset.ck]:i.checked}))redraw()});
+  document.querySelectorAll("[data-rj]").forEach(b=>b.onclick=async()=>{const r=b.dataset.rj;if(await setChk({reason:a.chk?.reason===r?"":r,j1:a.chk?.reason!==r}))redraw()});
+  if($("#tplCopy"))$("#tplCopy").onclick=async()=>{const t=$("#tplText");try{await navigator.clipboard.writeText(t.value)}catch(e){t.select();document.execCommand("copy")}$("#tplCopy").textContent="Хуулсан"};
   $("#aSave").onclick=async()=>{if(await save({hrNote:$("#aNote").value}))$("#aMsg").textContent="Хадгалагдлаа."};
   $("#aDel").onclick=()=>{$("#aDelRow").innerHTML=`<span style="font-size:14px">${esc(a.name)}-ийн анкетыг устгах уу?</span><button type="button" class="danger" id="aYes">Тийм, устгах</button><button type="button" id="aNo">Болих</button>`;
     $("#aNo").onclick=()=>renderAll();

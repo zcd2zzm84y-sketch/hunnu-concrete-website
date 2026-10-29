@@ -61,6 +61,15 @@ export default async (req: Request) => {
       }
       next.iAns = out
     }
+    if (p.chk && typeof p.chk === "object") {
+      const out: Record<string, boolean | string> = {}
+      for (const [k, v] of Object.entries(p.chk).slice(0, 40) as [string, any][]) {
+        if (!/^[a-z0-9_]{1,20}$/.test(k)) continue
+        if (k === "reason") { const t = clip(v, 120).trim(); if (t) out.reason = t }
+        else if (v === true) out[k] = true
+      }
+      next.chk = out
+    }
     if ("hrNote" in p) next.hrNote = clip(p.hrNote, 3000)
     await store.setJSON(id, next)
     return json({ ok: true, row: next })

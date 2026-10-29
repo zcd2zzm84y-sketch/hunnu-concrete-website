@@ -478,3 +478,11 @@ footer .hr-link:hover{color:var(--fg)}
 .iq-r button.good.on{background:var(--good-soft);color:var(--good);border-color:var(--good)}
 .iq-r button.warn.on{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
 .iq-r button.bad.on{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+.iq-head{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.ck-list{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}
+.ck-list label{display:flex;gap:10px;align-items:flex-start;cursor:pointer}
+.ck-list input{margin-top:4px;width:18px;height:18px;flex:none}
+.ck-list small{display:block;font-size:13px;color:var(--muted);margin-top:2px}
+.tpl{margin-top:14px;display:flex;flex-direction:column;gap:6px}
+.tpl textarea{min-height:96px;background:var(--surface);font-size:14px}
+.tpl button{padding:6px 12px;font-size:13px}
