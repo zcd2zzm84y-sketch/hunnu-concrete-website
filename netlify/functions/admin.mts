@@ -1,5 +1,5 @@
 import type { Config } from "@netlify/functions"
-import { staffStore, pulseStore, applicantStore, summarizePulse, json, clip, STATUS } from "../lib/store.mts"
+import { staffStore, pulseStore, applicantStore, settingsStore, getOpenings, isPosition, summarizePulse, json, clip, STATUS } from "../lib/store.mts"
 import { KMAP } from "../lib/bank.mjs"
 import { COMP } from "../../public/assets/data.mjs"
 
@@ -23,16 +23,21 @@ const scores = (src: any) => {
 export default async (req: Request) => {
   if (!authorized(req)) return json({ error: "Нууц үг буруу байна." }, 401)
   if (req.method === "GET") {
-    const [rows, pulse, apps] = await Promise.all([readAll(staffStore()), readAll(pulseStore()), readAll(applicantStore())])
+    const [rows, pulse, apps, openings] = await Promise.all([readAll(staffStore()), readAll(pulseStore()), readAll(applicantStore()), getOpenings()])
     const newest = (a: any, b: any) => b.submittedAt - a.submittedAt
     rows.sort(newest); apps.sort(newest)
     // Answer key only for the questions that were actually asked, so HR can review mistakes
     const ids = new Set([...rows, ...apps].flatMap((r: any) => r.questions || []))
     const bank = Object.fromEntries([...ids].filter(id => KMAP[id]).map(id => [id, KMAP[id]]))
-    return json({ staff: rows, pulse: summarizePulse(pulse), applicants: apps, bank })
+    return json({ staff: rows, pulse: summarizePulse(pulse), applicants: apps, bank, openings })
   }
   let body: any
   try { body = await req.json() } catch { return json({ error: "Хүсэлт буруу байна." }, 400) }
+  if (body?.action === "openings") {
+    const list = [...new Set((Array.isArray(body.openings) ? body.openings : []).map(String).filter(isPosition))]
+    await settingsStore().setJSON("openings", list)
+    return json({ ok: true, openings: list })
+  }
   const store = body?.kind === "app" ? applicantStore() : staffStore()
   const id = clip(body?.id, 80)
   const cur: any = await store.get(id, { type: "json" })

@@ -3,7 +3,7 @@ import {$,esc,avg,fmtDate,mmss,lvl,initials,setBand,gauge,radarMulti} from "./ui
 
 const KEY="hunnu-admin-key";
 let key=(()=>{try{return sessionStorage.getItem(KEY)||""}catch(e){return""}})();
-let staff=[],pulse=null,apps=[],bank={},selS=null,selA=null,appFilter="",deptFilter="",msg="",view=["staff","pulse","app"].includes(location.hash.slice(1))?location.hash.slice(1):"staff";
+let staff=[],pulse=null,apps=[],bank={},openings=[],editOpen=false,selS=null,selA=null,appFilter="",deptFilter="",msg="",view=["staff","pulse","app"].includes(location.hash.slice(1))?location.hash.slice(1):"staff";
 
 async function api(method,body){
   const res=await fetch("/api/admin",{method,headers:{"x-admin-key":key,"content-type":"application/json"},body:body?JSON.stringify(body):undefined});
@@ -13,11 +13,11 @@ async function api(method,body){
   return j;
 }
 async function load(){
-  try{const j=await api("GET");staff=j.staff;pulse=j.pulse;apps=j.applicants||[];bank=j.bank||{};msg="";if(!selS&&staff.length)selS=staff[0].id;if(!selA&&apps.length)selA=apps[0].id;render()}
+  try{const j=await api("GET");staff=j.staff;pulse=j.pulse;apps=j.applicants||[];bank=j.bank||{};openings=j.openings||[];msg="";if(!selS&&staff.length)selS=staff[0].id;if(!selA&&apps.length)selA=apps[0].id;render()}
   catch(e){if(e.auth)return login(e.message);msg="Ачаалж чадсангүй: "+e.message;render()}
 }
 // Forget the password in this tab and drop loaded data from memory
-function logout(){key="";try{sessionStorage.removeItem(KEY)}catch(e){}staff=[];pulse=null;apps=[];bank={};selS=selA=null;view="staff";login()}
+function logout(){key="";try{sessionStorage.removeItem(KEY)}catch(e){}staff=[];pulse=null;apps=[];bank={};openings=[];editOpen=false;selS=selA=null;view="staff";login()}
 function login(err){
   setBand("HR","самбар.","Хүннү Конкрет ХХК-ийн ажилтны үнэлгээний нэгдсэн үр дүн.");
   $("#view").innerHTML=`<div class="gate">
@@ -150,8 +150,7 @@ function renderApps(){
       <div><b>${cnt("interview")}</b><strong>Ярилцлагад</strong><span>уригдсан</span></div>
       <div><b>${cnt("hire")}</b><strong>Ажилд авах</strong><span>шийдвэрлэсэн</span></div>
     </div>
-    <div class="sheet stack"><div class="tag"><b>01</b>Анкетын холбоос</div>
-      <p style="margin:0">Горилогчдод <b>hunnu-talent.netlify.app/apply</b> холбоосыг илгээнэ үү. Утаснаас ч, компьютерээс ч бөглөнө.</p></div>
+    ${openingsCard()}
     ${msg?`<div class="err">${esc(msg)}</div>`:""}
     <div class="hr">
       <aside class="stack" style="gap:12px">
@@ -165,8 +164,29 @@ function renderApps(){
       <div id="detail">${cur?appPassport(cur):`<div class="sheet empty">Анкетыг харах горилогчоо сонгоно уу.</div>`}</div>
     </div></div>`;
   $("#af").onchange=e=>{appFilter=e.target.value;renderAll()};
+  bindOpenings();
   document.querySelectorAll("[data-aid]").forEach(b=>b.onclick=()=>{selA=b.dataset.aid;renderAll();if(window.innerWidth<920)$("#detail").scrollIntoView({behavior:"smooth"})});
   if(cur)bindApp(cur);
+}
+// HR ticks which positions take applications; /apply lists only these
+function openingsCard(){
+  const open=new Set(openings);
+  if(!editOpen)return `<div class="sheet stack"><div class="row spread"><div class="tag"><b>01</b>Нээлттэй ажлын байр (${openings.length})</div><button type="button" id="opEdit">Засах</button></div>
+    ${openings.length?`<div class="chips">${openings.map(k=>`<span class="chip on">${esc(k.split("|")[1])}</span>`).join("")}</div>`:`<p style="margin:0">Одоогоор нээлттэй ажлын байр алга. Анкетын хуудас «нээлттэй ажлын байр алга» гэж харуулна. «Засах» дарж ажилд авах албан тушаалаа чагтална уу.</p>`}
+    <p class="muted" style="margin:0;font-size:14px">Анкетын холбоос: <b style="color:var(--fg)">hunnu-talent.netlify.app/apply</b></p></div>`;
+  return `<div class="sheet stack"><div class="tag"><b>01</b>Ажилд авах албан тушаалаа чагтална уу</div>
+    <div class="opgrid">${Object.entries(DEPTS).map(([d,ps])=>`<fieldset class="opdept"><legend>${esc(d)}</legend>${ps.map(p=>{const k=d+"|"+p[0];return `<label class="opchk"><input type="checkbox" value="${esc(k)}" ${open.has(k)?"checked":""}><span>${esc(p[0])}</span></label>`}).join("")}</fieldset>`).join("")}</div>
+    <div class="row"><button type="button" class="primary" id="opSave">Хадгалах</button><button type="button" id="opCancel">Болих</button><span id="opMsg" class="muted" aria-live="polite"></span></div></div>`;
+}
+function bindOpenings(){
+  const redraw=()=>{const y=window.scrollY;renderAll();window.scrollTo(0,y)};
+  if($("#opEdit"))$("#opEdit").onclick=()=>{editOpen=true;redraw()};
+  if($("#opCancel"))$("#opCancel").onclick=()=>{editOpen=false;redraw()};
+  if($("#opSave"))$("#opSave").onclick=async()=>{
+    const list=[...document.querySelectorAll(".opchk input:checked")].map(x=>x.value);
+    $("#opSave").disabled=true;
+    try{const j=await api("POST",{action:"openings",openings:list});openings=j.openings;editOpen=false;redraw()}
+    catch(e){if(e.auth)return login(e.message);$("#opMsg").textContent="Хадгалж чадсангүй: "+e.message;$("#opSave").disabled=false}};
 }
 function appPassport(a){
   const k=kPct(a),ad=advice(k),bp=a.byPart||{},pp=x=>x&&x.t?Math.round(x.c/x.t*100):0;

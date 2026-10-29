@@ -26,9 +26,17 @@ function render(){
   return done();
 }
 
+// Positions HR has opened ("dept|position"); null while loading
+let OPEN=null,openErr="";
+async function loadOpenings(){
+  try{const r=await fetch("/api/openings");const j=await r.json();if(!r.ok)throw new Error(j.error||("HTTP "+r.status));OPEN=j.openings||[]}
+  catch(e){OPEN=[];openErr="Нээлттэй ажлын байрны жагсаалтыг ачаалж чадсангүй. Интернэт холболтоо шалгаад хуудсаа шинэчилнэ үү."}
+}
 function form(){
   setBand("Хүннү Конкретод","ажилд орох.","Анкетаа бөглөөд, сонгосон албан тушаалынхаа мэдлэгийн богино шалгалтыг өгнө үү. Нийт 30–40 минут.");
-  const f=A.f,dept=f.dept||"Үйлдвэр, үйл ажиллагааны алба",pos=f.position||"Миксер жолооч";
+  if(!OPEN.length){$("#view").innerHTML=`<div class="sheet stack"><h2 style="margin:0">${openErr?"Түр алдаа гарлаа":"Одоогоор нээлттэй ажлын байр алга байна"}</h2><p style="margin:0">${openErr||"Шинэ ажлын байр нээгдэхэд энэ хуудсаар дамжуулан бүртгүүлэх боломжтой. Лавлах: 7575 4040 · info@hunnu.asia"}</p></div>`;return}
+  const openSet=new Set(OPEN),wanted=(A.f.dept||"")+"|"+(A.f.position||"");
+  const [dept,pos]=(openSet.has(wanted)?wanted:OPEN[0]).split("|");const f=A.f;
   const opt=(list,v)=>list.map(x=>`<option ${x===v?"selected":""}>${esc(x)}</option>`).join("");
   $("#view").innerHTML=`<div class="stack" style="gap:24px">
     ${stepper("form")}
@@ -40,7 +48,7 @@ function form(){
     </div>
     <form class="stack" id="fApp" novalidate style="gap:18px">
       <div class="sheet stack"><div class="tag"><b>A</b>Сонирхож буй ажлын байр</div>
-        <label class="f">Албан тушаал<select id="aPos">${Object.entries(DEPTS).map(([d,ps])=>`<optgroup label="${esc(d)}">${ps.map(p=>`<option value="${esc(d+"|"+p[0])}" ${d===dept&&p[0]===pos?"selected":""}>${esc(p[0])}</option>`).join("")}</optgroup>`).join("")}</select></label>
+        <label class="f">Албан тушаал<select id="aPos">${Object.entries(DEPTS).map(([d,ps])=>[d,ps.filter(p=>openSet.has(d+"|"+p[0]))]).filter(([,ps])=>ps.length).map(([d,ps])=>`<optgroup label="${esc(d)}">${ps.map(p=>`<option value="${esc(d+"|"+p[0])}" ${d===dept&&p[0]===pos?"selected":""}>${esc(p[0])}</option>`).join("")}</optgroup>`).join("")}</select></label>
       </div>
       <div class="sheet stack"><div class="tag"><b>B</b>Хувийн мэдээлэл</div>
         <div class="grid2">
@@ -156,4 +164,4 @@ function done(){
   $("#view").innerHTML=`<div class="sheet stack"><p>Таны анкет болон шалгалтын хариулт Хүний нөөцийн албанд хүрлээ. Шалгаруулалтын дүнг таны үлдээсэн утсаар мэдэгдэнэ.</p>
     <p class="muted" style="margin:0">Лавлах: 7575 4040 · info@hunnu.asia</p></div>`;
 }
-render();
+loadOpenings().then(render);

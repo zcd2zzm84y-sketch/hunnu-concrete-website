@@ -7,6 +7,19 @@ export const staffStore = () => getStore({ name: "staff", consistency: "strong" 
 export const pulseStore = () => getStore({ name: "pulse", consistency: "strong" })
 // Job applicants: application form + test, read only through the HR dashboard
 export const applicantStore = () => getStore({ name: "applicants", consistency: "strong" })
+// HR settings, e.g. which positions are open for applications
+export const settingsStore = () => getStore({ name: "settings", consistency: "strong" })
+const posKey = (dept: string, position: string) => `${dept}|${position}`
+// Open positions as "dept|position"; nothing is open until HR ticks positions in the dashboard
+export async function getOpenings(): Promise<string[]> {
+  const v: any = await settingsStore().get("openings", { type: "json" })
+  return Array.isArray(v) ? v.filter(isPosition) : []
+}
+export function isPosition(k: unknown) {
+  const [dept, position] = String(k).split("|")
+  return !!DEPTS[dept as keyof typeof DEPTS]?.some((p: any) => p[0] === position)
+}
+export const isOpen = async (dept: string, position: string) => (await getOpenings()).includes(posKey(dept, position))
 
 export const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" } })
