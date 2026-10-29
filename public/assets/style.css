@@ -444,3 +444,12 @@ footer .inner{border-top-color:var(--line)}
 .kv dt{font-size:13px;color:var(--muted)}
 .kv dd{margin:2px 0 0;font-weight:600;overflow-wrap:anywhere}
 button.chip{font:inherit;font-size:14px;cursor:pointer}
+/* brand colours (Tigo, 2026.10.29): #333333 charcoal band, RAL 7043 #4E5452 accent, yellow mark — flat, no invented gradients */
+:root{--brand-dark:#333333;--ral7043:#4e5452}
+.band{background:var(--brand-dark);color:#fff}
+.band .inner{padding-block:30px 26px}
+.band h1{color:#fff}
+.band h1 span{color:#c8cbca}
+.band p{color:#d4d6d5}
+.gate-side{background:var(--brand-dark)}
+:root:not([data-theme="dark"]){--accent:var(--ral7043);--sel:var(--ral7043)}
