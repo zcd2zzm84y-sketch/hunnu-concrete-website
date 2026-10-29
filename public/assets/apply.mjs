@@ -7,6 +7,7 @@ const EDU=["Бүрэн дунд","Мэргэжлийн (ТМС, коллеж)","
 const EXP=["Туршлагагүй","1 жил хүртэл","1–3 жил","3–5 жил","5-аас дээш жил"];
 const LIC=["A","B","C","D","E","M"];
 const TOTAL=APP_N_COMMON+APP_N_JOB;
+const fmtNum=v=>{const d=String(v??"").replace(/\D/g,"");return d?Number(d).toLocaleString("en-US"):String(v??"")};
 const fresh=()=>({stage:"form",f:{consent:false,license:[]},order:[],qs:{},shuffles:{},answers:{},idx:0,self:{},startedAt:0,endedAt:0,timedOut:false,away:0,err:"",confirm:false});
 let A=fresh();
 const save=()=>{try{localStorage.setItem(LS,JSON.stringify(A))}catch(e){}};
@@ -76,7 +77,7 @@ function form(){
       <div class="sheet stack"><div class="tag"><b>D</b>Нэмэлт</div>
         <div class="grid2">
           <label class="f">Хэзээнээс ажиллах боломжтой<input type="date" id="aStart" value="${esc(f.startDate)}"></label>
-          <label class="f">Цалингийн хүлээлт (₮, сараар)<input type="text" id="aSalary" value="${esc(f.salary)}" inputmode="numeric"></label>
+          <label class="f">Цалингийн хүлээлт (₮, сараар)<input type="text" id="aSalary" value="${esc(fmtNum(f.salary))}" inputmode="numeric" placeholder="Жишээ: 2,500,000"></label>
         </div>
         <label class="f">Яагаад Хүннү Конкретод ажиллахыг хүсэж байна вэ?<textarea id="aWhy" style="min-height:80px">${esc(f.why)}</textarea></label>
       </div>
@@ -86,6 +87,8 @@ function form(){
       <div class="row"><button class="yellow" type="submit">Шалгалт эхлүүлэх →</button></div>
     </form></div>`;
   document.querySelectorAll(".chip input").forEach(cb=>cb.onchange=()=>{A.f=read();save();keep(form)});
+  // Thousands separators while typing: 2500000 → 2,500,000
+  $("#aSalary").oninput=e=>{const el=e.target,d=el.value.replace(/\D/g,"").slice(0,12);el.value=d?Number(d).toLocaleString("en-US"):""};
   $("#aDistrict").onchange=()=>{A.f={...read(),khoroo:""};save();keep(form)};
   $("#fApp").addEventListener("input",()=>{A.f=read();save()});
   $("#fApp").addEventListener("submit",start);
