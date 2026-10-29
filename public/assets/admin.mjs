@@ -1,5 +1,5 @@
 import {DEPTS,FAMILY,COMP,ANCHOR,PULSE,MIN_GROUP,PROX,proximity} from "./data.mjs";
-import {interviewGuide,stageGuide,REJECT} from "./interview.mjs";
+import {interviewGuide,stageGuide,REJECT,assess} from "./interview.mjs";
 import {$,esc,avg,fmtDate,mmss,lvl,initials,setBand,gauge,radarMulti} from "./ui.mjs";
 
 const KEY="hunnu-admin-key";
@@ -207,6 +207,7 @@ function appPassport(a){
     <dl class="pp-facts">${fact("Утас",a.phone)}${fact("Төрсөн он",a.birthYear)}${fact("Боловсрол",a.edu)}${fact("Туршлага",a.exp)}</dl>
     ${flags?`<div class="flags">${flags}</div>`:""}
     <section class="pp-sec"><div class="tag"><b>A</b>Шийдвэр</div>
+      ${recBlock(a)}
       <div class="chips" role="radiogroup" aria-label="Шийдвэр">${Object.entries(STATUS).map(([v,[t]])=>`<button type="button" class="chip ${a.status===v?"on":""}" data-st="${v}">${t}</button>`).join("")}</div>
       ${a.status==="interview"?iqBlock(a,wrong):stageBlock(a)}
       <label class="f">Тэмдэглэл (ярилцлагын дүгнэлт, санал болгосон цалин гэх мэт)<textarea id="aNote" style="min-height:70px">${esc(a.hrNote||"")}</textarea></label>
@@ -235,6 +236,11 @@ function iqBlock(a,wrong){
     <div class="iq-sum"><span class="pill good">Сайн ${n(3)}</span><span class="pill warn">Дунд ${n(2)}</span><span class="pill bad">Сул ${n(1)}</span><span>${verdict}</span></div>
     <ol class="iq-list">${g.map(q=>{const x=ans[q.id]||{};return `<li><div class="iq-q"><small>${esc(q.src)}</small>${esc(q.q)}</div><div class="iq-good">Сайн хариулт: ${esc(q.good)}</div>
       <div class="iq-row"><span class="iq-r">${IQR.map(([v,t,c])=>`<button type="button" class="${c} ${x.r===v?"on":""}" data-iq="${q.id}" data-r="${v}">${t}</button>`).join("")}</span><input type="text" data-iqt="${q.id}" maxlength="500" placeholder="Хариултын товч тэмдэглэл" value="${esc(x.t||"")}"></div></li>`}).join("")}</ol></details>`;
+}
+function recBlock(a){
+  const r=assess(a),li=(xs,c)=>xs.map(x=>`<li class="${c}">${esc(x)}</li>`).join("");
+  return `<div class="rec rec-${r.cls}"><div class="rec-head"><span>Зөвлөмж</span><b>${esc(r.verdict)}</b><span class="rec-sc">${r.score}/100</span></div>
+    <ul>${li(r.pros,"pro")}${li(r.cons,"con")}</ul><small class="muted">Шалгалт, анкет, байршлаас автоматаар тооцсон санал. Эцсийн шийдвэрийг ярилцлагын дараа гаргана.</small></div>`;
 }
 function stageBlock(a){
   const g=stageGuide(a),c=a.chk||{},done=g.items.filter(([k])=>c[k]).length;

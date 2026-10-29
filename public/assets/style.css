@@ -486,3 +486,14 @@ footer .hr-link:hover{color:var(--fg)}
 .tpl{margin-top:14px;display:flex;flex-direction:column;gap:6px}
 .tpl textarea{min-height:96px;background:var(--surface);font-size:14px}
 .tpl button{padding:6px 12px;font-size:13px}
+.rec{border:1px solid var(--line);border-left:4px solid var(--muted);border-radius:3px;padding:12px 14px;background:var(--surface)}
+.rec-good{border-left-color:var(--good)}.rec-warn{border-left-color:var(--warn)}.rec-bad{border-left-color:var(--bad)}
+.rec-head{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.rec-head span:first-child{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.rec-head b{font-size:18px}.rec-good .rec-head b{color:var(--good)}.rec-warn .rec-head b{color:var(--warn)}.rec-bad .rec-head b{color:var(--bad)}
+.rec-sc{margin-left:auto;font-family:var(--mono);font-size:13px;color:var(--muted)}
+.rec ul{margin:8px 0 6px;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px;font-size:14px}
+.rec li{padding-left:20px;position:relative}
+.rec li.pro::before{content:"+";position:absolute;left:4px;color:var(--good);font-weight:700}
+.rec li.con::before{content:"−";position:absolute;left:4px;color:var(--bad);font-weight:700}
+.rec small{font-size:12px}

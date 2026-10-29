@@ -69,3 +69,30 @@ export function stageGuide(a){
  };
  return S[a.status]||S.new;
 }
+
+// Rule-based recommendation from the applicant's test, form and self-assessment. Advisory only: HR decides.
+const EXPP={"Туршлагагүй":0,"1 жил хүртэл":4,"1–3 жил":8,"3–5 жил":10,"5-аас дээш жил":10};
+const EDUL={"Бүрэн дунд":1,"Мэргэжлийн (ТМС, коллеж)":2,"Бакалавр":3,"Магистр, доктор":4};
+const NEED_EDU={admin:3,hr:3,it:3,finance:3,sales:3,quality:2,office:2};
+export function assess(a){
+ const bp=a.byPart||{},pc=x=>x&&x.t?Math.round(x.c/x.t*100):null,job=pc(bp.job),com=pc(bp.common);
+ const tot=a.max?Math.round(a.score/a.max*100):0,pros=[],cons=[];let pts=0,veto="";
+ const j=job??tot;pts+=j*.4+(com??tot)*.15;
+ if(j>=75)pros.push(`Мэргэжлийн мэдлэг сайн (${j}%).`);else if(j<50)cons.push(`Мэргэжлийн мэдлэг сул (${j}%).`);else if(j<65)cons.push(`Мэргэжлийн мэдлэг дунд (${j}%). Ярилцлагаар шалгах.`);
+ if(com!=null&&com<50)cons.push(`Ерөнхий асуулт (компани, ХАБ) сул (${com}%).`);
+ if(j<35)veto="Мэргэжлийн шалгалтын дүн хэт бага.";
+ const ex=EXPP[a.exp];if(ex!=null){pts+=ex;if(ex>=8)pros.push(`Туршлагатай (${a.exp}).`);else if(ex===0)cons.push("Энэ чиглэлээр туршлагагүй. Сургах шаардлагатай.")}
+ const ed=EDUL[a.edu]||0,need=NEED_EDU[a.family]||1;if(ed>=need){pts+=8;if(ed>=2&&need>=2)pros.push(`Боловсрол шаардлага хангана (${a.edu}).`)}else if(ed){cons.push(`Боловсрол албан тушаалын шаардлагаас доогуур (${a.edu}).`)}
+ const px=proximity(a.district,a.area);pts+={top:15,near:12,mid:6,far:2}[px]||0;
+ if(px==="top"||px==="near")pros.push("Гэр нь Үйлдвэр 2.0-д ойр.");else if(px==="far")cons.push(`Гэр нь хол (${a.district||"тодорхойгүй"}). Тээврийн асуудлыг ярилцлагаар тодруулах.`);
+ if(a.family==="driver"){const L=a.license||[];if(L.some(x=>["C","D","E"].includes(x)))pros.push("Хүнд машины үнэмлэхтэй ("+L.join(", ")+").");else veto="Миксер жолоодох C/D ангиллын үнэмлэхгүй."}
+ if((a.why||"").trim().length>=30){pts+=4;pros.push("Яагаад манайд ажиллах шалтгаанаа тодорхой бичсэн.")}else cons.push("Ажиллах сонирхлоо бараг бичээгүй.");
+ const sv=Object.values(a.self||{}).filter(Number),sa=sv.length?sv.reduce((x,y)=>x+y,0)/sv.length:0;
+ if(sa>=4.5&&j<55)cons.push("Өөрийгөө өндөр үнэлсэн ч шалгалтын дүн сул. Хэт өөртөө итгэлтэй байж болзошгүй.");
+ if((a.durationSec||0)<300&&!a.timedOut){pts-=10;cons.push("Шалгалтыг 5 минутаас богино хугацаанд өгсөн.")}
+ if(a.away>=2){pts-=8;cons.push(`Шалгалтын үеэр өөр цонх руу ${a.away} удаа шилжсэн.`)}
+ const sc=Math.max(0,Math.min(100,Math.round(pts/(55+10+8+15+4)*100)));
+ const v=veto?["Татгалзах","bad"]:sc>=68?["Ажилд авах боломжтой","good"]:sc>=45?["Ярилцлагаар тодруулах","warn"]:["Татгалзах","bad"];
+ if(veto)cons.unshift(veto);
+ return {score:sc,verdict:v[0],cls:v[1],pros:pros.slice(0,4),cons:cons.slice(0,4)};
+}
