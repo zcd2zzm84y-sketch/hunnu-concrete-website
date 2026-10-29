@@ -47,13 +47,32 @@ function login(err){
   if(matchMedia("(hover:hover)").matches)$("#pw").focus();
 }
 function tabs(cur){
-  return `<div class="row spread"><nav class="tabs" aria-label="Үр дүнгийн хэсэг">${[["staff","Ажилтны паспорт"],["pulse","Сэтгэл ханамж"],["app","Горилогчид"+(apps.some(a=>a.status==="new")?" ("+apps.filter(a=>a.status==="new").length+")":"")]].map(([v,t])=>`<button type="button" data-view="${v}" ${v===cur?'aria-current="page"':""}>${t}</button>`).join("")}</nav><div class="row"><button type="button" id="reload">Шинэчлэх</button><button type="button" id="logout">Гарах</button></div></div>`;
+  return `<div class="row spread"><nav class="tabs" aria-label="Үр дүнгийн хэсэг">${[["staff","Ажилтны паспорт"],["pulse","Сэтгэл ханамж"],["app","Горилогчид"+(apps.some(a=>a.status==="new")?" ("+apps.filter(a=>a.status==="new").length+")":"")]].map(([v,t])=>`<button type="button" data-view="${v}" ${v===cur?'aria-current="page"':""}>${t}</button>`).join("")}</nav><div class="row">${cur!=="pulse"?`<button type="button" id="xls">Excel татах</button>`:""}<button type="button" id="reload">Шинэчлэх</button><button type="button" id="logout">Гарах</button></div></div>`;
 }
 function render(){
   if(view==="pulse")renderPulse();else if(view==="app")renderApps();else renderStaffHr();
   document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>{view=b.dataset.view;history.replaceState(null,"","#"+view);render()});
   const r=$("#reload");if(r)r.onclick=()=>{r.disabled=true;load()};
   const o=$("#logout");if(o)o.onclick=logout;
+  const x=$("#xls");if(x)x.onclick=()=>view==="app"?exportApps():exportStaff();
+  const pr=$("#print");if(pr)pr.onclick=()=>{document.querySelectorAll("#detail details").forEach(d=>d.open=true);window.print()};
+}
+// CSV with a UTF-8 BOM so Excel shows Cyrillic correctly
+function download(name,rows){
+  const cell=v=>{const t=v==null?"":String(v);return /[",\n\r]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t};
+  const blob=new Blob(["\ufeff"+rows.map(r=>r.map(cell).join(",")).join("\r\n")],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name+"-"+new Date().toISOString().slice(0,10)+".csv";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+const pctOf=x=>x&&x.t?Math.round(x.c/x.t*100):"";
+const PXT={top:"Маш ойр",near:"Ойр",mid:"Дунд",far:"Хол"};
+function exportApps(){
+  const head=["Илгээсэн","Нэр","Утас","И-мэйл","Алба","Албан тушаал","Төрсөн он","Боловсрол","Мэргэжил","Туршлага","Сүүлийн ажил","Дүүрэг","Хороо","Байршил","Үйлдвэр 2.0-д","Шалгалт %","Ерөнхий %","Мэргэжлийн %","Шалгалтын хугацаа","Зөвлөмж","Зөвлөмжийн оноо","Төлөв","Ярилцлага: сайн/дунд/сул","Цалингийн хүлээлт","Ажиллах огноо","Жолооны ангилал","HR тэмдэглэл"];
+  download("gorilogchid",[head,...apps.map(a=>{const r=assess(a),ia=Object.values(a.iAns||{}),n=k=>ia.filter(x=>x.r===k).length;return [fmtDate(a.submittedAt),a.name,a.phone,a.email,a.dept,a.position,a.birthYear,a.edu,a.major,a.exp,a.lastJob,a.district,a.khoroo,a.area,PXT[proximity(a.district,a.area)]||"",kPct(a),pctOf(a.byPart?.common),pctOf(a.byPart?.job),mmss(a.durationSec||0),r.verdict,r.score,(STATUS[a.status]||STATUS.new)[0],n(3)+"/"+n(2)+"/"+n(1),a.salary,a.startDate,(a.license||[]).join(" "),a.hrNote]})]);
+}
+function exportStaff(){
+  const head=["Илгээсэн","Нэр","Алба","Албан тушаал","Ажилласан","Мэдлэг %","Өөрийн үнэлгээ (дундаж)","Удирдлагын үнэлгээ (дундаж)",...COMP.flatMap(c=>[c.t+" (өөрөө)",c.t+" (удирдлага)"]),"Сургалтын хэрэгцээ","Хөгжлийн төлөвлөгөө"];
+  const r1=v=>v?Math.round(v*10)/10:"";
+  download("ajiltnii-unelgee",[head,...staff.map(s=>[fmtDate(s.submittedAt),s.name,s.dept,s.position,s.tenure,kPct(s),r1(avg(COMP.map(c=>s.self?.[c.id]).filter(Boolean))),r1(mgrAvg(s)),...COMP.flatMap(c=>[s.self?.[c.id]||"",s.mgr?.[c.id]||""]),[...(s.train||[]),s.trainOther].filter(Boolean).join("; "),s.plan])]);
 }
 const renderAll=render;
 
@@ -102,7 +121,7 @@ function staffPassport(s){
   const qids=s.questions||[];const wrong=qids.map(id=>bank[id]).filter(q=>q&&s.answers?.[q.id]!==q.a);
   const devNeeds=COMP.filter(c=>(s.mgr?.[c.id]||s.self?.[c.id]||5)<=2).map(c=>c.t);
   return `<article class="passport">
-    <header class="pp-head"><div class="pp-id"><span class="avatar">${esc(initials(s.name))}</span><div style="min-width:0"><div class="pp-kicker">Ажилтны паспорт · ${"HS-"+String(s.id).slice(-8).toUpperCase()}</div><h2>${esc(s.name)}</h2><div class="pp-meta">${esc(s.position)} · ${esc(s.dept)}</div></div></div>
+    <header class="pp-head"><button type="button" id="print" class="pp-print">Хэвлэх</button><div class="pp-id"><span class="avatar">${esc(initials(s.name))}</span><div style="min-width:0"><div class="pp-kicker">Ажилтны паспорт · ${"HS-"+String(s.id).slice(-8).toUpperCase()}</div><h2>${esc(s.name)}</h2><div class="pp-meta">${esc(s.position)} · ${esc(s.dept)}</div></div></div>
       <div class="pp-total"><div class="big">${k}%</div><span class="pill ${lvl(k).k}">Мэдлэг: ${lvl(k).t}</span></div></header>
     <dl class="pp-facts"><div><dt>Ажилласан</dt><dd>${esc(s.tenure)}</dd></div><div><dt>Ажлын бүлэг</dt><dd>${esc(FAMILY[s.family]||"—")}</dd></div><div><dt>Огноо</dt><dd>${fmtDate(s.submittedAt)}</dd></div><div><dt>Зарцуулсан</dt><dd>${mmss(s.durationSec||0)}</dd></div></dl>
     ${(s.durationSec||0)<240?`<div class="flags"><div class="flag bad">Хэт богино хугацаанд (${mmss(s.durationSec||0)}) бөглөсөн. Хариулт бодит бус байж болзошгүй.</div></div>`:""}
@@ -202,7 +221,7 @@ function appPassport(a){
     a.timedOut?`<div class="flag warn">Шалгалтын хугацаа дуусч автоматаар хаагдсан.</div>`:"",
     a.away>=2?`<div class="flag warn">Шалгалтын үеэр өөр цонх руу ${a.away} удаа шилжсэн. Хариултыг хайж олсон байж болзошгүй.</div>`:""].join("");
   return `<article class="passport">
-    <header class="pp-head"><div class="pp-id"><span class="avatar">${esc(initials(a.name))}</span><div style="min-width:0"><div class="pp-kicker">Ажлын анкет · ${"AP-"+String(a.id).slice(-8).toUpperCase()}</div><h2>${esc(a.name)}</h2><div class="pp-meta">${esc(a.position)} · ${esc(a.dept)}</div></div></div>
+    <header class="pp-head"><button type="button" id="print" class="pp-print">Хэвлэх</button><div class="pp-id"><span class="avatar">${esc(initials(a.name))}</span><div style="min-width:0"><div class="pp-kicker">Ажлын анкет · ${"AP-"+String(a.id).slice(-8).toUpperCase()}</div><h2>${esc(a.name)}</h2><div class="pp-meta">${esc(a.position)} · ${esc(a.dept)}</div></div></div>
       <div class="pp-total"><div class="big">${k}%</div><span class="pill ${ad.k}">${ad.t}</span></div></header>
     <dl class="pp-facts">${fact("Утас",a.phone)}${fact("Төрсөн он",a.birthYear)}${fact("Боловсрол",a.edu)}${fact("Туршлага",a.exp)}</dl>
     ${flags?`<div class="flags">${flags}</div>`:""}

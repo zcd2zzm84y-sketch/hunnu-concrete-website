@@ -497,3 +497,18 @@ footer .hr-link:hover{color:var(--fg)}
 .rec li.pro::before{content:"+";position:absolute;left:4px;color:var(--good);font-weight:700}
 .rec li.con::before{content:"−";position:absolute;left:4px;color:var(--bad);font-weight:700}
 .rec small{font-size:12px}
+/* print: only the open passport */
+.pp-head{position:relative}
+.pp-print{position:absolute;top:0;right:0;padding:6px 12px;font-size:13px}
+.pp-head .pp-total{margin-top:34px}
+@media print{
+  :root{--bg:#fff;--surface:#fff;--sunk:#fff}
+  body{background:#fff}
+  .topbar,.band,footer,nav.tabs,#reload,#logout,#xls,.stats,.hr>aside,.pp-print,#aDelRow,#aSave,#aMsg,.iq-r button:not(.on),.tpl,[data-st]:not(.on),.err{display:none!important}
+  #view>.stack>*:not(.hr){display:none!important}
+  .hr{display:block!important}
+  #detail{width:100%}
+  .passport{box-shadow:none;border:0}
+  .pp-sec,.iq li,.rec{break-inside:avoid}
+  textarea,input[type=text]{border:1px solid #bbb;background:#fff}
+}
