@@ -6,7 +6,7 @@ let key=(()=>{try{return sessionStorage.getItem(KEY)||""}catch(e){return""}})();
 let staff=[],pulse=null,apps=[],bank={},openings=[],editOpen=false,selS=null,selA=null,appFilter="",deptFilter="",msg="",view=["staff","pulse","app"].includes(location.hash.slice(1))?location.hash.slice(1):"staff";
 
 async function api(method,body){
-  const res=await fetch("/api/admin",{method,headers:{"x-admin-key":key,"content-type":"application/json"},body:body?JSON.stringify(body):undefined});
+  const res=await fetch("api/admin",{method,headers:{"x-admin-key":key,"content-type":"application/json"},body:body?JSON.stringify(body):undefined});
   const j=await res.json().catch(()=>({}));
   if(res.status===401){key="";try{sessionStorage.removeItem(KEY)}catch(e){}throw Object.assign(new Error(j.error||"Нууц үг буруу"),{auth:true})}
   if(!res.ok)throw new Error(j.error||("HTTP "+res.status));
@@ -177,7 +177,7 @@ function openingsCard(){
   const open=new Set(openings);
   if(!editOpen)return `<div class="sheet stack"><div class="row spread"><div class="tag"><b>01</b>Нээлттэй ажлын байр (${openings.length})</div><button type="button" id="opEdit">Засах</button></div>
     ${openings.length?`<div class="chips">${openings.map(k=>`<span class="chip on">${esc(k.split("|")[1])}</span>`).join("")}</div>`:`<p style="margin:0">Одоогоор нээлттэй ажлын байр алга. Анкетын хуудас «нээлттэй ажлын байр алга» гэж харуулна. «Засах» дарж ажилд авах албан тушаалаа чагтална уу.</p>`}
-    <p class="muted" style="margin:0;font-size:14px">Анкетын холбоос: <b style="color:var(--fg)">hunnu-talent.netlify.app/apply</b></p></div>`;
+    <p class="muted" style="margin:0;font-size:14px">Анкетын холбоос: <b style="color:var(--fg)">${esc(location.host+location.pathname.replace(/admin\.html$/,"")+"apply")}</b></p></div>`;
   return `<div class="sheet stack"><div class="tag"><b>01</b>Ажилд авах албан тушаалаа чагтална уу</div>
     <div class="opgrid">${Object.entries(DEPTS).map(([d,ps])=>`<fieldset class="opdept"><legend>${esc(d)}</legend>${ps.map(p=>{const k=d+"|"+p[0];return `<label class="opchk"><input type="checkbox" value="${esc(k)}" ${open.has(k)?"checked":""}><span>${esc(p[0])}</span></label>`}).join("")}</fieldset>`).join("")}</div>
     <div class="row"><button type="button" class="primary" id="opSave">Хадгалах</button><button type="button" id="opCancel">Болих</button><span id="opMsg" class="muted" aria-live="polite"></span></div></div>`;

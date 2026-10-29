@@ -15,7 +15,7 @@ function roleBox(){const e=T.emp,dept=DEPTS[e.dept]?e.dept:"";
     <div class="grid2"><label class="f">Алба, хэлтэс<select id="rDept"><option value="">— Сонгох —</option>${Object.keys(DEPTS).map(d=>`<option ${d===dept?"selected":""}>${d}</option>`).join("")}</select></label>
     <label class="f">Албан тушаал<select id="rPos"><option value="">— Сонгох —</option>${(DEPTS[dept]||[]).map(p=>`<option ${e.position===p[0]?"selected":""}>${p[0]}</option>`).join("")}</select></label></div></div>`}
 async function drawStaff(dept,pos){
-  const res=await fetch("/api/quiz",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({mode:"staff",dept,position:pos})});
+  const res=await fetch("api/quiz",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({mode:"staff",dept,position:pos})});
   const j=await res.json().catch(()=>({}));
   if(!res.ok)throw new Error(j.error||("HTTP "+res.status));
   return j;
@@ -161,7 +161,7 @@ async function sendStaff(){
     durationSec:Math.round((Date.now()-T.startedAt)/1000),questions:T.order,answers:T.answers,self:T.self,train:T.train,trainOther:T.trainOther,mgr:{},hrNote:"",plan:""};
   const pulseDoc={dept:T.emp.dept,tenure:T.emp.tenure,month:now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0"),items:T.pulse,enps:T.enps,leave:T.leave,like:T.like,change:T.change};
   try{
-    const res=await fetch("/api/submit",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({staff:{...staffDoc,common:T.common},pulse:pulseDoc})});
+    const res=await fetch("api/submit",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({staff:{...staffDoc,common:T.common},pulse:pulseDoc})});
     if(!res.ok){const j=await res.json().catch(()=>({}));
       if(j.code==="role"){T.needRole=true;T.emp={...T.emp,position:""};T.confirm=false;T.err=j.error;saveStaff();sendingStaff=false;keep(staffPulse);$("#roleBox")?.scrollIntoView({block:"center"});return}
       T.err="Илгээж чадсангүй: "+(j.error||("HTTP "+res.status));sendingStaff=false;return keep(staffPulse)}

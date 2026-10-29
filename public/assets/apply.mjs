@@ -29,7 +29,7 @@ function render(){
 // Positions HR has opened ("dept|position"); null while loading
 let OPEN=null,openErr="";
 async function loadOpenings(){
-  try{const r=await fetch("/api/openings");const j=await r.json();if(!r.ok)throw new Error(j.error||("HTTP "+r.status));OPEN=j.openings||[]}
+  try{const r=await fetch("api/openings");const j=await r.json();if(!r.ok)throw new Error(j.error||("HTTP "+r.status));OPEN=j.openings||[]}
   catch(e){OPEN=[];openErr="Нээлттэй ажлын байрны жагсаалтыг ачаалж чадсангүй. Интернэт холболтоо шалгаад хуудсаа шинэчилнэ үү."}
 }
 function form(){
@@ -101,7 +101,7 @@ async function start(ev){
   if(miss){A.err=miss;return keep(form)}
   const btn=ev.target.querySelector("[type=submit]");btn.disabled=true;btn.textContent="Ачаалж байна…";
   try{
-    const res=await fetch("/api/quiz",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({mode:"apply",dept:f.dept,position:f.position})});
+    const res=await fetch("api/quiz",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({mode:"apply",dept:f.dept,position:f.position})});
     const j=await res.json().catch(()=>({}));if(!res.ok)throw new Error(j.error||("HTTP "+res.status));
     A={...A,err:"",stage:"test",order:j.order,common:j.common,qs:j.qs,shuffles:Object.fromEntries(j.order.map(id=>[id,shuffle(j.qs[id].o.map((_,i)=>i))])),answers:{},idx:0,startedAt:Date.now(),timedOut:false,away:0};
   }catch(e){A.err="Шалгалт ачаалж чадсангүй: "+e.message+" Интернэт холболтоо шалгана уу.";return keep(form)}
@@ -159,7 +159,7 @@ async function send(){
   if(sending)return;sending=true;$("#send").disabled=true;
   const applicant={...A.f,questions:A.order,answers:A.answers,self:A.self,startedAt:A.startedAt,durationSec:Math.round(((A.endedAt||Date.now())-A.startedAt)/1000),timedOut:A.timedOut,away:A.away};
   try{
-    const res=await fetch("/api/apply",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({applicant})});
+    const res=await fetch("api/apply",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({applicant})});
     if(!res.ok){const j=await res.json().catch(()=>({}));throw new Error(j.error||("HTTP "+res.status))}
   }catch(e){A.err="Илгээж чадсангүй: "+e.message+" Интернэт холболтоо шалгаад дахин оролдоно уу.";sending=false;return keep(skill)}
   clear();const name=A.f.name;A={...fresh(),stage:"done",f:{name}};sending=false;render();window.scrollTo(0,0);
