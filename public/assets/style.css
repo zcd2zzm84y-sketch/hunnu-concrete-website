@@ -463,3 +463,18 @@ footer .hr-link:hover{color:var(--fg)}
 .opdept legend{font-weight:700;font-size:14px;padding:0 6px}
 .opchk{display:flex;gap:10px;align-items:center;padding:7px 0;font-size:15px;cursor:pointer}
 .opchk input{width:20px;height:20px;flex:none;accent-color:var(--accent)}
+
+/* interview guide in the applicant decision section */
+.iq{border:1px solid var(--line);border-radius:3px;background:var(--sunk);padding:12px 14px}
+.iq summary{font-weight:700;cursor:pointer}
+.iq-sum{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0 4px;font-size:14px}
+.iq-list{margin:8px 0 0;padding-left:22px;display:flex;flex-direction:column;gap:14px}
+.iq-q small{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.iq-good{font-size:13px;color:var(--muted);margin-top:3px}
+.iq-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;align-items:center}
+.iq-row input{flex:1 1 200px;padding:7px 9px;background:var(--surface)}
+.iq-r{display:flex;gap:4px}
+.iq-r button{padding:6px 10px;font-size:13px;font-weight:600}
+.iq-r button.good.on{background:var(--good-soft);color:var(--good);border-color:var(--good)}
+.iq-r button.warn.on{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
+.iq-r button.bad.on{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}

@@ -1,4 +1,5 @@
 import {DEPTS,FAMILY,COMP,ANCHOR,PULSE,MIN_GROUP,PROX,proximity} from "./data.mjs";
+import {interviewGuide} from "./interview.mjs";
 import {$,esc,avg,fmtDate,mmss,lvl,initials,setBand,gauge,radarMulti} from "./ui.mjs";
 
 const KEY="hunnu-admin-key";
@@ -207,6 +208,7 @@ function appPassport(a){
     ${flags?`<div class="flags">${flags}</div>`:""}
     <section class="pp-sec"><div class="tag"><b>A</b>Шийдвэр</div>
       <div class="chips" role="radiogroup" aria-label="Шийдвэр">${Object.entries(STATUS).map(([v,[t]])=>`<button type="button" class="chip ${a.status===v?"on":""}" data-st="${v}">${t}</button>`).join("")}</div>
+      ${iqBlock(a,wrong)}
       <label class="f">Тэмдэглэл (ярилцлагын дүгнэлт, санал болгосон цалин гэх мэт)<textarea id="aNote" style="min-height:70px">${esc(a.hrNote||"")}</textarea></label>
       <div class="row"><button type="button" class="primary" id="aSave">Хадгалах</button><span id="aMsg" class="muted" style="font-size:15px" aria-live="polite"></span></div></section>
     <section class="pp-sec"><div class="tag"><b>B</b>Мэдлэгийн шалгалт</div>
@@ -224,11 +226,24 @@ function appPassport(a){
     <div class="row pp-sec" id="aDelRow" style="flex-direction:row"><button type="button" class="danger" id="aDel">Устгах</button></div>
   </article>`;
 }
+// Interview questions with a good-answer hint, a 3-step rating and a short note per question
+const IQR=[[3,"Сайн","good"],[2,"Дунд","warn"],[1,"Сул","bad"]];
+function iqBlock(a,wrong){
+  const g=interviewGuide(a,wrong),ans=a.iAns||{},n=k=>g.filter(q=>ans[q.id]?.r===k).length,done=n(3)+n(2)+n(1);
+  const verdict=!done?"Ярилцлагын явцад асуулт бүрийг үнэлбэл энд дүгнэлт гарна.":n(1)>=3||n(1)>n(3)?"Сул хариулт олон байна. Татгалзах эсвэл нөөцөд үлдээхийг бодоорой.":n(3)>=done*.6?"Ихэнх хариулт сайн байна. Ажилд авах санал гаргаж болно.":"Холимог дүн. Сул хариултыг нь дахин тодруулаарай.";
+  return `<details class="iq" ${a.status==="interview"?"open":""}><summary>Ярилцлагын асуулт (${g.length}) · үнэлсэн ${done}</summary>
+    <div class="iq-sum"><span class="pill good">Сайн ${n(3)}</span><span class="pill warn">Дунд ${n(2)}</span><span class="pill bad">Сул ${n(1)}</span><span>${verdict}</span></div>
+    <ol class="iq-list">${g.map(q=>{const x=ans[q.id]||{};return `<li><div class="iq-q"><small>${esc(q.src)}</small>${esc(q.q)}</div><div class="iq-good">Сайн хариулт: ${esc(q.good)}</div>
+      <div class="iq-row"><span class="iq-r">${IQR.map(([v,t,c])=>`<button type="button" class="${c} ${x.r===v?"on":""}" data-iq="${q.id}" data-r="${v}">${t}</button>`).join("")}</span><input type="text" data-iqt="${q.id}" maxlength="500" placeholder="Хариултын товч тэмдэглэл" value="${esc(x.t||"")}"></div></li>`}).join("")}</ol></details>`;
+}
 function bindApp(a){
   const save=async patch=>{try{const j=await api("POST",{kind:"app",action:"update",id:a.id,patch});Object.assign(a,j.row);return true}catch(e){if(e.auth)return login(e.message);$("#aMsg").textContent="Хадгалж чадсангүй: "+e.message;return false}};
   const redraw=()=>{const y=window.scrollY;renderAll();window.scrollTo(0,y)};
   document.querySelectorAll("[data-st]").forEach(b=>b.onclick=async()=>{if(await save({status:b.dataset.st}))redraw()});
   document.querySelectorAll("[data-ic]").forEach(b=>b.onclick=async()=>{if(await save({interview:{...(a.interview||{}),[b.dataset.ic]:+b.dataset.n}}))redraw()});
+  const setIq=(id,v)=>save({iAns:{...(a.iAns||{}),[id]:{...(a.iAns?.[id]||{}),...v}}});
+  document.querySelectorAll("[data-iq]").forEach(b=>b.onclick=async()=>{const id=b.dataset.iq,r=+b.dataset.r;if(await setIq(id,{r:a.iAns?.[id]?.r===r?0:r}))redraw()});
+  document.querySelectorAll("[data-iqt]").forEach(i=>i.onchange=()=>setIq(i.dataset.iqt,{t:i.value}));
   $("#aSave").onclick=async()=>{if(await save({hrNote:$("#aNote").value}))$("#aMsg").textContent="Хадгалагдлаа."};
   $("#aDel").onclick=()=>{$("#aDelRow").innerHTML=`<span style="font-size:14px">${esc(a.name)}-ийн анкетыг устгах уу?</span><button type="button" class="danger" id="aYes">Тийм, устгах</button><button type="button" id="aNo">Болих</button>`;
     $("#aNo").onclick=()=>renderAll();

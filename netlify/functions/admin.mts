@@ -50,6 +50,17 @@ export default async (req: Request) => {
     if (p.interview) next.interview = scores(p.interview)
     if (STATUS.includes(p.status)) next.status = p.status
     if ("plan" in p) next.plan = clip(p.plan, 3000)
+    if (p.iAns && typeof p.iAns === "object") {
+      const out: Record<string, { r?: number, t?: string }> = {}
+      for (const [k, v] of Object.entries(p.iAns).slice(0, 60) as [string, any][]) {
+        if (!/^q[0-9a-z]{1,8}$/.test(k)) continue
+        const r = Number(v?.r), t = clip(v?.t, 500).trim(), o: { r?: number, t?: string } = {}
+        if ([1, 2, 3].includes(r)) o.r = r
+        if (t) o.t = t
+        if (o.r || o.t) out[k] = o
+      }
+      next.iAns = out
+    }
     if ("hrNote" in p) next.hrNote = clip(p.hrNote, 3000)
     await store.setJSON(id, next)
     return json({ ok: true, row: next })
