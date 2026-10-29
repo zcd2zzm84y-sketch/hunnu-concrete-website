@@ -35,7 +35,7 @@ export function interviewGuide(a,wrong){
 }
 
 // Guidance for the other decision stages: a checklist (each item with a hint) and a message template to copy
-const HR_CONTACT="Асуух зүйл байвал Хүний нөөцийн албаны дарга Б.Мөнхмандах, утас 8806-6831 руу холбогдоно уу.";
+const HR_CONTACT="Асуух зүйл байвал Хүний нөөцийн албаны дарга Б.Мөнхмандах, утас 8806-6831, эсвэл компанийн утас 7575-4040 руу холбогдоно уу.";
 const first=n=>String(n||"").trim().split(/\s+/).pop()||"";
 export const REJECT=["Шалгалтын дүн хангалтгүй","Ярилцлагад тэнцээгүй","Туршлага шаардлага хангаагүй","Цалингийн хүлээлт зөрсөн","Гэр хол, тээврийн асуудал","Горилогч өөрөө татгалзсан","Холбогдох боломжгүй"];
 export function stageGuide(a){
