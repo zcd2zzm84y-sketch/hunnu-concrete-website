@@ -133,6 +133,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .flag{font-size:13px;padding:8px 12px;border-left:3px solid}
 .flag.bad{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
 .flag.warn{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
+.flag.good{background:var(--good-soft);border-color:var(--good);color:var(--good)}
 .pp-sec{padding:18px 22px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:12px}
 .flags+.pp-sec,.pp-facts+.pp-sec{border-top:0}
 .gauges{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}

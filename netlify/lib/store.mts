@@ -128,7 +128,7 @@ export function cleanApplicant(s: any) {
   }
   return {
     name, phone, email: clip(s?.email, 120).trim(), birthYear: int(s?.birthYear, 1950, 2010),
-    district: clip(s?.district, 80), dept, position, family: fam,
+    district: clip(s?.district, 80), khoroo: int(s?.khoroo, 1, 45), area: clip(s?.area, 120), dept, position, family: fam,
     edu: EDU.includes(s?.edu) ? s.edu : "", major: clip(s?.major, 120), exp: EXP.includes(s?.exp) ? s.exp : "",
     lastJob: clip(s?.lastJob, 200), license: (Array.isArray(s?.license) ? s.license : []).filter((x: string) => LIC.includes(x)),
     startDate: clip(s?.startDate, 10), salary: clip(s?.salary, 40), why: clip(s?.why, 1500),

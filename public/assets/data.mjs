@@ -59,3 +59,15 @@ export function migrateRole(dept,pos){
   const d=DEPTS[dept]?dept:OLD_DEPT[dept]||"";
   return{dept:d,pos:"",ok:false};
 }
+
+// Home location vs. Үйлдвэр 2.0 (Хан-Уул, 47.830031, 106.766055; Яармаг/Нисэх орчим). Living close is a hiring plus.
+export const DISTRICTS=["Хан-Уул","Сонгинохайрхан","Баянгол","Баянзүрх","Чингэлтэй","Сүхбаатар","Налайх","Багануур","Багахангай","Хөдөө орон нутаг"];
+const NEAR_AREAS=/яармаг|нисэх|буянт|туул|зайсан|улаан\s*гүүр|дулааны|наадамчид|апу|хан[\s-]*уул/i;
+const MID_DIST=["Сонгинохайрхан","Баянгол"];
+export const PROX={top:["Гэр маш ойр","good"],near:["Гэр ойр","good"],mid:["Дунд зай","warn"],far:["Гэр хол","idle"]};
+export function proximity(district,area){const d=district||"",a=area||"";
+  if(!d&&!a)return"";
+  if(/яармаг|нисэх|буянт/i.test(a+" "+d))return"top";
+  if(/хан[\s-]*уул/i.test(d)||NEAR_AREAS.test(a))return"near";
+  if(MID_DIST.some(m=>d.includes(m)))return"mid";
+  return"far";}

@@ -1,4 +1,4 @@
-import {DEPTS,FAMILY,COMP,ANCHOR,APP_N_COMMON,APP_N_JOB,APP_MINUTES,posInfo} from "./data.mjs";
+import {DEPTS,FAMILY,COMP,ANCHOR,APP_N_COMMON,APP_N_JOB,APP_MINUTES,posInfo,DISTRICTS} from "./data.mjs";
 import {$,esc,shuffle,setBand,mmss} from "./ui.mjs";
 
 // Job application: form → timed knowledge test → self-rated skills → sent to HR
@@ -56,8 +56,13 @@ function form(){
           <label class="f">Утас *<input type="tel" id="aPhone" value="${esc(f.phone)}" autocomplete="tel" inputmode="tel"></label>
           <label class="f">И-мэйл<input type="email" id="aEmail" value="${esc(f.email)}" autocomplete="email"></label>
           <label class="f">Төрсөн он<input type="number" id="aBirth" value="${esc(f.birthYear)}" min="1950" max="2010" inputmode="numeric"></label>
-          <label class="f">Оршин суугаа дүүрэг, сум<input type="text" id="aDistrict" value="${esc(f.district)}"></label>
         </div>
+        <div class="grid2">
+          <label class="f">Гэрийн хаяг: дүүрэг *<select id="aDistrict"><option value="">— Сонгох —</option>${opt(DISTRICTS,f.district)}</select></label>
+          <label class="f">Хороо<input type="number" id="aKhoroo" value="${esc(f.khoroo)}" min="1" max="45" inputmode="numeric"></label>
+        </div>
+        <label class="f">Байршил, ойролцоох газар<input type="text" id="aArea" value="${esc(f.area)}" placeholder="Жишээ: Яармаг, 5-р гудамж"></label>
+        <div class="muted" style="font-size:13px">Манай Үйлдвэр 2.0 Хан-Уул дүүрэгт, Яармаг, Нисэхийн орчимд байрладаг.</div>
       </div>
       <div class="sheet stack"><div class="tag"><b>C</b>Боловсрол, туршлага</div>
         <div class="grid2">
@@ -86,13 +91,13 @@ function form(){
 }
 function read(){
   const [dept,position]=$("#aPos").value.split("|");
-  return{dept,position,name:$("#aName").value.trim(),phone:$("#aPhone").value.trim(),email:$("#aEmail").value.trim(),birthYear:$("#aBirth").value,district:$("#aDistrict").value.trim(),
+  return{dept,position,name:$("#aName").value.trim(),phone:$("#aPhone").value.trim(),email:$("#aEmail").value.trim(),birthYear:$("#aBirth").value,district:$("#aDistrict").value,khoroo:$("#aKhoroo").value,area:$("#aArea").value.trim(),
     edu:$("#aEdu").value,major:$("#aMajor").value.trim(),exp:$("#aExp").value,lastJob:$("#aLast").value.trim(),license:[...document.querySelectorAll(".chip input:checked")].map(x=>x.value),
     startDate:$("#aStart").value,salary:$("#aSalary").value.trim(),why:$("#aWhy").value,consent:$("#aConsent").checked};
 }
 async function start(ev){
   ev.preventDefault();const f=read();A.f=f;
-  const miss=f.name.length<3?"Овог нэрээ бүтэн бичнэ үү.":f.phone.replace(/\D/g,"").length<8?"Утасны дугаараа зөв бичнэ үү.":!f.consent?"Мэдээлэл ашиглах зөвшөөрлийг тэмдэглэнэ үү.":"";
+  const miss=f.name.length<3?"Овог нэрээ бүтэн бичнэ үү.":f.phone.replace(/\D/g,"").length<8?"Утасны дугаараа зөв бичнэ үү.":!f.district?"Гэрийн хаягийн дүүргээ сонгоно уу.":!f.consent?"Мэдээлэл ашиглах зөвшөөрлийг тэмдэглэнэ үү.":"";
   if(miss){A.err=miss;return keep(form)}
   const btn=ev.target.querySelector("[type=submit]");btn.disabled=true;btn.textContent="Ачаалж байна…";
   try{

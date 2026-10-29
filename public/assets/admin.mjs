@@ -1,4 +1,4 @@
-import {DEPTS,FAMILY,COMP,ANCHOR,PULSE,MIN_GROUP} from "./data.mjs";
+import {DEPTS,FAMILY,COMP,ANCHOR,PULSE,MIN_GROUP,PROX,proximity} from "./data.mjs";
 import {$,esc,avg,fmtDate,mmss,lvl,initials,setBand,gauge,radarMulti} from "./ui.mjs";
 
 const KEY="hunnu-admin-key";
@@ -137,9 +137,11 @@ const STATUS={new:["Шинэ","idle"],interview:["Ярилцлагад урих"
 // Suggested next step from the test score; HR makes the decision
 const advice=k=>k>=70?{t:"Ярилцлагад урих",k:"good"}:k>=50?{t:"Ярилцлагаар тодруулах",k:"warn"}:{t:"Тэнцээгүй",k:"bad"};
 const ansWrong=a=>(a.questions||[]).map(id=>bank[id]).filter(q=>q&&a.answers?.[q.id]!==q.a);
+let proxFilter=false;
+const proxPill=a=>{const p=PROX[proximity(a.district,a.area)];return p?` <span class="pill ${p[1]}">${p[0]}</span>`:""};
 function renderApps(){
   setBand("Ажил","горилогчид.","Ажлын анкет, мэдлэгийн шалгалтын дүн. Шалгалт сайн өгсөн хүнийг ярилцлагад урьж, шийдвэрээ энд тэмдэглэнэ.");
-  const list=apps.filter(a=>!appFilter||a.status===appFilter);
+  const list=apps.filter(a=>(!appFilter||a.status===appFilter)&&(!proxFilter||["top","near"].includes(proximity(a.district,a.area))));
   const cur=apps.find(a=>a.id===selA);
   const cnt=k=>apps.filter(a=>a.status===k).length;
   $("#view").innerHTML=`<div class="stack" style="gap:24px">
@@ -156,14 +158,16 @@ function renderApps(){
       <aside class="stack" style="gap:12px">
         <div class="tag"><b>02</b>Горилогчид</div>
         <label class="f">Төлөвөөр шүүх<select id="af"><option value="">Бүгд</option>${Object.entries(STATUS).map(([k,v])=>`<option value="${k}" ${k===appFilter?"selected":""}>${v[0]} (${cnt(k)})</option>`).join("")}</select></label>
+        <label class="consent"><input type="checkbox" id="pxf" ${proxFilter?"checked":""}><span>Зөвхөн Үйлдвэр 2.0-д гэр ойр</span></label>
         <div class="plist">${list.length?list.map(a=>{const k=kPct(a),st=STATUS[a.status]||STATUS.new;return `<button type="button" class="pcard ${a.id===selA?"on":""}" data-aid="${esc(a.id)}">
-          <span class="pc-main"><b>${esc(a.name)}</b><small>${esc(a.position)}</small><small class="lvl">${fmtDate(a.submittedAt)}</small></span>
+          <span class="pc-main"><b>${esc(a.name)}</b><small>${esc(a.position)}</small><small class="lvl">${fmtDate(a.submittedAt)}${proxPill(a)}</small></span>
           <span class="pc-score"><b>${k}%</b></span><span class="pc-pill"><span class="pill ${st[1]}">${st[0]}</span></span>
           <span class="pc-bar"><i style="width:${k}%"></i></span></button>`}).join(""):`<div class="sheet empty">${apps.length?"Энэ төлөвт горилогч алга.":"Одоогоор анкет ирээгүй байна."}</div>`}</div>
       </aside>
       <div id="detail">${cur?appPassport(cur):`<div class="sheet empty">Анкетыг харах горилогчоо сонгоно уу.</div>`}</div>
     </div></div>`;
   $("#af").onchange=e=>{appFilter=e.target.value;renderAll()};
+  $("#pxf").onchange=e=>{proxFilter=e.target.checked;renderAll()};
   bindOpenings();
   document.querySelectorAll("[data-aid]").forEach(b=>b.onclick=()=>{selA=b.dataset.aid;renderAll();if(window.innerWidth<920)$("#detail").scrollIntoView({behavior:"smooth"})});
   if(cur)bindApp(cur);
@@ -192,7 +196,8 @@ function appPassport(a){
   const k=kPct(a),ad=advice(k),bp=a.byPart||{},pp=x=>x&&x.t?Math.round(x.c/x.t*100):0;
   const sv=COMP.map(c=>(a.self?.[c.id]||0)/5),iv=COMP.map(c=>(a.interview?.[c.id]||0)/5);
   const wrong=ansWrong(a),fact=(t,v)=>`<div><dt>${t}</dt><dd>${v?esc(v):"—"}</dd></div>`;
-  const flags=[(a.durationSec||0)<300&&!a.timedOut?`<div class="flag bad">Шалгалтыг хэт богино хугацаанд (${mmss(a.durationSec||0)}) өгсөн. Таамаглан хариулсан байж болзошгүй.</div>`:"",
+  const px=proximity(a.district,a.area);
+  const flags=[px==="top"||px==="near"?`<div class="flag good">Гэр нь Үйлдвэр 2.0-д ойр (${esc(a.district||a.area)}). Ажилд авахад давуу тал.</div>`:"",(a.durationSec||0)<300&&!a.timedOut?`<div class="flag bad">Шалгалтыг хэт богино хугацаанд (${mmss(a.durationSec||0)}) өгсөн. Таамаглан хариулсан байж болзошгүй.</div>`:"",
     a.timedOut?`<div class="flag warn">Шалгалтын хугацаа дуусч автоматаар хаагдсан.</div>`:"",
     a.away>=2?`<div class="flag warn">Шалгалтын үеэр өөр цонх руу ${a.away} удаа шилжсэн. Хариултыг хайж олсон байж болзошгүй.</div>`:""].join("");
   return `<article class="passport">
@@ -213,7 +218,7 @@ function appPassport(a){
       <div class="mgr-list">${COMP.map(c=>`<div class="mg"><div><b>${c.t}</b><small>Өөрөө: ${a.self?.[c.id]||"—"} · ${ANCHOR[a.self?.[c.id]||0]||""}</small></div><div class="score5">${[1,2,3,4,5].map(n=>`<button type="button" data-ic="${c.id}" data-n="${n}" class="${a.interview?.[c.id]===n?"on":""}" title="${ANCHOR[n]}">${n}</button>`).join("")}</div></div>`).join("")}</div></div>
       <p class="muted" style="font-size:14px;margin:0">Ярилцлагын дараа ур чадвар бүрийг 1–5-аар үнэлнэ.</p></section>
     <section class="pp-sec"><div class="tag"><b>D</b>Анкет</div>
-      <dl class="kv">${[["И-мэйл",a.email],["Хаяг",a.district],["Мэргэжил",a.major],["Сүүлийн ажил",a.lastJob],["Жолооны ангилал",(a.license||[]).join(", ")],["Ажиллах боломжтой",a.startDate],["Цалингийн хүлээлт",a.salary],["Ажлын бүлэг",FAMILY[a.family]],["Илгээсэн",fmtDate(a.submittedAt)]].map(([t,v])=>`<div><dt>${t}</dt><dd>${v?esc(v):"—"}</dd></div>`).join("")}</dl>
+      <dl class="kv">${[["И-мэйл",a.email],["Гэрийн хаяг",[a.district,a.khoroo?a.khoroo+"-р хороо":"",a.area].filter(Boolean).join(", ")],["Мэргэжил",a.major],["Сүүлийн ажил",a.lastJob],["Жолооны ангилал",(a.license||[]).join(", ")],["Ажиллах боломжтой",a.startDate],["Цалингийн хүлээлт",a.salary],["Ажлын бүлэг",FAMILY[a.family]],["Илгээсэн",fmtDate(a.submittedAt)]].map(([t,v])=>`<div><dt>${t}</dt><dd>${v?esc(v):"—"}</dd></div>`).join("")}</dl>
       ${a.why?`<blockquote class="cm like"><small>Яагаад Хүннү Конкрет</small>${esc(a.why)}</blockquote>`:""}</section>
     <details class="pp-sec"><summary>Буруу хариулсан асуултууд (${wrong.length})</summary><div class="ansl">${wrong.map(q=>{const x=a.answers?.[q.id];return `<div>${esc(q.q)}<small>Хариулт: ${x===undefined?"хариулаагүй":esc(q.o[x])}</small><small>Зөв: ${esc(q.o[q.a])}</small></div>`}).join("")||'<div class="ok">Бүгд зөв.</div>'}</div></details>
     <div class="row pp-sec" id="aDelRow" style="flex-direction:row"><button type="button" class="danger" id="aDel">Устгах</button></div>
