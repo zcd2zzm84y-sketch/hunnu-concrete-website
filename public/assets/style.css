@@ -455,3 +455,4 @@ button.chip{font:inherit;font-size:14px;cursor:pointer}
 :root:not([data-theme="dark"]){--accent:var(--ral7043);--sel:var(--ral7043)}
 footer .hr-link{white-space:nowrap;color:var(--muted);text-decoration:underline;text-underline-offset:3px}
 footer .hr-link:hover{color:var(--fg)}
+.logo-link{display:inline-flex;border-radius:6px}

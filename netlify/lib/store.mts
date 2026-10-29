@@ -1,6 +1,6 @@
 import { getStore } from "@netlify/blobs"
-import { PULSE, COMP, MIN_GROUP, LEAVE, DEPTS, APP_COMMON, APP_N_COMMON, APP_N_JOB, posInfo } from "../../public/assets/data.mjs"
-import { KMAP, jobPool } from "./bank.mjs"
+import { PULSE, COMP, MIN_GROUP, LEAVE, DEPTS, APP_N_COMMON, APP_N_JOB } from "../../public/assets/data.mjs"
+import { KMAP, jobPool, commonPool } from "./bank.mjs"
 
 export const staffStore = () => getStore({ name: "staff", consistency: "strong" })
 // Anonymous answers: random keys, month only, nothing that ties them to a person
@@ -100,7 +100,8 @@ export function cleanApplicant(s: any) {
   const { fam, pool } = jobPool(dept, position)
   const jobIds = new Set(pool.map((q: any) => q.id))
   const questions: string[] = [...new Set<string>((Array.isArray(s?.questions) ? s.questions : []).map(String))]
-  const common = questions.filter(id => APP_COMMON.includes(id)), job = questions.filter(id => jobIds.has(id))
+  const commonIds = new Set(commonPool("apply", fam))
+  const common = questions.filter(id => commonIds.has(id)), job = questions.filter(id => jobIds.has(id) && !commonIds.has(id))
   if (common.length !== APP_N_COMMON || job.length !== APP_N_JOB || questions.length !== APP_N_COMMON + APP_N_JOB) throw new Error("Шалгалтын асуулт буруу байна. Хуудсаа шинэчлээд дахин эхэлнэ үү.")
   const answers: Record<string, number> = {}
   const byPart = { common: { c: 0, t: common.length }, job: { c: 0, t: job.length } }

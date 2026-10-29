@@ -28,7 +28,7 @@ function render(){
 
 function form(){
   setBand("Хүннү Конкретод","ажилд орох.","Анкетаа бөглөөд, сонгосон албан тушаалынхаа мэдлэгийн богино шалгалтыг өгнө үү. Нийт 30–40 минут.");
-  const f=A.f,dept=f.dept||"Үйлдвэрийн алба",pos=f.position||"Миксер жолооч";
+  const f=A.f,dept=f.dept||"Үйлдвэр, үйл ажиллагааны алба",pos=f.position||"Миксер жолооч";
   const opt=(list,v)=>list.map(x=>`<option ${x===v?"selected":""}>${esc(x)}</option>`).join("");
   $("#view").innerHTML=`<div class="stack" style="gap:24px">
     ${stepper("form")}
