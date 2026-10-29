@@ -2,7 +2,7 @@ import type { Config, Context } from "@netlify/functions"
 import { applicantStore, cleanApplicant, isOpen, json } from "../lib/store.mts"
 import { assess } from "../../public/assets/interview.mjs"
 
-// Posts a short summary to the Netlify form "new-applicant"; its email notification alerts HR. Never blocks the submission.
+// Posts a short summary to the Netlify form "new-applicant" (its email notification alerts HR) and, if set, to Teams. Never fails the submission.
 async function notify(site: string, row: any) {
   const pct = row.max ? Math.round(row.score / row.max * 100) : 0, r = assess(row)
   const body = new URLSearchParams({
@@ -10,9 +10,22 @@ async function notify(site: string, row: any) {
     score: `${pct}%`, recommendation: `${r.verdict} (${r.score}/100)`, home: [row.district, row.khoroo ? row.khoroo + "-р хороо" : ""].filter(Boolean).join(", "),
     dashboard: "https://hunnu.asia/talent/admin#app",
   })
-  try {
-    await fetch(new URL("/", site), { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" }, body, signal: AbortSignal.timeout(4000) })
-  } catch { }
+  const jobs = [fetch(new URL("/", site), { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" }, body, signal: AbortSignal.timeout(4000) })]
+  // Optional Teams channel post through a Teams Workflows webhook
+  const hook = Netlify.env.get("TEAMS_WEBHOOK_URL")
+  if (hook) {
+    const fact = (title: string, value: string) => ({ title, value: value || "—" })
+    const card = {
+      type: "AdaptiveCard", $schema: "http://adaptivecards.io/schemas/adaptive-card.json", version: "1.4",
+      body: [
+        { type: "TextBlock", text: "Шинэ ажлын анкет ирлээ", weight: "Bolder", size: "Medium" },
+        { type: "FactSet", facts: [fact("Нэр", row.name), fact("Албан тушаал", `${row.position} (${row.dept})`), fact("Утас", row.phone), fact("Шалгалт", `${pct}%`), fact("Зөвлөмж", `${r.verdict} (${r.score}/100)`), fact("Гэр", body.get("home") || "")] },
+      ],
+      actions: [{ type: "Action.OpenUrl", title: "HR самбарт харах", url: "https://hunnu.asia/talent/admin#app" }],
+    }
+    jobs.push(fetch(hook, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ type: "message", attachments: [{ contentType: "application/vnd.microsoft.card.adaptive", content: card }] }), signal: AbortSignal.timeout(4000) }))
+  }
+  await Promise.allSettled(jobs)
 }
 
 export default async (req: Request, context: Context) => {

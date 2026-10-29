@@ -100,6 +100,7 @@ function renderStaffHr(keepEdits){
     ${msg?`<div class="err">${esc(msg)}</div>`:""}
     <div class="hr">
       <aside class="stack" style="gap:12px">
+        <button type="button" id="rpt" class="${selS==="report"?"primary":""}">${selS==="report"?"Тайланг хаах":"Албаны тайлан"}</button>
         <div class="tag"><b>02</b>Ажилтнууд</div>
         <label class="f">Албаар шүүх<select id="df"><option value="">Бүгд</option>${Object.keys(DEPTS).map(d=>`<option ${d===deptFilter?"selected":""}>${d}</option>`).join("")}</select></label>
         <div class="plist">${list.length?list.map(s=>{const k=kPct(s),L=lvl(k);return `<button type="button" class="pcard ${s.id===selS?"on":""}" data-id="${esc(s.id)}">
@@ -107,12 +108,32 @@ function renderStaffHr(keepEdits){
           <span class="pc-score"><b>${k}%</b></span><span class="pc-pill">${COMP.every(c=>s.mgr?.[c.id])?'<span class="pill good">Удирдлага үнэлсэн</span>':'<span class="pill idle">Удирдлагын үнэлгээ дутуу</span>'}</span>
           <span class="pc-bar"><i style="width:${k}%"></i></span></button>`}).join(""):`<div class="sheet empty">Одоогоор бөглөсөн ажилтан алга. Ажилчдад үнэлгээний холбоос эсвэл QR кодыг илгээнэ үү.</div>`}</div>
       </aside>
-      <div id="detail">${cur?staffPassport(cur):`<div class="sheet empty">Паспортыг харах ажилтнаа сонгоно уу.</div>`}</div>
+      <div id="detail">${selS==="report"?deptReport(list):cur?staffPassport(cur):`<div class="sheet empty">Паспортыг харах ажилтнаа сонгоно уу.</div>`}</div>
     </div></div>`;
+  $("#rpt").onclick=()=>{selS=selS==="report"?(staff[0]?.id||null):"report";renderAll()};
   $("#df").onchange=e=>{deptFilter=e.target.value;renderAll()};
   document.querySelectorAll("[data-dept]").forEach(b=>b.onclick=()=>{deptFilter=deptFilter===b.dataset.dept?"":b.dataset.dept;renderAll()});
   document.querySelectorAll(".pcard").forEach(b=>b.onclick=()=>{selS=b.dataset.id;renderAll();if(window.innerWidth<920)$("#detail").scrollIntoView({behavior:"smooth"})});
   if(cur)bindStaff(cur);
+}
+// Department summary: knowledge, self vs manager competency averages, weakest areas and training demand
+function deptReport(list){
+  const ds=Object.keys(DEPTS).map(d=>[d,list.filter(s=>s.dept===d)]).filter(([,g])=>g.length);
+  const r1=v=>v?v.toFixed(1):"—",bar=(v,max)=>`<span class="t"><i style="width:${max?v/max*100:0}%"></i></span>`;
+  const sec=([d,g])=>{
+    const k=Math.round(avg(g.map(kPct))),low=g.filter(s=>kPct(s)<50).length,mg=g.filter(s=>COMP.every(c=>s.mgr?.[c.id])).length;
+    const comp=COMP.map(c=>{const sv=g.map(s=>s.self?.[c.id]).filter(Boolean),mv=g.map(s=>s.mgr?.[c.id]).filter(Boolean);return{t:c.t,s:avg(sv),m:mv.length?avg(mv):null}});
+    const weak=[...comp].sort((a,b)=>(a.m??a.s)-(b.m??b.s)).slice(0,2);
+    const tc={};g.forEach(s=>(s.train||[]).forEach(t=>tc[t]=(tc[t]||0)+1));const tt=Object.entries(tc).sort((a,b)=>b[1]-a[1]).slice(0,4);
+    return `<section class="pp-sec rp"><h3>${esc(d)} <small class="muted">${g.length} хүн</small></h3>
+      <dl class="pp-facts">${[["Мэдлэгийн дундаж",k+"%"],["50%-иас доош",low+" хүн"],["Удирдлага үнэлсэн",mg+"/"+g.length],["Ур чадвар (өөрөө)",r1(avg(g.map(selfAvg)))]].map(([t,v])=>`<div><dt>${t}</dt><dd>${v}</dd></div>`).join("")}</dl>
+      <div class="deptbars">${comp.map(c=>`<div class="db"><span>${esc(c.t)}</span>${bar(c.m??c.s,5)}<span class="v">${r1(c.s)} / ${r1(c.m)}</span></div>`).join("")}</div>
+      <p class="muted" style="margin:0;font-size:13px">Тоо: өөрийн үнэлгээ / удирдлагын үнэлгээ (5-аас). Зурвас удирдлагын үнэлгээгээр, байхгүй бол өөрийн үнэлгээгээр.</p>
+      <p style="margin:0"><b>Сул тал:</b> ${weak.map(w=>esc(w.t)).join(", ")}</p>
+      <p style="margin:0"><b>Сургалтын хэрэгцээ:</b> ${tt.length?tt.map(([t,n])=>`${esc(t)} (${n})`).join(", "):"—"}</p>
+      ${low?`<p style="margin:0"><b>Анхаарах ажилтан (мэдлэг 50%-иас доош):</b> ${g.filter(s=>kPct(s)<50).map(s=>esc(s.name)+" "+kPct(s)+"%").join(", ")}</p>`:""}</section>`};
+  return `<article class="passport"><header class="pp-head"><button type="button" id="print" class="pp-print">Хэвлэх</button><div class="pp-id"><div><div class="pp-kicker">Албаны тайлан · ${fmtDate(Date.now())}</div><h2>Ажилтны үнэлгээний нэгдсэн тайлан</h2><div class="pp-meta">${list.length} ажилтан · ${ds.length} алба${deptFilter?" · "+esc(deptFilter):""}</div></div></div></header>
+    ${ds.length?ds.map(sec).join(""):`<div class="pp-sec muted">Одоогоор бөглөсөн ажилтан алга.</div>`}</article>`;
 }
 function staffPassport(s){
   const k=kPct(s);const sv=COMP.map(c=>(s.self?.[c.id]||0)/5),mv=COMP.map(c=>(s.mgr?.[c.id]||0)/5);

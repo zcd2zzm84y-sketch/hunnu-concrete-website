@@ -512,3 +512,5 @@ footer .hr-link:hover{color:var(--fg)}
   .pp-sec,.iq li,.rec{break-inside:avoid}
   textarea,input[type=text]{border:1px solid #bbb;background:#fff}
 }
+.rp h3{margin:0;font-size:20px}
+.rp{display:flex;flex-direction:column;gap:12px}
