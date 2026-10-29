@@ -5,7 +5,7 @@ export default async (req: Request) => {
   let body: any
   try { body = await req.json() } catch { return json({ error: "Хүсэлт буруу байна." }, 400) }
   let staff
-  try { staff = cleanStaff(body?.staff) } catch { return json({ error: "Алба, албан тушаал буруу байна." }, 400) }
+  try { staff = cleanStaff(body?.staff) } catch { return json({ error: "Алба, албан тушаалаа дээрээс дахин сонгоно уу.", code: "role" }, 400) }
   if (staff.name.length < 3) return json({ error: "Овог нэрээ бүтэн бичнэ үү." }, 400)
   const id = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`
   await staffStore().setJSON(id, { ...staff, id, submittedAt: Date.now() })

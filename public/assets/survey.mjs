@@ -1,4 +1,4 @@
-import {DEPTS,FAMILY,TENURE,N_COMMON,N_JOB,COMP,ANCHOR,TRAIN,PULSE,LIKERT,LEAVE,MIN_GROUP,posInfo} from "./data.mjs";
+import {DEPTS,FAMILY,TENURE,N_COMMON,N_JOB,COMP,ANCHOR,TRAIN,PULSE,LIKERT,LEAVE,MIN_GROUP,posInfo,migrateRole} from "./data.mjs";
 import {$,esc,shuffle,setBand} from "./ui.mjs";
 
 const LS2="hunnu-staff-draft-v2";
@@ -6,7 +6,14 @@ const freshStaff=()=>({stage:"info",emp:null,order:[],qs:{},shuffles:{},answers:
 let T=freshStaff();
 const saveStaff=()=>{try{localStorage.setItem(LS2,JSON.stringify(T))}catch(e){}};
 const clearStaff=()=>{try{localStorage.removeItem(LS2)}catch(e){}};
-function loadStaff(){try{const d=JSON.parse(localStorage.getItem(LS2)||"null");if(d&&d.stage&&d.stage!=="info"&&d.stage!=="done")T={...d,err:"",confirm:false}}catch(e){}}
+function loadStaff(){try{const d=JSON.parse(localStorage.getItem(LS2)||"null");if(d&&d.stage&&d.stage!=="info"&&d.stage!=="done"){T={...d,err:"",confirm:false};fixRole()}}catch(e){}}
+// Drafts started before the official titles came in may carry old names: map them, or ask once on the last page
+function fixRole(){if(!T.emp)return;const r=migrateRole(T.emp.dept,T.emp.position);T.emp={...T.emp,dept:r.dept||T.emp.dept,position:r.pos};
+  if(r.ok){T.emp.family=posInfo(r.dept,r.pos)[1];T.needRole=false}else T.needRole=true;saveStaff()}
+function roleBox(){const e=T.emp,dept=DEPTS[e.dept]?e.dept:"";
+  return `<div class="sheet stack" id="roleBox"><div><b>Алба, албан тушаалаа сонгоно уу.</b> Албан тушаалын нэрс шинэчлэгдсэн тул дахин сонгоход л хангалттай. Бусад хариулт хадгалагдсан.</div>
+    <div class="grid2"><label class="f">Алба, хэлтэс<select id="rDept"><option value="">— Сонгох —</option>${Object.keys(DEPTS).map(d=>`<option ${d===dept?"selected":""}>${d}</option>`).join("")}</select></label>
+    <label class="f">Албан тушаал<select id="rPos"><option value="">— Сонгох —</option>${(DEPTS[dept]||[]).map(p=>`<option ${e.position===p[0]?"selected":""}>${p[0]}</option>`).join("")}</select></label></div></div>`}
 async function drawStaff(dept,pos){
   const res=await fetch("/api/quiz",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({mode:"staff",dept,position:pos})});
   const j=await res.json().catch(()=>({}));
@@ -125,6 +132,7 @@ function staffPulse(){
       <label class="f">Ажлын байрандаа хамгийн их таалагддаг зүйл<textarea id="pLike" style="min-height:70px">${esc(T.like)}</textarea></label>
       <label class="f">Нэн тэргүүнд өөрчлөх ёстой нэг зүйл<textarea id="pChange" style="min-height:70px">${esc(T.change)}</textarea></label>
     </div>
+    ${T.needRole?roleBox():""}
     ${T.confirm?`<div class="confirm stack"><div><b>Илгээх үү?</b> Илгээсний дараа өөрчлөх боломжгүй.</div>${T.err?`<div class="err">${esc(T.err)}</div>`:""}<div class="row"><button type="button" class="primary" id="send">Илгээх</button><button type="button" id="noSend">Буцах</button></div></div>`:(T.err?`<div class="err">${esc(T.err)}</div>`:"")}
     <div class="row spread"><button type="button" id="back">← Ур чадвар</button><button type="button" class="yellow" id="fin">Дуусгах</button></div>
   </div>`;
@@ -134,7 +142,10 @@ function staffPulse(){
   $("#pLike").oninput=e=>{T.like=e.target.value;saveStaff()};
   $("#pChange").oninput=e=>{T.change=e.target.value;saveStaff()};
   $("#back").onclick=()=>{T.stage="skill";T.err="";T.confirm=false;saveStaff();renderStaff()};
+  if($("#rDept")){$("#rDept").onchange=e=>{T.emp={...T.emp,dept:e.target.value,position:""};saveStaff();keep(staffPulse)};
+    $("#rPos").onchange=e=>{T.emp={...T.emp,position:e.target.value};if(e.target.value){T.emp.family=posInfo(T.emp.dept,e.target.value)[1];T.err=""}saveStaff();keep(staffPulse)}}
   $("#fin").onclick=()=>{const miss=PULSE.filter(p=>!T.pulse[p.id]).length+(T.enps===null?1:0);
+    if(T.needRole&&!T.emp.position){T.err="Алба, албан тушаалаа сонгоно уу.";T.confirm=false;return keep(staffPulse)}
     if(miss){T.err=miss+" асуулт хариултгүй байна.";T.confirm=false;return keep(staffPulse)}T.err="";T.confirm=true;keep(staffPulse)};
   if($("#send"))$("#send").onclick=sendStaff;
   if($("#noSend"))$("#noSend").onclick=()=>{T.confirm=false;keep(staffPulse)};
@@ -151,8 +162,10 @@ async function sendStaff(){
   const pulseDoc={dept:T.emp.dept,tenure:T.emp.tenure,month:now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0"),items:T.pulse,enps:T.enps,leave:T.leave,like:T.like,change:T.change};
   try{
     const res=await fetch("/api/submit",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({staff:{...staffDoc,common:T.common},pulse:pulseDoc})});
-    if(!res.ok){const j=await res.json().catch(()=>({}));throw new Error(j.error||("HTTP "+res.status))}
-  }catch(e){T.err="Илгээж чадсангүй: "+e.message+" Интернэт холболтоо шалгаад дахин оролдоно уу.";sendingStaff=false;return keep(staffPulse)}
+    if(!res.ok){const j=await res.json().catch(()=>({}));
+      if(j.code==="role"){T.needRole=true;T.emp={...T.emp,position:""};T.confirm=false;T.err=j.error;saveStaff();sendingStaff=false;keep(staffPulse);$("#roleBox")?.scrollIntoView({block:"center"});return}
+      T.err="Илгээж чадсангүй: "+(j.error||("HTTP "+res.status));sendingStaff=false;return keep(staffPulse)}
+  }catch(e){T.err="Илгээж чадсангүй. Интернэт холболтоо шалгаад дахин оролдоно уу.";sendingStaff=false;return keep(staffPulse)}
   clearStaff();const name=T.emp.name;T={...freshStaff(),stage:"done",emp:{name}};sendingStaff=false;renderStaff();window.scrollTo(0,0);
 }
 function staffDone(){

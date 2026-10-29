@@ -45,3 +45,17 @@ export const LIKERT=["Огт санал нийлэхгүй","Санал нийл
 export const LEAVE=["Цалин, урамшуулал","Шууд удирдлага","Ажлын нөхцөл, аюулгүй байдал","Ажлын цаг, ээлж","Хөгжих боломж","Хамт олон","Гэр бүл, хувийн шалтгаан","Ажлаас гарах бодолгүй"];
 export const MIN_GROUP=3;
 export const posInfo=(dept,pos)=>(DEPTS[dept]||[]).find(p=>p[0]===pos)||[pos,"admin"];
+// Titles used before the switch to the official register (2026.10.29); drafts and links may still carry them
+const OLD_POS={"Гүйцэтгэх захирал":"Салбарын Гүйцэтгэх захирал","IT менежер":"Программ хангамжийн менежер","Backend архитектор":"Системийн архитектор","App хөгжүүлэгч":"Программист","IT инженер":"Программист",
+ "Маркетинг, борлуулалтын ахлах менежер":"Маркетинг борлуулалтын ахлах менежер","Маркетинг, борлуулалтын менежер":"Маркетинг борлуулалтын менежер","Борлуулалтын менежер — бетон":"Борлуулалтын менежер","Борлуулалтын менежер — бартер хөрөнгө":"Борлуулалтын менежер",
+ "Талбайн техникч":"Талбайн технологич","Жолооч — лаборатори, хангамж":"Жолооч (лабораторын)","Засварчин (гагнуур)":"Үйлдвэрийн засварчин"};
+const OLD_DEPT={"Удирдлага":"Захиргаа","Систем хөгжүүлэлтийн алба":"Программ хангамжийн алба","Санхүү, бүртгэлийн алба":"Санхүүгийн алба","Маркетинг, борлуулалтын алба":"Маркетинг борлуулалтын алба","Үйлдвэрийн алба":"Үйлдвэр, үйл ажиллагааны алба"};
+// Map a possibly outdated department/position to current ones; ok=false when the person has to choose
+export function migrateRole(dept,pos){
+  const p=OLD_POS[pos]||pos;
+  if((DEPTS[dept]||[]).some(x=>x[0]===p))return{dept,pos:p,ok:true};
+  const homes=Object.keys(DEPTS).filter(d=>DEPTS[d].some(x=>x[0]===p));
+  if(homes.length===1)return{dept:homes[0],pos:p,ok:true};
+  const d=DEPTS[dept]?dept:OLD_DEPT[dept]||"";
+  return{dept:d,pos:"",ok:false};
+}

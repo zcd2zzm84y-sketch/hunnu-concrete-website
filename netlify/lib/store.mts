@@ -1,5 +1,5 @@
 import { getStore } from "@netlify/blobs"
-import { PULSE, COMP, MIN_GROUP, LEAVE, DEPTS, APP_N_COMMON, APP_N_JOB } from "../../public/assets/data.mjs"
+import { PULSE, COMP, MIN_GROUP, LEAVE, DEPTS, APP_N_COMMON, APP_N_JOB, migrateRole } from "../../public/assets/data.mjs"
 import { KMAP, jobPool, commonPool } from "./bank.mjs"
 
 export const staffStore = () => getStore({ name: "staff", consistency: "strong" })
@@ -34,8 +34,10 @@ const cleanSelf = (src: any) => {
 }
 
 export function cleanStaff(s: any) {
-  const dept = clip(s?.dept, 80), position = clip(s?.position, 120)
-  if (!DEPTS[dept as keyof typeof DEPTS]) throw new Error("dept")
+  // Older drafts may carry pre-register titles; translate them instead of rejecting the whole survey
+  const role = migrateRole(clip(s?.dept, 80), clip(s?.position, 120))
+  if (!role.ok) throw new Error("role")
+  const { dept, pos: position } = role
   const questions: string[] = (Array.isArray(s?.questions) ? s.questions : []).filter((id: string) => KMAP[id]).slice(0, 40)
   const common = new Set((Array.isArray(s?.common) ? s.common : []).filter((id: string) => KMAP[id]))
   const answers: Record<string, number> = {}
