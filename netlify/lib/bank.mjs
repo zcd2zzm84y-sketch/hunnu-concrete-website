@@ -215,7 +215,14 @@ KQ.maint.push(
 KQ.service.push(
 {id:"sv11",q:"Хүнсний бүтээгдэхүүнийг хөргөгчинд хэрхэн байрлуулах нь зөв бэ?",o:["Түүхий махыг дээд тавиурт, болсон хоолыг доод тавиурт","Бэлэн хоолыг дээд тавиурт, түүхий махыг доод тавиурт битүү саванд","Хурдан хөрөхийн тулд бүгдийг нэг том саванд хамт хийнэ","Хоол, мах аль алиныг нь хаалганы тавиурт ойрхон, хурдан авахаар байрлуулна"],a:1},
 {id:"sv12",q:"Ажлын байрны ариун цэврийг хамгийн их хангадаг дадал аль вэ?",o:["Өдөрт нэг удаа, ажил эхлэхээс өмнө гараа савантай сайтар угааж, ариутгах","Ажил эхлэх, түүхий хүнсэнд хүрсний дараа гараа савантай угаах","Гар угаахын оронд нэг удаагийн бээлий байнга өмсөх","Ажлын үеэр гараа цэвэр алчуурт байнга арчиж байх"],a:1});
-export const KMAP=Object.fromEntries([...Object.values(KQ).flat(),...QS].map(q=>[q.id,q]));
+// Hunnu and TESO group basics (2026 business plan): every staff member gets all of these
+export const ORG=[
+{id:"t1",q:"Хүннү Конкрет ХХК аль группийн салбар компани вэ?",o:["ТЭСО групп","Улаанбаатар хотын өмчит компаниудын нэгдэл","Ямар нэг группэд хамаарахгүй, бие даасан","Гадаадын хөрөнгө оруулалттай хамтарсан групп"],a:0},
+{id:"t2",q:"Хүннү Конкрет ХХК-ийн гүйцэтгэх захирал хэн бэ?",o:["С.Болор","Н.Амарбаясгалан","О.Дамжин","О.Өлзийтөгс"],a:1},
+{id:"t3",q:"ТЭСО группийн гүйцэтгэх захирал хэн бэ?",o:["Н.Амарбаясгалан","О.Өлзийтөгс","С.Болор","О.Дамжин"],a:2},
+{id:"t4",q:"Хүннү Конкретын 2026 оны бетон зуурмагийн борлуулалтын төлөвлөгөө хэдэн м³ вэ?",o:["60,000 м³","90,000 м³","150,000 м³","120,000 м³"],a:3},
+];
+export const KMAP=Object.fromEntries([...Object.values(KQ).flat(),...QS,...ORG].map(q=>[q.id,q]));
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
 const ids=qs=>qs.map(q=>q.id);
 // Families whose people work with concrete every day also get the technical common questions
@@ -239,7 +246,7 @@ function drawJob(dept,pos,n){
 }
 export function draw(mode,dept,pos){
   const fam=posInfo(dept,pos)[1];
-  const common=shuffle(commonPool(mode,fam)).slice(0,mode==="apply"?APP_N_COMMON:N_COMMON);
+  const common=[...(mode==="apply"?[]:ids(ORG)),...shuffle(commonPool(mode,fam)).slice(0,mode==="apply"?APP_N_COMMON:N_COMMON)];
   const job=drawJob(dept,pos,mode==="apply"?APP_N_JOB:N_JOB).filter(id=>!common.includes(id));
   const order=[...common,...shuffle(job)];
   return {common,order,qs:Object.fromEntries(order.map(id=>[id,{q:KMAP[id].q,o:KMAP[id].o}]))};

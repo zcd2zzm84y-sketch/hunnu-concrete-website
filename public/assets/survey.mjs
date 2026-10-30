@@ -1,4 +1,4 @@
-import {DEPTS,FAMILY,TENURE,N_COMMON,N_JOB,COMP,ANCHOR,TRAIN,PULSE,LIKERT,LEAVE,MIN_GROUP,posInfo,migrateRole} from "./data.mjs";
+import {DEPTS,FAMILY,TENURE,N_COMMON,N_JOB,N_ORG,COMP,ANCHOR,TRAIN,PULSE,LIKERT,LEAVE,MIN_GROUP,posInfo,migrateRole} from "./data.mjs";
 import {$,esc,shuffle,setBand,ic} from "./ui.mjs";
 
 const LS2="hunnu-staff-draft-v2";
@@ -38,7 +38,7 @@ function staffInfo(){
   $("#view").innerHTML=`<div class="stack" style="gap:24px">
     ${stepper("info")}
     <div class="stats">
-      <div><b>${N_COMMON+N_JOB}</b><strong>Мэдлэгийн асуулт</strong><span>нийтлэг ${N_COMMON} + ажлын ${N_JOB}</span></div>
+      <div><b>${N_ORG+N_COMMON+N_JOB}</b><strong>Мэдлэгийн асуулт</strong><span>нийтлэг ${N_ORG+N_COMMON} + ажлын ${N_JOB}</span></div>
       <div><b>${COMP.length}</b><strong>Ур чадвар</strong><span>өөрийгөө 1–5 үнэлнэ</span></div>
       <div><b>${PULSE.length+1}</b><strong>Сэтгэл ханамж</strong><span>нэргүй хадгална</span></div>
       <div><b>~20′</b><strong>Хугацаа</strong><span>цаг хязгааргүй</span></div>
