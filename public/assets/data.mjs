@@ -13,7 +13,7 @@ export const DEPTS={
 };
 export const FAMILY={admin:"Удирдлага, захиргаа",hr:"Хүний нөөц",it:"Программ хангамж",finance:"Санхүү, нягтлан",sales:"Маркетинг, борлуулалт",quality:"Чанар, лаборатори",plant:"Үйлдвэрлэл",driver:"Жолооч, тээвэр",maint:"Засвар, механик",office:"Оффис, удирдлага",service:"Үйлчилгээ, хоол"};
 export const TENURE=["1 жил хүртэл","1–3 жил","3–5 жил","5-аас дээш жил"];
-export const N_COMMON=8, N_JOB=10, N_ORG=4; // N_ORG: fixed Hunnu/TESO questions on top of N_COMMON
+export const N_COMMON=8, N_JOB=10;
 export const APP_N_COMMON=6, APP_N_JOB=12, APP_MINUTES=30;
 export const COMP=[
 {id:"c1",t:"Мэргэжлийн ур чадвар",d:"Ажлаа стандарт, зааврын дагуу бие даан гүйцэтгэх"},
