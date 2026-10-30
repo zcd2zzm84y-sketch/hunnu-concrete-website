@@ -332,13 +332,13 @@ function renderPulse(){
   <div class="sheet stack"><div class="tag"><b>04</b>Ажилчдын санал</div>
     <div class="comments">${P.comments.map(c=>`<blockquote class="cm ${c.k}"><small>${c.k==="like"?"Таалагддаг":"Өөрчлөх"}</small>${esc(c.t)}</blockquote>`).join("")||'<span class="muted">Санал алга</span>'}</div></div>`}
   <div class="sheet stack"><div class="tag"><b>!</b>Туршилтын өгөгдөл цэвэрлэх</div>
-    <p class="muted" style="margin:0;font-size:14px">Хариулт нэргүй тул нэг нэгээр нь устгах боломжгүй. Жинхэнэ судалгаа эхлэхээс өмнө туршилтын бүх хариултыг энд нэг дор устгана. Буцаах боломжгүй.</p>
-    <div class="row" id="pgRow"><button type="button" class="danger" id="pg">${ic("trash")}Бүх хариултыг устгах (${pulse?.n||0})</button></div></div>
+    <p class="muted" style="margin:0;font-size:14px">Жинхэнэ үнэлгээ эхлэхээс өмнө туршилтаар бөглөсөн бүх ажилтны паспорт (${staff.length}) болон сэтгэл ханамжийн хариултыг (${pulse?.n||0}) энд нэг дор устгана. Ажил горилогчдын анкет устахгүй. Буцаах боломжгүй.</p>
+    <div class="row" id="pgRow"><button type="button" class="danger" id="pg">${ic("trash")}Ажилтны үнэлгээг цэвэрлэх (${staff.length+(pulse?.n||0)})</button></div></div>
   </div>`;
   $("#pg").onclick=()=>{$("#pgRow").innerHTML=`<label class="f" style="flex:1 1 260px">Баталгаажуулахын тулд УСТГАХ гэж бичнэ үү<input type="text" id="pgTxt" autocomplete="off"></label><button type="button" class="danger" id="pgYes">${ic("trash")}Устгах</button><button type="button" id="pgNo">${ic("x")}Болих</button><span id="pgMsg" class="muted"></span>`;
     $("#pgNo").onclick=()=>render();
     $("#pgYes").onclick=async()=>{if($("#pgTxt").value.trim()!=="УСТГАХ"){$("#pgMsg").textContent="УСТГАХ гэж бичнэ үү.";return}
-      try{const j=await api("POST",{action:"purgePulse"});$("#pgMsg").textContent=j.deleted+" хариулт устгагдлаа.";await load()}catch(e){if(e.auth)return login(e.message);$("#pgMsg").textContent="Устгаж чадсангүй: "+e.message}}};
+      try{const j=await api("POST",{action:"purgeSurvey"});$("#pgMsg").textContent=j.staff+" паспорт, "+j.pulse+" хариулт устгагдлаа.";await load()}catch(e){if(e.auth)return login(e.message);$("#pgMsg").textContent="Устгаж чадсангүй: "+e.message}}};
 }
 
 if(key){$("#view").innerHTML='<p class="muted">Ачаалж байна…</p>';load()}else login();

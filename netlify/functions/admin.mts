@@ -38,10 +38,15 @@ export default async (req: Request) => {
     await settingsStore().setJSON("openings", list)
     return json({ ok: true, openings: list })
   }
-  if (body?.action === "purgePulse") {
-    const store = pulseStore(), { blobs } = await store.list()
-    await Promise.all(blobs.map(b => store.delete(b.key)))
-    return json({ ok: true, deleted: blobs.length })
+  // Clears staff passports and pulse answers before the real survey starts; applicants are kept
+  if (body?.action === "purgeSurvey") {
+    const wipe = async (store: ReturnType<typeof staffStore>) => {
+      const { blobs } = await store.list()
+      await Promise.all(blobs.map(b => store.delete(b.key)))
+      return blobs.length
+    }
+    const [staff, pulse] = await Promise.all([wipe(staffStore()), wipe(pulseStore())])
+    return json({ ok: true, staff, pulse })
   }
   const store = body?.kind === "app" ? applicantStore() : staffStore()
   const id = clip(body?.id, 80)
