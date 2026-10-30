@@ -1,6 +1,8 @@
 // Small DOM and chart helpers shared by the survey and the HR dashboard
 // Line icons (24px grid, stroke follows the text colour) used inside buttons
 const IC={
+  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  moon:'<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
   left:'<path d="M19 12H5M12 19l-7-7 7-7"/>',
   right:'<path d="M5 12h14M12 5l7 7-7 7"/>',
   play:'<path d="M7 4.5v15l12-7.5z"/>',
@@ -52,3 +54,15 @@ export function radarMulti(labels,series){
     ${labels.map((l,i)=>{const[x,y]=pt(i,R+22);const an=Math.abs(x-C)<8?"middle":x>C?"start":"end";return `<text x="${x.toFixed(1)}" y="${(y+4).toFixed(1)}" text-anchor="${an}" font-size="15" font-weight="700" fill="var(--fg)">${esc(l)}</text>`}).join("")}
   </svg>`;
 }
+
+// Light/dark switch in the top bar, like hunnu.asia; the choice is kept per browser, otherwise the system setting wins
+const isDark=()=>document.documentElement.dataset.theme?document.documentElement.dataset.theme==="dark":matchMedia("(prefers-color-scheme: dark)").matches;
+function themeBtn(){
+  const bar=document.querySelector(".topbar .inner");if(!bar)return;
+  const b=document.createElement("button");b.type="button";b.className="theme-tg";
+  const paint=()=>{const d=isDark();b.innerHTML=ic(d?"sun":"moon");b.title=b.ariaLabel=d?"Цайвар горим":"Харанхуй горим"};
+  b.onclick=()=>{const t=isDark()?"light":"dark";document.documentElement.dataset.theme=t;try{localStorage.setItem("theme",t)}catch{}paint()};
+  matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change",paint);
+  paint();bar.append(b);
+}
+themeBtn();

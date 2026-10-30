@@ -522,3 +522,13 @@ footer .hr-link:hover{color:var(--fg)}
 .rp .db .v{white-space:nowrap;min-width:72px;text-align:right}
 footer .inner a{color:inherit;text-decoration:none}
 footer .inner a:hover{color:var(--fg);text-decoration:underline;text-underline-offset:3px}
+
+/* dark theme last so it wins over the brand overrides above: system setting, or the top-bar switch (data-theme) */
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121413;--surface:#1b1e1d;--sunk:#232625;--line:#2f3331;--fg:#eceeed;--band-fg:#eceeed;--muted:#a3a9a6;--band-dim:#a3a9a6;--accent:#e6e8eb;--accent-fg:#14171c;--accent-soft:#262a2d;--sel:#e6e8eb;--sel-fg:#14171c;--brand-dark:#1b1e1d}}
+:root[data-theme="dark"]{--bg:#121413;--surface:#1b1e1d;--sunk:#232625;--line:#2f3331;--fg:#eceeed;--band-fg:#eceeed;--muted:#a3a9a6;--band-dim:#a3a9a6;--accent:#e6e8eb;--accent-fg:#14171c;--accent-soft:#262a2d;--sel:#e6e8eb;--sel-fg:#14171c;--brand-dark:#1b1e1d}
+.theme-tg{margin-left:auto;width:38px;height:38px;padding:0;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--muted);cursor:pointer}
+.theme-tg:hover{color:var(--fg);border-color:var(--fg)}
+.topbar .inner .since+.theme-tg{margin-left:0}
+.topbar .inner{justify-content:flex-start}
+.topbar .since{margin-left:auto}
+.topbar .logo-link+.theme-tg{margin-left:auto}
