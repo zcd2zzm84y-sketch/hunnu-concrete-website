@@ -519,3 +519,5 @@ footer .hr-link:hover{color:var(--fg)}
 .rp h3{margin:0;font-size:20px}
 .rp{display:flex;flex-direction:column;gap:12px}
 .rp .db .v{white-space:nowrap;min-width:72px;text-align:right}
+footer .inner a{color:inherit;text-decoration:none}
+footer .inner a:hover{color:var(--fg);text-decoration:underline;text-underline-offset:3px}
