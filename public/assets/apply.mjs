@@ -125,13 +125,14 @@ function test(){
     <div class="sheet stack">
       <div class="qmeta">Асуулт ${i+1} / ${TOTAL} · ${part}</div>
       <div class="qtext" id="qt">${esc(q.q)}</div>
-      <div class="opts" role="radiogroup" aria-labelledby="qt">${A.shuffles[id].map((oi,k)=>`<label class="opt ${A.answers[id]===oi?"sel":""}"><input type="radio" name="opt" value="${oi}" ${A.answers[id]===oi?"checked":""}><span class="k">${"АБВГ"[k]}</span><span>${esc(q.o[oi])}</span></label>`).join("")}</div>
+      <div class="opts fresh" role="radiogroup" aria-labelledby="qt">${A.shuffles[id].map((oi,k)=>`<label class="opt ${A.answers[id]===oi?"sel":""}"><input type="radio" name="opt" value="${oi}" ${A.answers[id]===oi?"checked":""}><span class="k">${"АБВГ"[k]}</span><span>${esc(q.o[oi])}</span></label>`).join("")}</div>
       <div class="row spread"><button type="button" id="prev" ${i===0?"disabled":""}>${ic("left")}Өмнөх</button>
       ${i<TOTAL-1?`<button type="button" class="primary" id="next">Дараах${ic("right")}</button>`:`<button type="button" class="yellow" id="next">${ic("flag")}Шалгалт дуусгах</button>`}</div>
       ${A.confirm?`<div class="confirm stack"><div><b>${TOTAL-answered} асуулт хариултгүй байна.</b> Дуусгавал хариултыг өөрчлөх боломжгүй.</div><div class="row"><button type="button" class="primary" id="yes">${ic("flag")}Дуусгах</button><button type="button" id="no">${ic("left")}Буцах</button></div></div>`:""}
     </div>
     <div class="navgrid">${A.order.map((x,k)=>`<button type="button" data-go="${k}" class="${A.answers[x]!==undefined?"ans":""} ${k===i?"cur":""}" aria-label="Асуулт ${k+1}">${k+1}</button>`).join("")}</div>
   </div>`;
+  const opts=document.querySelector(".opts");opts.addEventListener("pointermove",()=>opts.classList.remove("fresh"),{once:true});document.activeElement?.blur?.();
   document.querySelectorAll('input[name="opt"]').forEach(r=>r.onchange=()=>{A.answers[id]=+r.value;if(i<TOTAL-1)A.idx++;save();test()});
   $("#prev").onclick=()=>{A.idx--;A.confirm=false;save();test()};
   $("#next").onclick=()=>{if(i<TOTAL-1){A.idx++;save();return test()}if(answered<TOTAL&&!A.confirm){A.confirm=true;return test()}A.confirm=false;finishTest(false)};

@@ -79,12 +79,13 @@ function staffKnow(){
     <div class="sheet stack">
       <div class="qmeta">Асуулт ${i+1} / ${total} · ${part}</div>
       <div class="qtext" id="qt">${esc(q.q)}</div>
-      <div class="opts" role="radiogroup" aria-labelledby="qt">${T.shuffles[q.id].map((oi,k)=>`<label class="opt ${T.answers[q.id]===oi?"sel":""}"><input type="radio" name="opt" id="sopt-${q.id}-${oi}" value="${oi}" ${T.answers[q.id]===oi?"checked":""}><span class="k">${"АБВГ"[k]}</span><span>${esc(q.o[oi])}</span></label>`).join("")}</div>
+      <div class="opts fresh" role="radiogroup" aria-labelledby="qt">${T.shuffles[q.id].map((oi,k)=>`<label class="opt ${T.answers[q.id]===oi?"sel":""}"><input type="radio" name="opt" id="sopt-${q.id}-${oi}" value="${oi}" ${T.answers[q.id]===oi?"checked":""}><span class="k">${"АБВГ"[k]}</span><span>${esc(q.o[oi])}</span></label>`).join("")}</div>
       <div class="row spread"><button type="button" id="prev" ${i===0?"disabled":""}>${ic("left")}Өмнөх</button>
       ${i<total-1?`<button type="button" class="primary" id="next">Дараах${ic("right")}</button>`:`<button type="button" class="yellow" id="next">Ур чадвар руу${ic("right")}</button>`}</div>
     </div>
     <div class="navgrid">${T.order.map((id,k)=>`<button type="button" data-go="${k}" class="${T.answers[id]!==undefined?"ans":""} ${k===i?"cur":""}" aria-label="Асуулт ${k+1}">${k+1}</button>`).join("")}</div>
   </div>`;
+  const opts=document.querySelector(".opts");opts.addEventListener("pointermove",()=>opts.classList.remove("fresh"),{once:true});document.activeElement?.blur?.();
   document.querySelectorAll('input[name="opt"]').forEach(r=>r.onchange=()=>{T.answers[q.id]=+r.value;if(i<total-1)T.idx++;saveStaff();staffKnow()});
   $("#prev").onclick=()=>{T.idx--;saveStaff();staffKnow()};
   $("#next").onclick=()=>{if(i<total-1)T.idx++;else T.stage="skill";saveStaff();renderStaff();window.scrollTo(0,0)};
