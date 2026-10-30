@@ -35,7 +35,7 @@ async function loadOpenings(){
 }
 function form(){
   setBand("Хүннү Конкретод","ажилд орох.","Анкетаа бөглөөд, сонгосон албан тушаалынхаа мэдлэгийн богино шалгалтыг өгнө үү. Нийт 30–40 минут.");
-  if(!OPEN.length){$("#view").innerHTML=`<div class="sheet stack"><h2 style="margin:0">${openErr?"Түр алдаа гарлаа":"Одоогоор нээлттэй ажлын байр алга байна"}</h2><p style="margin:0">${openErr||"Шинэ ажлын байр нээгдэхэд энэ хуудсаар дамжуулан бүртгүүлэх боломжтой. Лавлах: Хүний нөөц 8806 6831 · Компани 7575 4040 · info@hunnu.asia"}</p></div>`;return}
+  if(!OPEN.length){$("#view").innerHTML=`<div class="sheet stack"><h2 style="margin:0">${openErr?"Түр алдаа гарлаа":"Одоогоор нээлттэй ажлын байр алга байна"}</h2><p style="margin:0">${openErr||"Шинэ ажлын байр нээгдэхэд энэ хуудсаар дамжуулан бүртгүүлэх боломжтой. Лавлах: Хүний нөөц 8806 6831, munkhmandakh@teso.mn · Компани 7575 4040 · info@hunnu.asia"}</p></div>`;return}
   const openSet=new Set(OPEN),wanted=(A.f.dept||"")+"|"+(A.f.position||"");
   const [dept,pos]=(openSet.has(wanted)?wanted:OPEN[0]).split("|");const f=A.f;
   const opt=(list,v)=>list.map(x=>`<option ${x===v?"selected":""}>${esc(x)}</option>`).join("");
@@ -171,6 +171,6 @@ async function send(){
 function done(){
   setBand("Баярлалаа,",(A.f?.name||"")+".","");
   $("#view").innerHTML=`<div class="sheet stack"><p>Таны анкет болон шалгалтын хариулт Хүний нөөцийн албанд хүрлээ. Шалгаруулалтын дүнг таны үлдээсэн утсаар мэдэгдэнэ.</p>
-    <p class="muted" style="margin:0">Лавлах: Хүний нөөц 8806 6831 · Компани 7575 4040 · info@hunnu.asia</p></div>`;
+    <p class="muted" style="margin:0">Лавлах: Хүний нөөц 8806 6831, munkhmandakh@teso.mn · Компани 7575 4040 · info@hunnu.asia</p></div>`;
 }
 loadOpenings().then(render);
