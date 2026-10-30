@@ -11,14 +11,14 @@ async function notify(site: string, row: any) {
     "Шалгалтын оноо": `${pct}%`, "Зөвлөмж": `${r.verdict} (${r.score}/100)`, "Гэрийн хаяг": [row.district, row.khoroo ? row.khoroo + "-р хороо" : ""].filter(Boolean).join(", "),
     "HR самбар": "https://hunnu.asia/talent/admin#app",
   })
-  // With RESEND_API_KEY the alert comes from hr@hunnu.asia; otherwise from Netlify's form notification
+  // With RESEND_API_KEY the alert comes from info@hunnu.asia; otherwise from Netlify's form notification
   const resend = Netlify.env.get("RESEND_API_KEY")
   const esc = (v: string) => String(v ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!))
   const rows = [...body].filter(([k]) => k !== "form-name" && k !== "HR самбар")
   const html = `<p style="font:16px sans-serif;margin:0 0 12px"><b>Шинэ ажлын анкет ирлээ</b></p><table style="font:14px sans-serif;border-collapse:collapse">${rows.map(([k, v]) => `<tr><td style="padding:4px 16px 4px 0;color:#4E5452">${esc(k)}</td><td style="padding:4px 0"><b>${esc(v) || "—"}</b></td></tr>`).join("")}</table><p style="font:14px sans-serif;margin:16px 0 0"><a href="https://hunnu.asia/talent/admin#app" style="background:#333;color:#fff;padding:10px 16px;text-decoration:none;border-radius:6px">HR самбарт харах</a></p>`
   const jobs = [resend
     ? fetch("https://api.resend.com/emails", { method: "POST", headers: { authorization: `Bearer ${resend}`, "content-type": "application/json" }, signal: AbortSignal.timeout(4000), body: JSON.stringify({
-        from: "HUNNU HR <hr@hunnu.asia>", to: (Netlify.env.get("ALERT_TO") || "munkhmandakh@teso.mn,info@hunnu.asia").split(",").map(s => s.trim()),
+        from: "Хүннү Конкрет Хүний нөөц <info@hunnu.asia>", to: (Netlify.env.get("ALERT_TO") || "munkhmandakh@teso.mn,info@hunnu.asia").split(",").map(s => s.trim()),
         reply_to: "info@hunnu.asia", subject: `Шинэ анкет: ${row.name}, ${row.position}`, html,
         text: rows.map(([k, v]) => `${k}: ${v}`).join("\n") + "\n\nHR самбар: https://hunnu.asia/talent/admin#app" }) })
     : fetch(new URL("/", site), { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" }, body, signal: AbortSignal.timeout(4000) })]
