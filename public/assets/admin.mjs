@@ -1,5 +1,6 @@
 import {DEPTS,FAMILY,COMP,ANCHOR,PULSE,MIN_GROUP,PROX,proximity,HEADCOUNT} from "./data.mjs";
 import {interviewGuide,stageGuide,REJECT,assess} from "./interview.mjs";
+import {analyze} from "./analysis.mjs";
 import {$,esc,avg,fmtDate,mmss,lvl,initials,setBand,gauge,radarMulti,ic} from "./ui.mjs";
 
 const KEY="hunnu-admin-key";
@@ -349,31 +350,13 @@ if(key){$("#view").innerHTML='<p class="muted">Ачаалж байна…</p>';l
 // Combined analysis, recomputed from the live data on every load. The last figures seen on an earlier day
 // are kept in this browser so the page can say how things moved since then.
 const SNAP="hunnu-sum-snap";
-const THEMES=[["Хамт олон, харилцаа",/хамт|харилцаа/i],["Ажлын ачаалал",/ачаал|илүү цаг/i],["Журам, систем, эмх цэгц",/журам|систем|стандарт|эмх|дүрэм|тогтсон/i],["Шийдвэр, хүсэлтийн шуурхай байдал",/шийдвэр|хүлээ|сануул|хэрэгжил|шуурхай/i],["Цалин, урамшуулал",/цалин|урамшуул/i],["Ажлын орчин, аюулгүй байдал",/тоос|цемент|аюулгүй|орчин|машин|тээвэр/i],["Хөгжил, сургалт",/сургалт|чадамж|хөгж|сур/i]];
 function renderSummary(){
   setBand("Нэгдсэн","анализ.","Ажилтны үнэлгээ, сэтгэл ханамжийн дүгнэлт. Хуудсыг шинэчлэх бүрт одоогийн өгөгдлөөр дахин тооцно.");
-  const n=staff.length,P=pulse||{n:0,hidden:true};
-  const K=n?Math.round(avg(staff.map(kPct))):0;
-  const part=k=>{const c=staff.reduce((a,s)=>a+(s.byPart?.[k]?.c||0),0),t=staff.reduce((a,s)=>a+(s.byPart?.[k]?.t||0),0);return t?Math.round(c/t*100):0};
+  const A=analyze(staff,pulse),{n,P,K,part,done,missing,low,gap,comp,train,other,mgrDone,suspect,weak,strong,hot,likes,themes,likeTeam}=A;
   const today=new Date().toDateString();let prev=null;
   try{const all=JSON.parse(localStorage.getItem(SNAP)||"{}");prev=all.cur&&all.cur.day!==today?all.cur:all.prev||null;
     localStorage.setItem(SNAP,JSON.stringify({prev,cur:{day:today,at:Date.now(),n,K,enps:P.hidden?null:P.enps,overall:P.hidden?null:P.overall}}))}catch(e){}
   const was=(v,pv,unit="")=>pv==null||pv===v?"":` <small class="muted">(${fmtDay(prev.at)}: ${pv}${unit})</small>`;
-  const depts=Object.keys(DEPTS).map(d=>{const g=staff.filter(s=>s.dept===d);return{d,n:g.length,k:g.length?Math.round(avg(g.map(kPct))):null}});
-  const done=depts.filter(x=>x.n).sort((a,b)=>b.k-a.k),missing=depts.filter(x=>!x.n).map(x=>x.d);
-  const low=staff.filter(s=>kPct(s)<60).sort((a,b)=>kPct(a)-kPct(b));
-  const gap=staff.filter(s=>{const sa=selfAvg(s),k=kPct(s);return(sa>=4.5&&k<60)||(sa<=1.5&&k>=75)});
-  const comp=COMP.map(c=>{const v=staff.map(s=>s.self?.[c.id]).filter(Boolean);return{t:c.t,v:v.length?avg(v):0}}).sort((a,b)=>a.v-b.v);
-  const tc={};staff.forEach(s=>(s.train||[]).forEach(t=>tc[t]=(tc[t]||0)+1));const train=Object.entries(tc).sort((a,b)=>b[1]-a[1]);
-  const other=staff.map(s=>(s.trainOther||"").trim()).filter(t=>t.length>3&&!/^(байхгүй|үгүй|-)$/i.test(t));
-  const mgrDone=staff.filter(s=>COMP.every(c=>s.mgr?.[c.id])).length;
-  const suspect=staff.filter(s=>(s.durationSec||0)<240||/тест|test/i.test(s.name||""));
-  const items=P.hidden?[]:[...P.byItem].sort((a,b)=>a.v-b.v),weak=items.filter(x=>x.v<50).slice(0,4),strong=items.slice().reverse().filter(x=>x.v>=70).slice(0,3);
-  const hot=P.hidden?[]:(P.depts||[]).filter(d=>!d.hidden).map(d=>{const bad=(d.groups||[]).map((v,i)=>[P.groups[i],v]).filter(([,v])=>v<45).sort((a,b)=>a[1]-b[1]);return{...d,bad}}).filter(d=>d.enps<0||d.bad.length);
-  const changes=(P.comments||[]).filter(c=>c.k==="change"&&c.t.trim().length>3).map(c=>c.t.trim());
-  const likes=(P.comments||[]).filter(c=>c.k==="like").map(c=>c.t.trim());
-  const themes=THEMES.map(([t,re])=>({t,list:changes.filter(c=>re.test(c))})).filter(x=>x.list.length).sort((a,b)=>b.list.length-a.list.length);
-  const likeTeam=likes.filter(t=>/хамт|хамд|олон/i.test(t)).length;
   const li=(arr)=>arr.length?`<ul class="sum-ul">${arr.map(x=>`<li>${x}</li>`).join("")}</ul>`:"";
   const sec=(no,title,body)=>`<section class="pp-sec"><div class="tag"><b>${no}</b>${title}</div>${body}</section>`;
   $("#view").innerHTML=`<div class="stack" style="gap:24px">${tabs("sum")}
