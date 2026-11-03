@@ -3,9 +3,13 @@ import { staffStore, pulseStore, applicantStore, settingsStore, getOpenings, isP
 import { KMAP } from "../lib/bank.mjs"
 import { COMP } from "../../public/assets/data.mjs"
 
-const authorized = (req: Request) => {
-  const key = Netlify.env.get("ADMIN_KEY")
-  return !!key && req.headers.get("x-admin-key") === key
+// HR (ADMIN_KEY) can do everything; leaders (MANAGER_KEY) can read results and enter their own skill ratings only
+const roleOf = (req: Request) => {
+  const k = req.headers.get("x-admin-key"), admin = Netlify.env.get("ADMIN_KEY"), mgr = Netlify.env.get("MANAGER_KEY")
+  if (!k) return null
+  if (admin && k === admin) return "admin"
+  if (mgr && k === mgr) return "manager"
+  return null
 }
 
 async function readAll(store: ReturnType<typeof staffStore>) {
@@ -21,7 +25,8 @@ const scores = (src: any) => {
 }
 
 export default async (req: Request) => {
-  if (!authorized(req)) return json({ error: "Нууц үг буруу байна." }, 401)
+  const role = roleOf(req)
+  if (!role) return json({ error: "Нууц үг буруу байна." }, 401)
   if (req.method === "GET") {
     const [rows, pulse, apps, openings] = await Promise.all([readAll(staffStore()), readAll(pulseStore()), readAll(applicantStore()), getOpenings()])
     const newest = (a: any, b: any) => b.submittedAt - a.submittedAt
@@ -29,10 +34,12 @@ export default async (req: Request) => {
     // Answer key only for the questions that were actually asked, so HR can review mistakes
     const ids = new Set([...rows, ...apps].flatMap((r: any) => r.questions || []))
     const bank = Object.fromEntries([...ids].filter(id => KMAP[id]).map(id => [id, KMAP[id]]))
-    return json({ staff: rows, pulse: summarizePulse(pulse), applicants: apps, bank, openings })
+    return json({ role, staff: rows, pulse: summarizePulse(pulse), applicants: apps, bank, openings })
   }
   let body: any
   try { body = await req.json() } catch { return json({ error: "Хүсэлт буруу байна." }, 400) }
+  const mgrOnly = body?.action === "update" && body?.kind !== "app" && body?.patch && typeof body.patch === "object" && Object.keys(body.patch).every(k => k === "mgr")
+  if (role === "manager" && !mgrOnly) return json({ error: "Удирдлагын эрхээр зөвхөн ур чадварын үнэлгээ оруулна." }, 403)
   if (body?.action === "openings") {
     const list = [...new Set((Array.isArray(body.openings) ? body.openings : []).map(String).filter(isPosition))]
     await settingsStore().setJSON("openings", list)

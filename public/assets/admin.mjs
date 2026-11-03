@@ -13,8 +13,9 @@ async function api(method,body){
   if(!res.ok)throw new Error(j.error||("HTTP "+res.status));
   return j;
 }
+let role="admin";
 async function load(){
-  try{const j=await api("GET");staff=j.staff;pulse=j.pulse;apps=j.applicants||[];bank=j.bank||{};openings=j.openings||[];msg="";if(!selS&&staff.length)selS=staff[0].id;if(!selA&&apps.length)selA=apps[0].id;render()}
+  try{const j=await api("GET");role=j.role||"admin";document.body.classList.toggle("role-manager",role==="manager");staff=j.staff;pulse=j.pulse;apps=j.applicants||[];bank=j.bank||{};openings=j.openings||[];msg="";if(!selS&&staff.length)selS=staff[0].id;if(!selA&&apps.length)selA=apps[0].id;render()}
   catch(e){if(e.auth)return login(e.message);msg="Ачаалж чадсангүй: "+e.message;render()}
 }
 const PRINT=`<button type="button" id="print" class="pp-print" title="Хэвлэх" aria-label="Хэвлэх">${ic("printer")}</button>`;
@@ -52,6 +53,8 @@ function tabs(cur){
 }
 function render(){
   if(view==="pulse")renderPulse();else if(view==="app")renderApps();else renderStaffHr();
+  // Leaders: everything is visible, but only the skill-rating buttons save (the server enforces the same)
+  if(role==="manager"){document.querySelectorAll("#view textarea,#view input[type=text]").forEach(e=>e.readOnly=true);const t=document.querySelector("nav.tabs");if(t&&!$("#roleNote"))t.closest(".row").insertAdjacentHTML("afterend",'<div class="note" id="roleNote">Удирдлагын эрх: үр дүнг харах, ажилтны ур чадварыг 1–5 үнэлэх. Бусад мэдээллийг өөрчлөхгүй.</div>')}
   document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>{view=b.dataset.view;history.replaceState(null,"","#"+view);render()});
   const r=$("#reload");if(r)r.onclick=()=>{r.disabled=true;load()};
   const o=$("#logout");if(o)o.onclick=logout;
