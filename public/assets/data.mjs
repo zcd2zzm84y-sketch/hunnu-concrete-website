@@ -44,6 +44,7 @@ export const PULSE=[
 export const LIKERT=["Огт санал нийлэхгүй","Санал нийлэхгүй","Хэлж мэдэхгүй","Санал нийлнэ","Бүрэн санал нийлнэ"];
 export const LEAVE=["Цалин, урамшуулал","Шууд удирдлага","Ажлын нөхцөл, аюулгүй байдал","Ажлын цаг, ээлж","Хөгжих боломж","Хамт олон","Гэр бүл, хувийн шалтгаан","Ажлаас гарах бодолгүй"];
 export const MIN_GROUP=3;
+export const HEADCOUNT=47; // active staff (HR, 2026.09.22): base for the participation rate
 export const posInfo=(dept,pos)=>(DEPTS[dept]||[]).find(p=>p[0]===pos)||[pos,"admin"];
 // Titles used before the switch to the official register (2026.10.29); drafts and links may still carry them
 const OLD_POS={"Гүйцэтгэх захирал":"Салбарын Гүйцэтгэх захирал","IT менежер":"Программ хангамжийн менежер","Backend архитектор":"Системийн архитектор","App хөгжүүлэгч":"Программист","IT инженер":"Программист",

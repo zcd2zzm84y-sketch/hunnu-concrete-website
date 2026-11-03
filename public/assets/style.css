@@ -543,3 +543,10 @@ footer .inner a:hover{color:var(--fg);text-decoration:underline;text-underline-o
 .role-manager [data-st],.role-manager [data-r],.role-manager [data-iq],.role-manager [data-ck],.role-manager [data-rj]{pointer-events:none}
 .role-manager #view textarea[readonly]{background:var(--sunk)}
 #roleNote{margin-top:12px}
+
+/* combined analysis */
+.sum .pp-sec p{margin:0 0 8px;font-size:15px}
+.sum-ul{margin:0;padding-left:20px;display:grid;gap:6px;font-size:15px;line-height:1.5}
+.sum-themes{display:grid;gap:6px}
+.sum-themes summary{cursor:pointer;font-size:15px}
+.sum-themes .sum-ul{margin:6px 0 4px;color:var(--muted)}

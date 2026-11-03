@@ -1,10 +1,10 @@
-import {DEPTS,FAMILY,COMP,ANCHOR,PULSE,MIN_GROUP,PROX,proximity} from "./data.mjs";
+import {DEPTS,FAMILY,COMP,ANCHOR,PULSE,MIN_GROUP,PROX,proximity,HEADCOUNT} from "./data.mjs";
 import {interviewGuide,stageGuide,REJECT,assess} from "./interview.mjs";
 import {$,esc,avg,fmtDate,mmss,lvl,initials,setBand,gauge,radarMulti,ic} from "./ui.mjs";
 
 const KEY="hunnu-admin-key";
 let key=(()=>{try{return sessionStorage.getItem(KEY)||""}catch(e){return""}})();
-let staff=[],pulse=null,apps=[],bank={},openings=[],editOpen=false,selS=null,selA=null,appFilter="",deptFilter="",msg="",view=["staff","pulse","app"].includes(location.hash.slice(1))?location.hash.slice(1):"staff";
+let staff=[],pulse=null,apps=[],bank={},openings=[],editOpen=false,selS=null,selA=null,appFilter="",deptFilter="",msg="",view=["sum","staff","pulse","app"].includes(location.hash.slice(1))?location.hash.slice(1):"sum";
 
 async function api(method,body){
   const res=await fetch("api/admin",{method,headers:{"x-admin-key":key,"content-type":"application/json"},body:body?JSON.stringify(body):undefined});
@@ -49,10 +49,10 @@ function login(err){
   if(matchMedia("(hover:hover)").matches)$("#pw").focus();
 }
 function tabs(cur){
-  return `<div class="row spread"><nav class="tabs" aria-label="Үр дүнгийн хэсэг">${[["staff","Ажилтны паспорт","users"],["pulse","Сэтгэл ханамж","heart"],["app","Горилогчид"+(apps.some(a=>a.status==="new")?" ("+apps.filter(a=>a.status==="new").length+")":""),"userPlus"]].map(([v,t,i])=>`<button type="button" data-view="${v}" ${v===cur?'aria-current="page"':""}>${ic(i)}${t}</button>`).join("")}</nav><div class="row">${cur!=="pulse"?`<button type="button" id="xls">${ic("download")}Excel татах</button>`:""}<button type="button" id="reload">${ic("refresh")}Шинэчлэх</button><button type="button" id="logout">${ic("logout")}Гарах</button></div></div>`;
+  return `<div class="row spread"><nav class="tabs" aria-label="Үр дүнгийн хэсэг">${[["sum","Нэгдсэн анализ","report"],["staff","Ажилтны паспорт","users"],["pulse","Сэтгэл ханамж","heart"],["app","Горилогчид"+(apps.some(a=>a.status==="new")?" ("+apps.filter(a=>a.status==="new").length+")":""),"userPlus"]].map(([v,t,i])=>`<button type="button" data-view="${v}" ${v===cur?'aria-current="page"':""}>${ic(i)}${t}</button>`).join("")}</nav><div class="row">${cur!=="pulse"&&cur!=="sum"?`<button type="button" id="xls">${ic("download")}Excel татах</button>`:""}<button type="button" id="reload">${ic("refresh")}Шинэчлэх</button><button type="button" id="logout">${ic("logout")}Гарах</button></div></div>`;
 }
 function render(){
-  if(view==="pulse")renderPulse();else if(view==="app")renderApps();else renderStaffHr();
+  if(view==="sum")renderSummary();else if(view==="pulse")renderPulse();else if(view==="app")renderApps();else renderStaffHr();
   // Leaders: everything is visible, but only the skill-rating buttons save (the server enforces the same)
   if(role==="manager"){document.querySelectorAll("#view textarea,#view input[type=text]").forEach(e=>e.readOnly=true);const t=document.querySelector("nav.tabs");if(t&&!$("#roleNote"))t.closest(".row").insertAdjacentHTML("afterend",'<div class="note" id="roleNote">Удирдлагын эрх: үр дүнг харах, ажилтны ур чадварыг 1–5 үнэлэх. Бусад мэдээллийг өөрчлөхгүй.</div>')}
   document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>{view=b.dataset.view;history.replaceState(null,"","#"+view);render()});
@@ -345,3 +345,60 @@ function renderPulse(){
 }
 
 if(key){$("#view").innerHTML='<p class="muted">Ачаалж байна…</p>';load()}else login();
+
+// Combined analysis, recomputed from the live data on every load. The last figures seen on an earlier day
+// are kept in this browser so the page can say how things moved since then.
+const SNAP="hunnu-sum-snap";
+const THEMES=[["Хамт олон, харилцаа",/хамт|харилцаа/i],["Ажлын ачаалал",/ачаал|илүү цаг/i],["Журам, систем, эмх цэгц",/журам|систем|стандарт|эмх|дүрэм|тогтсон/i],["Шийдвэр, хүсэлтийн шуурхай байдал",/шийдвэр|хүлээ|сануул|хэрэгжил|шуурхай/i],["Цалин, урамшуулал",/цалин|урамшуул/i],["Ажлын орчин, аюулгүй байдал",/тоос|цемент|аюулгүй|орчин|машин|тээвэр/i],["Хөгжил, сургалт",/сургалт|чадамж|хөгж|сур/i]];
+function renderSummary(){
+  setBand("Нэгдсэн","анализ.","Ажилтны үнэлгээ, сэтгэл ханамжийн дүгнэлт. Хуудсыг шинэчлэх бүрт одоогийн өгөгдлөөр дахин тооцно.");
+  const n=staff.length,P=pulse||{n:0,hidden:true};
+  const K=n?Math.round(avg(staff.map(kPct))):0;
+  const part=k=>{const c=staff.reduce((a,s)=>a+(s.byPart?.[k]?.c||0),0),t=staff.reduce((a,s)=>a+(s.byPart?.[k]?.t||0),0);return t?Math.round(c/t*100):0};
+  const today=new Date().toDateString();let prev=null;
+  try{const all=JSON.parse(localStorage.getItem(SNAP)||"{}");prev=all.cur&&all.cur.day!==today?all.cur:all.prev||null;
+    localStorage.setItem(SNAP,JSON.stringify({prev,cur:{day:today,at:Date.now(),n,K,enps:P.hidden?null:P.enps,overall:P.hidden?null:P.overall}}))}catch(e){}
+  const was=(v,pv,unit="")=>pv==null||pv===v?"":` <small class="muted">(${fmtDay(prev.at)}: ${pv}${unit})</small>`;
+  const depts=Object.keys(DEPTS).map(d=>{const g=staff.filter(s=>s.dept===d);return{d,n:g.length,k:g.length?Math.round(avg(g.map(kPct))):null}});
+  const done=depts.filter(x=>x.n).sort((a,b)=>b.k-a.k),missing=depts.filter(x=>!x.n).map(x=>x.d);
+  const low=staff.filter(s=>kPct(s)<60).sort((a,b)=>kPct(a)-kPct(b));
+  const gap=staff.filter(s=>{const sa=selfAvg(s),k=kPct(s);return(sa>=4.5&&k<60)||(sa<=1.5&&k>=75)});
+  const comp=COMP.map(c=>{const v=staff.map(s=>s.self?.[c.id]).filter(Boolean);return{t:c.t,v:v.length?avg(v):0}}).sort((a,b)=>a.v-b.v);
+  const tc={};staff.forEach(s=>(s.train||[]).forEach(t=>tc[t]=(tc[t]||0)+1));const train=Object.entries(tc).sort((a,b)=>b[1]-a[1]);
+  const other=staff.map(s=>(s.trainOther||"").trim()).filter(t=>t.length>3&&!/^(байхгүй|үгүй|-)$/i.test(t));
+  const mgrDone=staff.filter(s=>COMP.every(c=>s.mgr?.[c.id])).length;
+  const suspect=staff.filter(s=>(s.durationSec||0)<240||/тест|test/i.test(s.name||""));
+  const items=P.hidden?[]:[...P.byItem].sort((a,b)=>a.v-b.v),weak=items.filter(x=>x.v<50).slice(0,4),strong=items.slice().reverse().filter(x=>x.v>=70).slice(0,3);
+  const hot=P.hidden?[]:(P.depts||[]).filter(d=>!d.hidden).map(d=>{const bad=(d.groups||[]).map((v,i)=>[P.groups[i],v]).filter(([,v])=>v<45).sort((a,b)=>a[1]-b[1]);return{...d,bad}}).filter(d=>d.enps<0||d.bad.length);
+  const changes=(P.comments||[]).filter(c=>c.k==="change"&&c.t.trim().length>3).map(c=>c.t.trim());
+  const likes=(P.comments||[]).filter(c=>c.k==="like").map(c=>c.t.trim());
+  const themes=THEMES.map(([t,re])=>({t,list:changes.filter(c=>re.test(c))})).filter(x=>x.list.length).sort((a,b)=>b.list.length-a.list.length);
+  const likeTeam=likes.filter(t=>/хамт|хамд|олон/i.test(t)).length;
+  const li=(arr)=>arr.length?`<ul class="sum-ul">${arr.map(x=>`<li>${x}</li>`).join("")}</ul>`:"";
+  const sec=(no,title,body)=>`<section class="pp-sec"><div class="tag"><b>${no}</b>${title}</div>${body}</section>`;
+  $("#view").innerHTML=`<div class="stack" style="gap:24px">${tabs("sum")}
+  ${msg?`<div class="err">${esc(msg)}</div>`:""}
+  <article class="passport sum"><header class="pp-head">${PRINT}<div class="pp-id"><div><div class="pp-kicker">Нэгдсэн анализ · ${fmtDate(Date.now())}</div><h2>Ажилтны үнэлгээ: ${n} хүн (${HEADCOUNT}-аас ${Math.round(n/HEADCOUNT*100)}%)</h2>
+    <div class="pp-meta">${prev?`Харьцуулалт: ${fmtDay(prev.at)}-нд ${prev.n} хүнтэй байсан.`:"Дараагийн өдөр нээхэд өнөөдрийнхтэй харьцуулна."}</div></div></div></header>
+  ${!n?`<div class="pp-sec"><p>Одоогоор бөглөсөн ажилтан алга.</p></div>`:`
+  ${sec("01","Мэдлэг",`<p><b>${K}%</b>${was(K,prev?.K,"%")}. Ажлын мэдлэг ${part("job")}%, нийтлэг мэдлэг ${part("common")}%.</p>
+    ${li([`Албаар: ${done.map(x=>`${esc(x.d)} <b>${x.k}%</b> <small class="muted">(${x.n})</small>`).join(", ")}.`,
+      missing.length?`Эхлээгүй алба: ${esc(missing.join(", "))}.`:"",
+      low.length?`60%-иас доош ${low.length} хүн: ${low.map(s=>`${esc(s.name)} (${esc(s.position)}) <b>${kPct(s)}%</b>`).join(", ")}.`:"60%-иас доош хүн алга.",
+      gap.length?`Ярилцаж тодруулах ${gap.length} хүн: ${gap.map(s=>`${esc(s.name)} (${esc(s.position)}): мэдлэг ${kPct(s)}%, өөрийн үнэлгээ ${selfAvg(s).toFixed(1)}`).join("; ")}.`:""].filter(Boolean))}`)}
+  ${sec("02","Ур чадвар, сургалт",`${li([`Хамгийн бага: ${comp.slice(0,2).map(c=>`${esc(c.t)} (${c.v.toFixed(1)})`).join(", ")}. Хамгийн өндөр: ${esc(comp[comp.length-1].t)} (${comp[comp.length-1].v.toFixed(1)}).`,
+      train.length?`Хүссэн сургалт: ${train.map(([t,c])=>`${esc(t)} <b>${c}</b>`).join(", ")}.`:"",
+      other.length?`Өөрөө бичсэн: ${esc(other.join("; "))}.`:""].filter(Boolean))}`)}`}
+  ${sec("03","Сэтгэл ханамж",P.hidden?`<p>${P.n} хариулт ирсэн. ${MIN_GROUP}-аас дээш болмогц дүн гарна.</p>`:`<p><b>${P.overall}%</b> эерэг${was(P.overall,prev?.overall,"%")}, eNPS <b>${P.enps>0?"+":""}${P.enps}</b>${was(P.enps,prev?.enps)}. Нэг жилийн дараа энд ажиллана гэсэн ${P.stay}%.</p>
+    ${li([weak.length?`Хамгийн сул: ${weak.map(x=>`${esc(x.t)} <b>${x.v}%</b>`).join("; ")}`:"",
+      strong.length?`Сайн тал: ${strong.map(x=>`${esc(x.t)} <b>${x.v}%</b>`).join("; ")}`:"",
+      ...hot.map(d=>`<b>${esc(d.d)}</b> анхаарах: eNPS ${d.enps>0?"+":""}${d.enps}${d.bad.length?", "+d.bad.map(([g,v])=>`${esc(g)} ${v}%`).join(", "):""}.`),
+      Object.keys(P.leave||{}).length?`Гарах шалтгаан: ${Object.entries(P.leave).sort((a,b)=>b[1]-a[1]).map(([l,c])=>`${esc(l)} ${c}`).join(", ")}.`:""].filter(Boolean))}`)}
+  ${P.hidden?"":sec("04","Сэтгэгдэл",`<p>${likes.length?`Таалагддаг зүйлд ${likes.length}-аас ${likeTeam} нь хамт олноо дурджээ.`:""} Өөрчлөх саналын сэдэв:</p>
+    ${themes.length?`<div class="sum-themes">${themes.map(x=>`<details><summary>${esc(x.t)} <b>${x.list.length}</b></summary>${li(x.list.map(esc))}</details>`).join("")}</div>`:"<p class=\"muted\">Санал алга.</p>"}`)}
+  ${sec("05","Хийх зүйл",li([`Удирдлагын үнэлгээ <b>${mgrDone}/${n}</b>.${mgrDone<n?" Алба бүрийн дарга нар паспорт дээр үнэлгээгээ оруулна.":""}`,
+    n<HEADCOUNT?`${HEADCOUNT-n} ажилтан бөглөөгүй байна${missing.length?", ялангуяа "+esc(missing.join(", ")):""}.`:"",
+    suspect.length?`Шалгах бичлэг: ${suspect.map(s=>`${esc(s.name)} (${mmss(s.durationSec||0)})`).join(", ")}. Туршилт эсвэл хэт богино хугацаанд бөглөсөн бол устгана уу.`:""].filter(Boolean)))}
+  </article></div>`;
+}
+const fmtDay=t=>{const d=new Date(t);return String(d.getMonth()+1).padStart(2,"0")+"."+String(d.getDate()).padStart(2,"0")};
