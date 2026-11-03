@@ -107,7 +107,6 @@ export function buildDeck(pptx,A,{date,logo,icons={}}){
   const c=pptx.addSlide();c.background={color:"EFEFED"};
   if(logo)c.addImage({data:logo,x:0.62,y:0.56,w:1.31,h:0.49});
   tx(c,date,{x:8.5,y:0.66,w:2.64,h:0.2,fontSize:8.5,color:T.muted,align:"right",charSpacing:1});
-  label(c,"ХҮНИЙ НӨӨЦИЙН АЛБА · УДИРДЛАГАД ТАНИЛЦУУЛАХ",{x:X,y:4.85,w:8});
   box(c,0,5.25,W,1.42,T.ink);
   tx(c,[{text:"Ажилтны үнэлгээ ",options:{color:"FFFFFF"}},{text:"2026.",options:{color:T.muted}}],{x:X,y:5.25,w:CW,h:1.42,fontSize:43,bold:true,valign:"middle"});
   tx(c,`Нэгдсэн дүн · ${A.n} ажилтны хариулт (${HEADCOUNT}-ийн ${part}%) · Hunnu Concrete | Хүннү Конкрет`,{x:X,y:6.85,w:CW,h:0.25,fontSize:10,color:T.body});
@@ -229,7 +228,6 @@ export function buildDeck(pptx,A,{date,logo,icons={}}){
   const b=pptx.addSlide();b.background={color:"EFEFED"};
   if(logo)b.addImage({data:logo,x:0.62,y:0.56,w:1.31,h:0.49});
   tx(b,date,{x:8.5,y:0.66,w:2.64,h:0.2,fontSize:8.5,color:T.muted,align:"right",charSpacing:1});
-  label(b,"АСУУЛТ, САНАЛ",{x:X,y:2.25,w:6},"chat");
   box(b,0,2.6,W,2.3,T.ink);
   tx(b,[{text:"Баярлалаа.",options:{color:"FFFFFF",fontSize:48,breakLine:true}},{text:"Дүн HR самбарт тогтмол шинэчлэгдэнэ: hunnu.asia/talent",options:{color:T.muted,fontSize:16}}],{x:X,y:2.6,w:CW,h:2.3,bold:true,valign:"middle"});
   rule(b,5.55);
