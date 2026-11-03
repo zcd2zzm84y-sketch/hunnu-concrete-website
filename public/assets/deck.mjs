@@ -57,172 +57,170 @@ export function buildDeck(pptx,A,{date,logo,icons={}}){
   const ico=(s,name,x,y,sz,tone="ink")=>{const d=icons[name+"_"+tone]||icons[name];if(d)s.addImage({data:d,x,y,w:sz,h:sz})};
   const ring=(s,name,x,y,d=0.5)=>{s.addShape("ellipse",{x,y,w:d,h:d,fill:{color:"FFFFFF"},line:{color:T.soft,width:0.75}});ico(s,name,x+d*0.25,y+d*0.25,d*0.5)};
   const disc=(s,name,x,y,d=0.5)=>{s.addShape("ellipse",{x,y,w:d,h:d,fill:{color:T.ink},line:{color:T.ink,width:0}});ico(s,name,x+d*0.24,y+d*0.24,d*0.52,"white")};
-  // Section label: small muted icon + [ CAPS ]
-  const label=(s,t,o,icon)=>{const{x,y}=o;if(icon)ico(s,icon,x,y+0.01,0.17,"muted");tx(s,`[ ${t} ]`,{fontSize:7.5,bold:true,color:T.muted,charSpacing:1,h:0.2,...o,x:icon?x+0.24:x})};
-  const pair=(s,a,b,o)=>tx(s,[{text:a,options:{color:T.ink,breakLine:true}},{text:b,options:{color:T.muted}}],{fontSize:22,bold:true,h:0.95,w:CW,x:X,y:1.25,lineSpacingMultiple:0.95,...o});
-  let no=1;
-  const page=(num,cap)=>{
+  const C=STATUS,good=(v,g=70,w=50)=>v==null?T.ink:v>=g?C.green:v>=w?C.amber:C.red,enpsC=v=>v<0?C.red:v<=30?C.amber:C.green;
+  // Small caption above a chart or card: muted icon + caps text
+  const label=(s,t,o,icon)=>{const{x,y}=o;if(icon)ico(s,icon,x,y,0.2,"muted");tx(s,t,{fontSize:8,bold:true,color:T.muted,charSpacing:1,h:0.22,valign:"middle",...o,x:icon?x+0.3:x})};
+  const pair=(s,a,b)=>tx(s,[{text:a,options:{color:T.ink,breakLine:true}},{text:b,options:{color:T.muted}}],{fontSize:24,bold:true,h:1.0,w:CW,x:X,y:1.2,lineSpacingMultiple:0.95});
+  let no=0;
+  const page=cap=>{
     const s=pptx.addSlide();no++;s.background={color:"FFFFFF"};
     s.addShape("roundRect",{x:X,y:0.4,w:0.36,h:0.36,rectRadius:0.06,fill:{color:T.ink},line:{color:T.ink,width:0}});
-    tx(s,num,{x:X,y:0.4,w:0.36,h:0.36,fontSize:10,bold:true,color:"FFFFFF",align:"center",valign:"middle"});
+    tx(s,String(no).padStart(2,"0"),{x:X,y:0.4,w:0.36,h:0.36,fontSize:10,bold:true,color:"FFFFFF",align:"center",valign:"middle"});
     tx(s,cap,{x:1.04,y:0.4,w:7,h:0.36,fontSize:9,bold:true,color:T.ink,charSpacing:1,valign:"middle"});
     if(logo)s.addImage({data:logo,x:10.49,y:0.50,w:0.66,h:0.25});
     rule(s,0.89);
     rule(s,7.61,T.muted,X,CW,0.5);
     tx(s,"Building Smarter.",{x:X,y:7.74,w:3,h:0.2,fontSize:8,color:T.muted});
-    tx(s,String(no).padStart(2,"0"),{x:10.4,y:7.74,w:0.74,h:0.2,fontSize:8,color:T.body,align:"right"});
+    tx(s,String(no+1).padStart(2,"0"),{x:10.4,y:7.74,w:0.74,h:0.2,fontSize:8,color:T.body,align:"right"});
     return s;
   };
-  // Horizontal bars on a fixed grid: left-aligned label column, grey track, value bar, value at the track end
-  const hbar=(s,rows,{x,y,w,lw=2.1,rh=0.5,max=100,fmt=v=>v+"%",dark=()=>true,ref}={})=>{
-    const tw=w-lw-0.55,bx=x+lw;
-    if(ref!=null){const rx=bx+tw*ref/max;s.addShape("line",{x:rx,y:y-0.05,w:0,h:rows.length*rh,line:{color:T.muted,width:0.5,dashType:"dash"}});
-      tx(s,fmt(ref),{x:rx-0.3,y:y+rows.length*rh-0.02,w:0.6,h:0.18,fontSize:7,color:T.muted,align:"center"})}
+  // One-line conclusion at the bottom of a slide
+  const sum=(s,t)=>{if(!t)return;s.addShape("roundRect",{x:X,y:6.85,w:CW,h:0.55,rectRadius:0.06,fill:{color:"F2F2F2"},line:{color:"F2F2F2",width:0}});
+    ico(s,"check",X+0.2,6.99,0.27);tx(s,t,{x:X+0.62,y:6.85,w:CW-0.8,h:0.55,fontSize:11,bold:true,color:T.ink,valign:"middle"})};
+  // Horizontal bars on a fixed grid: label column, grey track, value bar, value at the track end (coloured by status)
+  const hbar=(s,rows,{x,y,w,lw=2.4,rh=0.5,max=100,fmt=v=>v+"%",dark=()=>true,vc=()=>T.ink,ref}={})=>{
+    const tw=w-lw-0.65,bx=x+lw;
+    if(ref!=null){const rx=bx+tw*ref/max;s.addShape("line",{x:rx,y:y-0.05,w:0,h:rows.length*rh+0.05,line:{color:T.muted,width:0.5,dashType:"dash"}});
+      tx(s,fmt(ref),{x:rx-0.3,y:y+rows.length*rh+0.03,w:0.6,h:0.18,fontSize:7.5,color:T.muted,align:"center"})}
     rows.forEach(([l,v],i)=>{const cy=y+i*rh,mid=cy+rh/2;
-      tx(s,l,{x,y:cy,w:lw-0.15,h:rh,fontSize:9,color:T.body,valign:"middle"});
-      box(s,bx,mid-0.11,tw,0.22,T.track);
+      tx(s,l,{x,y:cy,w:lw-0.15,h:rh,fontSize:10,color:T.body,valign:"middle"});
+      box(s,bx,mid-0.12,tw,0.24,T.track);
       const col=dark(v)?T.ink:T.soft;
-      if(v>0)s.addShape("rect",{x:bx,y:mid-0.11,w:Math.max(0.02,tw*Math.min(v,max)/max),h:0.22,fill:{color:col},line:{color:col,width:0},objectName:"anim-bar-"+i});
-      tx(s,fmt(v),{x:bx+tw+0.08,y:cy,w:0.47,h:rh,fontSize:9,bold:true,color:T.ink,valign:"middle",objectName:"anim-val-"+i})});
+      if(v>0)s.addShape("rect",{x:bx,y:mid-0.12,w:Math.max(0.02,tw*Math.min(v,max)/max),h:0.24,fill:{color:col},line:{color:col,width:0},objectName:"anim-bar-"+i});
+      tx(s,fmt(v),{x:bx+tw+0.1,y:cy,w:0.55,h:rh,fontSize:10.5,bold:true,color:vc(v),valign:"middle",objectName:"anim-val-"+i})});
     return y+rows.length*rh;
   };
-  // Right-hand card: top rule, icon label, rows of text
-  const card=(s,{x,y,w,h},title,icon,lines,fs=9.5)=>{rule(s,y,T.ink,x,w);label(s,title,{x,y:y+0.14,w:w-0.3},icon);
-    tx(s,lines.map(t=>({text:t,options:{breakLine:true,paraSpaceAfter:4}})),{x,y:y+0.45,w,h:h-0.45,fontSize:fs,color:T.body})};
-  const list=(s,items,o)=>tx(s,items.filter(Boolean).map(t=>({text:t,options:{bullet:{indent:12},paraSpaceAfter:7,breakLine:true}})),{fontSize:11,color:T.body,...o});
-  // KPI row (REPORT360 style): dark discs with white icons on one grey line, CAPS label, value, description
-  const strip=(s,cols)=>{rule(s,5.9,"CCCCCC",X,CW,1);[0.55,3.20,5.84,8.49].forEach((x,i)=>{const c=cols[i];if(!c)return;
-    disc(s,c[3],x,5.6,0.6);
-    tx(s,c[1].toUpperCase(),{x,y:6.35,w:2.5,h:0.2,fontSize:7.5,bold:true,color:"777777",charSpacing:1});
-    tx(s,c[0],{x,y:6.56,w:2.5,h:0.42,fontSize:22,bold:true,color:T.ink});
-    tx(s,c[2],{x,y:7.0,w:2.45,h:0.45,fontSize:8.3,color:"555555"})})};
-  // Dark highlight card: white text on #333
-  const darkCard=(s,{x,y,w,h},title,icon,lines,fs=9.5)=>{s.addShape("roundRect",{x,y,w,h,rectRadius:0.1,fill:{color:T.ink},line:{color:T.ink,width:0}});
-    ico(s,icon,x+0.25,y+0.22,0.2,"white");tx(s,title,{x:x+0.55,y:y+0.2,w:w-0.8,h:0.24,fontSize:8,bold:true,color:"FFFFFF",charSpacing:1,valign:"middle"});
-    lines.forEach((t,i)=>{const ly=y+0.6+i*0.36;if(i)s.addShape("line",{x:x+0.25,y:ly-0.04,w:w-0.5,h:0,line:{color:"5A5A5A",width:0.5}});tx(s,t,{x:x+0.25,y:ly,w:w-0.5,h:0.32,fontSize:fs,color:"FFFFFF",valign:"middle"})})};
+  // Column with icon heading and rows of [big value, text]
+  const col=(s,{x,y,w},title,icon,rows,{vw=0.75,fs=10.5}={})=>{disc(s,icon,x,y,0.42);tx(s,title,{x:x+0.55,y,w:w-0.55,h:0.42,fontSize:11,bold:true,color:T.ink,valign:"middle"});
+    rows.forEach(([v,t,c],i)=>{const ry=y+0.65+i*0.62;rule(s,ry,i?"E3E3E3":T.ink,x,w,i?0.5:0.75);
+      tx(s,v,{x,y:ry+0.07,w:vw,h:0.48,fontSize:17,bold:true,color:c||T.ink,valign:"middle"});
+      tx(s,t,{x:x+vw+0.05,y:ry+0.07,w:w-vw-0.05,h:0.48,fontSize:fs,color:T.body,valign:"middle"})})};
   const part=Math.round(A.n/HEADCOUNT*100);
-  const LX=X,LW=6.05,RX=7.0,RW=W-X-1.0-RX+0.45; // left chart column, right card column (ends at 11.14)
+  const wk=t=>A.weak.some(x=>x.t.includes(t));
+  const steps=[A.mgrDone<A.n?["award",`Алба бүрийн дарга ажилтныхаа ур чадварыг HR самбарт үнэлэх (одоо ${A.mgrDone}/${A.n}).`]:null,
+    A.n<HEADCOUNT?["users",`Үлдсэн ${HEADCOUNT-A.n} ажилтныг бөглүүлэх${A.missing.length?": "+A.missing.join(", "):""}.`]:null,
+    wk("Урамшуулал")?["wallet","Урамшууллын журмыг ажилтнуудад тайлбарлаж, шалгуурыг ил болгох."]:null,
+    A.train[0]?["cap",`Хамгийн их хүссэн сургалтыг эхлүүлэх: ${A.train.slice(0,3).map(t=>t[0]).join(", ")}.`]:null,
+    A.low.length?["book",`60%-иас доош ${A.low.length} ажилтанд ажлын байрны сургалт, давтан шалгалт.`]:null,
+    wk("сургалтад")?["list","Жилийн сургалтын төлөвлөгөөг алба бүрээр гаргах."]:null,
+    wk("аюулгүй")?["shield","Ажлын байрны аюулгүй байдлын үзлэг (тоос, цемент, ачилт буулгалт)."]:null,
+    A.hot.length?["chat",`Анхаарах албадын даргатай тусад нь уулзах: ${A.hot.map(d=>d.d).join(", ")}.`]:null].filter(Boolean);
 
   // Cover
   const c=pptx.addSlide();c.background={color:"EFEFED"};
   if(logo)c.addImage({data:logo,x:0.62,y:0.56,w:1.31,h:0.49});
   tx(c,date,{x:8.5,y:0.66,w:2.64,h:0.2,fontSize:8.5,color:T.muted,align:"right",charSpacing:1});
+  tx(c,"ХҮНИЙ НӨӨЦИЙН АЛБА",{x:X,y:4.85,w:6,h:0.22,fontSize:9,bold:true,color:T.ink,charSpacing:1});
   box(c,0,5.25,W,1.42,T.ink);
   tx(c,[{text:"Ажилтны үнэлгээ ",options:{color:"FFFFFF"}},{text:"2026.",options:{color:T.muted}}],{x:X,y:5.25,w:CW,h:1.42,fontSize:43,bold:true,valign:"middle"});
   tx(c,`Нэгдсэн дүн · ${A.n} ажилтны хариулт (${HEADCOUNT}-ийн ${part}%) · Hunnu Concrete | Хүннү Конкрет`,{x:X,y:6.85,w:CW,h:0.25,fontSize:10,color:T.body});
 
-  // 01 Overview
-  const o=page("01","ТОЙМ");
-  pair(o,`${A.n} ажилтан санал өглөө,`,`нийт ${HEADCOUNT}-ийн ${part}%.`);
-  label(o,"СЭТГЭЛ ХАНАМЖ",{x:X,y:TOP,w:4},"smile");
-  tx(o,P.hidden?"—":pct(P.overall),{x:X,y:2.7,w:5,h:1.45,fontSize:90,bold:true,color:T.ink});
-  tx(o,`Сэтгэл ханамжийн асуултуудад 4 эсвэл 5 гэж хариулсан хувь.${P.hidden?"":P.overall>=70?" Ихэнх нь сэтгэл хангалуун байна.":P.overall>=50?" Тал илүү нь сэтгэл хангалуун байна.":" Тал хүрэхгүй нь сэтгэл хангалуун байна."}`,{x:X,y:4.3,w:4.6,h:0.6,fontSize:9.5});
-  rule(o,TOP-0.1,T.ink,RX,RW);
-  label(o,"ГОЛ ДҮГНЭЛТ",{x:RX,y:TOP+0.05,w:4},"target");
-  const keys=[A.likes.length?["users",`Хамгийн их таалагддаг зүйл нь хамт олон (${A.likes.length}-аас ${A.likeTeam}).`]:null,
-    A.strong[0]?["up",`Хамгийн өндөр: ${clean(A.strong[0].t)} (${A.strong[0].v}%).`]:null,
-    A.weak[0]?["down",`Хамгийн бага: ${clean(A.weak[0].t)} (${A.weak[0].v}%).`]:null,
-    ["book",`Мэдлэгийн дундаж ${A.K}%. 60%-иас доош ${A.low.length} ажилтан.`],
-    A.train[0]?["cap",`Хамгийн их хүссэн сургалт: ${A.train[0][0]} (${A.train[0][1]} хүн).`]:null].filter(Boolean);
-  keys.forEach(([ic,t],i)=>{const y=TOP+0.4+i*0.56;ico(o,ic,RX,y+0.02,0.22);tx(o,t,{x:RX+0.38,y,w:RW-0.38,h:0.58,fontSize:10.5})});
-  strip(o,[[`${A.n} / ${HEADCOUNT}`,"Оролцоо",A.missing.length?`Эхлээгүй: ${A.missing.join(", ")}`:"Бүх алба оролцсон","users"],
-    [pct(A.K),"Мэдлэг",`Ажлын ${A.part("job")}% · нийтлэг ${A.part("common")}%`,"book"],
-    [P.hidden?"—":sign(P.enps),"eNPS","Найздаа санал болгох (−100…+100)","thumb"],
-    [P.hidden?"—":pct(P.stay),"Үлдэх хүсэл","Нэг жилийн дараа ч энд ажиллана","anchor"]]);
+  // Key results
+  const o=page("ГОЛ ДҮН");
+  pair(o,`${A.n} ажилтан санал өглөө,`,P.hidden?`нийт ${HEADCOUNT}-ийн ${part}%.`:`${P.overall}% нь сэтгэл хангалуун байна.`);
+  const kpi=[[`${A.n}/${HEADCOUNT}`,"Оролцоо",A.missing.length?`Эхлээгүй: ${A.missing.join(", ")}`:"Бүх алба оролцсон","users",good(part,80,50)],
+    [pct(A.K),"Мэдлэг",`Ажлын ${A.part("job")}% · нийтлэг ${A.part("common")}%`,"book",good(A.K)],
+    [P.hidden?"—":pct(P.overall),"Сэтгэл ханамж","4–5 гэж хариулсан хувь","smile",P.hidden?T.ink:good(P.overall)],
+    [P.hidden?"—":sign(P.enps),"eNPS","Найздаа санал болгох (−100…+100)","thumb",P.hidden?T.ink:enpsC(P.enps)]];
+  const kw=(CW-0.6)/4;
+  kpi.forEach(([v,l,d,ic,cl],i)=>{const x=X+i*(kw+0.2),y=2.4;
+    o.addShape("roundRect",{x,y,w:kw,h:1.85,rectRadius:0.08,fill:{color:"FFFFFF"},line:{color:"D9D9D6",width:0.75}});
+    disc(o,ic,x+0.22,y+0.22,0.46);
+    tx(o,l,{x:x+0.8,y:y+0.22,w:kw-0.95,h:0.46,fontSize:10.5,bold:true,color:T.ink,valign:"middle"});
+    tx(o,v,{x:x+0.22,y:y+0.8,w:kw-0.4,h:0.55,fontSize:28,bold:true,color:cl});
+    tx(o,d,{x:x+0.22,y:y+1.38,w:kw-0.4,h:0.4,fontSize:8.5,color:"555555"})});
+  const cw3=(CW-0.6)/3;
+  col(o,{x:X,y:4.6,w:cw3},"Давуу тал","up",[...(A.likes.length?[[`${A.likeTeam}/${A.likes.length}`,"Хамт олноо хамгийн их үнэлдэг",C.green]]:[]),...A.strong.slice(0,2).map(x=>[x.v+"%",cut(clean(x.t),48),good(x.v)])].slice(0,3),{fs:9.5});
+  col(o,{x:X+cw3+0.3,y:4.6,w:cw3},"Анхаарах","alert",A.weak.slice(0,3).map(x=>[x.v+"%",cut(clean(x.t),48),good(x.v)]),{fs:9.5});
+  col(o,{x:X+2*(cw3+0.3),y:4.6,w:cw3},"Эхний алхам","check",steps.slice(0,3).map(([,t],i)=>[String(i+1).padStart(2,"0"),cut(t,62),T.muted]),{vw:0.5,fs:9.5});
 
-  // 02 Knowledge
-  const kn=page("02","МЭДЛЭГ");
+  // Knowledge
+  const kn=page("МЭДЛЭГ");
   pair(kn,`Мэдлэгийн дундаж ${A.K}%,`,`ажлын ${A.part("job")}%, нийтлэг ${A.part("common")}%.`);
-  rule(kn,TOP-0.1,T.ink,LX,LW);
-  label(kn,"АЛБААР · ХАРИУЛСАН ХҮН · ТАСАРХАЙ ШУГАМ 60%",{x:LX,y:TOP+0.05,w:LW},"building");
-  hbar(kn,A.done.map(d=>[`${d.d} (${d.n})`,d.k]),{x:LX,y:TOP+0.45,w:LW,lw:2.5,rh:Math.min(0.5,4.2/Math.max(1,A.done.length)),dark:v=>v<60,ref:60});
-  const kh=A.gap.length?2.05:4.6;
-  card(kn,{x:RX,y:TOP-0.1,w:RW,h:kh},"60%-ИАС ДООШ","alert",A.low.length?A.low.map(s=>`${kPct(s)}% · ${s.position}`):["Ийм ажилтан алга."]);
-  if(A.gap.length)card(kn,{x:RX,y:TOP+2.15,w:RW,h:2.35},"ЯРИЛЦАЖ ТОДРУУЛАХ","chat",[...A.gap.map(s=>`${s.position}: мэдлэг ${kPct(s)}%, өөрийн үнэлгээ ${selfAvg(s).toFixed(1)}`),""]);
-  if(A.gap.length)tx(kn,"Өөрийн үнэлгээ ба мэдлэгийн оноо хоорондоо зөрсөн.",{x:RX,y:7.25,w:RW,h:0.2,fontSize:8,color:T.muted});
+  label(kn,"АЛБААР · ХАРИУЛСАН ХҮНИЙ ТОО ХААЛТАНД",{x:X,y:2.4,w:6.3},"building");
+  hbar(kn,A.done.map(d=>[`${d.d} (${d.n})`,d.k]),{x:X,y:2.8,w:6.5,lw:2.6,rh:Math.min(0.55,3.6/Math.max(1,A.done.length)),dark:v=>v<60,vc:v=>good(v,75,60),ref:60});
+  const RX=7.45,RW=11.14-RX;
+  kn.addShape("roundRect",{x:RX,y:2.35,w:RW,h:4.25,rectRadius:0.08,fill:{color:"F7F7F7"},line:{color:"F7F7F7",width:0}});
+  label(kn,"60%-ИАС ДООШ",{x:RX+0.25,y:2.55,w:RW-0.5},"alert");
+  tx(kn,(A.low.length?A.low.map(s=>({text:[{text:kPct(s)+"%  ",options:{bold:true,color:good(kPct(s),75,60)}},{text:s.position}]})):[{text:"Ийм ажилтан алга."}]).flatMap(r=>r.text?r.text.map((t,j,a)=>({text:t.text,options:{...t.options,breakLine:j===a.length-1}})):[{text:r.text,options:{breakLine:true}}]),{x:RX+0.25,y:2.9,w:RW-0.5,h:1.7,fontSize:10.5,paraSpaceAfter:5});
+  if(A.gap.length){label(kn,"ӨӨРИЙН ҮНЭЛГЭЭ ЗӨРСӨН",{x:RX+0.25,y:4.65,w:RW-0.5},"chat");
+    tx(kn,A.gap.map(s=>({text:`${s.position}: мэдлэг ${kPct(s)}%, өөрөө ${selfAvg(s).toFixed(1)}/5`,options:{breakLine:true}})),{x:RX+0.25,y:5.0,w:RW-0.5,h:1.5,fontSize:9.5,paraSpaceAfter:5})}
+  const kd=A.done,kt=kd.length?`Хамгийн өндөр: ${kd[0].d} ${kd[0].k}%. Хамгийн бага: ${kd[kd.length-1].d} ${kd[kd.length-1].k}%.`:"";
+  sum(kn,kt);
 
-  // 03 Skills and training
-  const sk=page("03","УР ЧАДВАР БА СУРГАЛТ");
+  // Skills and training
+  const sk=page("УР ЧАДВАР БА СУРГАЛТ");
   const lo=A.comp[0],hi=A.comp[A.comp.length-1];
-  pair(sk,lo?`Сул ур чадвар: ${lo.t.toLowerCase()},`:"Ур чадвар",hi?`хамгийн сайн нь ${hi.t.toLowerCase()}.`:"");
+  pair(sk,lo?`Хамгийн сул нь ${lo.t.toLowerCase()},`:"Ур чадвар",hi?`хамгийн сайн нь ${hi.t.toLowerCase()}.`:"");
   const half=(CW-0.5)/2,SX2=X+half+0.5;
-  const rows=Math.max(A.comp.length,Math.min(7,A.train.length)),rh=Math.min(0.5,4.4/Math.max(1,rows));
-  rule(sk,TOP-0.1,T.ink,X,half);rule(sk,TOP-0.1,T.ink,SX2,half);
-  label(sk,"ӨӨРИЙН ҮНЭЛГЭЭ · 5-ААС · ТАСАРХАЙ ШУГАМ 3.5",{x:X,y:TOP+0.05,w:half},"award");
-  hbar(sk,[...A.comp].reverse().map(x=>[x.t,+x.v.toFixed(1)]),{x:X,y:TOP+0.45,w:half,lw:2.0,rh,max:5,fmt:v=>v.toFixed(1),dark:v=>v<3.5,ref:3.5});
-  label(sk,"ХҮССЭН СУРГАЛТ · ХҮНИЙ ТОО",{x:SX2,y:TOP+0.05,w:half},"cap");
+  const rows=Math.max(A.comp.length,Math.min(7,A.train.length)),rh=Math.min(0.5,3.8/Math.max(1,rows));
+  label(sk,"ӨӨРИЙН ҮНЭЛГЭЭ · 5-ААС",{x:X,y:2.4,w:half},"award");
+  hbar(sk,[...A.comp].reverse().map(x=>[x.t,+x.v.toFixed(1)]),{x:X,y:2.8,w:half,lw:2.1,rh,max:5,fmt:v=>v.toFixed(1),dark:v=>v<3.5,vc:v=>v<3.5?C.amber:T.ink,ref:3.5});
+  label(sk,"ХҮССЭН СУРГАЛТ · ХҮНИЙ ТОО",{x:SX2,y:2.4,w:half},"cap");
   const tr=A.train.slice(0,7),tmax=tr.length?tr[0][1]:1;
-  const ty=hbar(sk,tr.map(t=>[t[0],t[1]]),{x:SX2,y:TOP+0.45,w:half,lw:2.2,rh,max:tmax,fmt:v=>String(v),dark:v=>v>=tmax*0.7});
-  if(A.other.length)tx(sk,"Бусад: "+cut(A.other.join("; "),200),{x:SX2,y:Math.max(ty+0.15,6.3),w:half,h:1.0,fontSize:8.5,color:T.muted});
+  hbar(sk,tr.map(t=>[t[0],t[1]]),{x:SX2,y:2.8,w:half,lw:2.3,rh,max:tmax,fmt:v=>String(v),dark:v=>v>=tmax*0.7});
+  sum(sk,tr.length?`Эхний ээлжийн сургалт: ${tr.slice(0,3).map(t=>`${t[0]} (${t[1]})`).join(", ")}.`:"");
 
-  // 04 Satisfaction
-  const sa=page("04","СЭТГЭЛ ХАНАМЖ");
+  // Satisfaction by area
+  const sa=page("СЭТГЭЛ ХАНАМЖ");
   if(P.hidden)pair(sa,`${P.n} хариулт ирсэн.`,"3-аас дээш болмогц дүн гарна.");
   else{
+    const g=[...P.byGroup].sort((a,b)=>a.v-b.v),low50=g.filter(x=>x.v<50);
     pair(sa,`${P.overall}% эерэг, eNPS ${sign(P.enps)},`,`үлдэх хүсэл ${P.stay}%.`);
-    const g=[...P.byGroup].sort((a,b)=>a.v-b.v);
-    rule(sa,TOP-0.1,T.ink,LX,LW);
-    label(sa,"ЧИГЛЭЛЭЭР · 4–5 ГЭСЭН ХУВЬ · ХАР НЬ 50%-ИАС ДООШ",{x:LX,y:TOP+0.05,w:LW},"smile");
-    hbar(sa,g.map(x=>[x.g,x.v]),{x:LX,y:TOP+0.45,w:LW,lw:2.5,rh:Math.min(0.58,4.2/Math.max(1,g.length)),dark:v=>v<50,ref:50});
-    const wk=A.weak.map(x=>`${x.v}% · ${cut(clean(x.t),36)}`),dh=0.62+wk.length*0.36;
-    darkCard(sa,{x:RX,y:TOP-0.1,w:RW,h:dh},"СУЛ ТАЛ · 50%-ИАС ДООШ","down",wk,9);
-    let cy2=TOP-0.1+dh+0.3;
-    const st=A.strong.map(x=>`${x.v}% · ${cut(clean(x.t),48)}`),sh=0.5+st.length*0.27;
-    card(sa,{x:RX,y:cy2,w:RW,h:sh},"САЙН ТАЛ","up",st,9);cy2+=sh+0.2;
-    const lv=A.leave.slice(0,4).map(([l,n])=>`${n} хүн · ${l}`);
-    card(sa,{x:RX,y:cy2,w:RW,h:Math.min(7.45-cy2,0.5+lv.length*0.27)},"ГАРВАЛ ШАЛТГААН НЬ","out",lv,9);
+    label(sa,"ЧИГЛЭЛЭЭР · 4–5 ГЭЖ ХАРИУЛСАН ХУВЬ",{x:X,y:2.4,w:8},"smile");
+    hbar(sa,g.map(x=>[x.g,x.v]),{x:X,y:2.8,w:CW,lw:3.0,rh:Math.min(0.55,3.6/Math.max(1,g.length)),dark:v=>v<50,vc:v=>good(v),ref:50});
+    sum(sa,low50.length?`50%-иас доош: ${low50.map(x=>`${x.g.toLowerCase()} ${x.v}%`).join(", ")}. Эндээс эхэлж сайжруулна.`:"Бүх чиглэл 50%-иас дээш.");
+
+    // Strong and weak items
+    const sw=page("САЙН БА СУЛ ТАЛ");
+    pair(sw,"Юу сайн, юу сул байна вэ,","гарвал ямар шалтгаантай вэ.");
+    const c3=(CW-0.6)/3;
+    col(sw,{x:X,y:2.45,w:c3},"Сул тал · 50%-иас доош","down",A.weak.map(x=>[x.v+"%",cut(clean(x.t),52),good(x.v)]),{fs:9.5});
+    col(sw,{x:X+c3+0.3,y:2.45,w:c3},"Сайн тал · 70%-иас дээш","up",A.strong.map(x=>[x.v+"%",cut(clean(x.t),52),good(x.v)]),{fs:9.5});
+    col(sw,{x:X+2*(c3+0.3),y:2.45,w:c3},"Гарвал шалтгаан нь","out",A.leave.slice(0,5).map(([l,n])=>[n+" хүн",l,T.ink]),{fs:9.5});
   }
 
-  // 05 Departments to watch: table kept; only the figures carry status colour (Tigo: «үзүүлэлтүүдийг өнгөөр тодруулж л болно»)
+  // Departments to watch: table; only figures carry status colour
   if(!P.hidden&&A.hot.length){
-    const hd=page("05","АНХААРАХ АЛБА");
+    const hd=page("АНХААРАХ АЛБА");
+    const neg=A.hot.filter(d=>d.enps<0);
     pair(hd,`${A.hot.length} албанд анхаарах чиглэл байна,`,"дарга нартай нь тусад нь ярилцана.");
-    const C=STATUS,lvl=v=>v<30?C.red:v<45?C.amber:C.green,ec=v=>v<0?C.red:v<=30?C.amber:C.green;
-    rule(hd,TOP-0.1);
-    label(hd,"eNPS СӨРӨГ ЭСВЭЛ 45%-ИАС ДООШ ЧИГЛЭЛТЭЙ АЛБА",{x:X,y:TOP+0.05,w:8},"alert");
-    const th=t=>({text:t,options:{bold:true,color:T.muted,fontSize:7.5,charSpacing:1}});
-    const runs=bad=>bad.length?bad.flatMap(([g,v],i)=>[...(i?[{text:"   ·   ",options:{color:T.soft}}]:[]),{text:g+" ",options:{color:T.body}},{text:v+"%",options:{bold:true,color:lvl(v)}}]):[{text:"—",options:{color:T.muted}}];
+    const lvl=v=>v<30?C.red:v<45?C.amber:C.green;
+    const th=t=>({text:t,options:{bold:true,color:T.muted,fontSize:8,charSpacing:1}});
+    const runs=bad=>bad.length?bad.flatMap(([gg,v],i)=>[...(i?[{text:"   ·   ",options:{color:T.soft}}]:[]),{text:gg+" ",options:{color:T.body}},{text:v+"%",options:{bold:true,color:lvl(v)}}]):[{text:"—",options:{color:T.muted}}];
     const rows2=[[th("АЛБА"),th("ХҮН"),th("eNPS"),th("45%-ИАС ДООШ ЧИГЛЭЛ")],
-      ...A.hot.map(d=>[{text:d.d,options:{bold:true,color:T.ink}},String(d.n),{text:sign(d.enps),options:{bold:true,fontSize:13,color:ec(d.enps)}},{text:runs(d.bad)}])];
-    hd.addTable(rows2,{x:X,y:TOP+0.4,w:CW,colW:[2.9,0.7,0.8,CW-4.4],fontFace:F,fontSize:10,color:T.body,border:[{type:"none"},{type:"none"},{type:"solid",color:T.soft,pt:0.5},{type:"none"}],rowH:0.5,valign:"middle",margin:[0.04,0.08,0.04,0]});
-    const lg=[[C.red,"eNPS сөрөг · 30%-иас доош"],[C.amber,"eNPS 0–30 · 30–45%"],[C.green,"eNPS 30-аас дээш"]];
-    lg.forEach(([col,t],i)=>{const lx=X+i*2.6;hd.addShape("ellipse",{x:lx,y:7.27,w:0.12,h:0.12,fill:{color:col},line:{color:col,width:0}});tx(hd,t,{x:lx+0.2,y:7.23,w:2.3,h:0.2,fontSize:8,color:T.body})});
-    tx(hd,"3-аас цөөн хариулттай албыг харуулахгүй. Хувь нь 4–5 гэж хариулсан хувь.",{x:7.0,y:7.23,w:4.14,h:0.2,fontSize:8,color:T.muted,align:"right"});
+      ...A.hot.map(d=>[{text:d.d,options:{bold:true,color:T.ink}},String(d.n),{text:sign(d.enps),options:{bold:true,fontSize:14,color:enpsC(d.enps)}},{text:runs(d.bad)}])];
+    hd.addTable(rows2,{x:X,y:2.45,w:CW,colW:[2.9,0.7,0.9,CW-4.5],fontFace:F,fontSize:10.5,color:T.body,border:[{type:"none"},{type:"none"},{type:"solid",color:T.soft,pt:0.5},{type:"none"}],rowH:0.55,valign:"middle",margin:[0.04,0.08,0.04,0]});
+    const lg=[[C.red,"30%-иас доош · eNPS сөрөг"],[C.amber,"30–45% · eNPS 0–30"],[C.green,"eNPS 30-аас дээш"]];
+    lg.forEach(([cl,t],i)=>{const lx=X+i*2.6;hd.addShape("ellipse",{x:lx,y:6.48,w:0.12,h:0.12,fill:{color:cl},line:{color:cl,width:0}});tx(hd,t,{x:lx+0.2,y:6.44,w:2.3,h:0.2,fontSize:8,color:T.body})});
+    tx(hd,"3-аас цөөн хариулттай албыг харуулахгүй.",{x:8.0,y:6.44,w:3.14,h:0.2,fontSize:8,color:T.muted,align:"right"});
+    sum(hd,neg.length?`eNPS сөрөг: ${neg.map(d=>`${d.d} (${sign(d.enps)})`).join(", ")}. Эхэлж уулзах.`:"Сөрөг eNPS-тэй алба алга.");
   }
 
-  // 06 Voice of employees
+  // Voice of employees
   if(!P.hidden&&A.themes.length){
-    const vo=page("06","АЖИЛТНЫ САНАЛ");
+    const vo=page("АЖИЛТНЫ САНАЛ");
     pair(vo,"Ажилтнууд юуг өөрчлөхийг хүсэж байна вэ?",A.likes.length?`Таалагддаг зүйлд ${A.likes.length}-аас ${A.likeTeam} нь хамт олноо дурдсан.`:"");
     const cw=(CW-0.5)/3;
-    A.themes.slice(0,6).forEach((x,i)=>{const cx=X+(i%3)*(cw+0.25),cy=TOP-0.1+Math.floor(i/3)*2.45;
-      rule(vo,cy,T.ink,cx,cw);
-      ring(vo,THEME_ICON[x.t]||"chat",cx,cy+0.15,0.5);
-      tx(vo,x.t,{x:cx+0.65,y:cy+0.15,w:cw-1.2,h:0.5,fontSize:10,bold:true,color:T.ink,valign:"middle"});
-      tx(vo,String(x.list.length),{x:cx+cw-0.55,y:cy+0.15,w:0.55,h:0.5,fontSize:20,bold:true,color:T.muted,align:"right",valign:"middle"});
-      tx(vo,x.list.slice(0,2).map(q=>({text:`«${cut(q,95)}»`,options:{breakLine:true,paraSpaceAfter:4}})),{x:cx,y:cy+0.8,w:cw,h:1.5,fontSize:9,color:T.body})});
-    tx(vo,"Тоо нь тухайн сэдвийг дурдсан ажилтны санал.",{x:X,y:7.3,w:CW,h:0.2,fontSize:8,color:T.muted});
+    A.themes.slice(0,6).forEach((x,i)=>{const cx=X+(i%3)*(cw+0.25),cy=2.4+Math.floor(i/3)*2.2;
+      vo.addShape("roundRect",{x:cx,y:cy,w:cw,h:2.0,rectRadius:0.08,fill:{color:"FFFFFF"},line:{color:"D9D9D6",width:0.75}});
+      disc(vo,THEME_ICON[x.t]||"chat",cx+0.2,cy+0.2,0.46);
+      tx(vo,x.t,{x:cx+0.8,y:cy+0.2,w:cw-1.5,h:0.46,fontSize:10.5,bold:true,color:T.ink,valign:"middle"});
+      tx(vo,String(x.list.length),{x:cx+cw-0.7,y:cy+0.2,w:0.5,h:0.46,fontSize:20,bold:true,color:T.muted,align:"right",valign:"middle"});
+      tx(vo,`«${cut(x.list[0],130)}»`,{x:cx+0.2,y:cy+0.85,w:cw-0.4,h:1.05,fontSize:9.5,italic:true,color:T.body})});
+    if(A.themes[0])sum(vo,`Хамгийн олон дурдсан: ${A.themes.slice(0,2).map(x=>`${x.t.toLowerCase()} (${x.list.length})`).join(", ")}.`);
   }
 
-  // 07 Next steps, derived from the figures
-  const nx=page("07","ДАРААГИЙН АЛХАМ");
+  // Next steps
+  const nx=page("ДАРААГИЙН АЛХАМ");
   pair(nx,"Санал болгож буй алхам,","тоон дүнгээс гаргасан.");
-  const wk=t=>A.weak.some(x=>x.t.includes(t));
-  const steps=[A.mgrDone<A.n?["award",`Алба бүрийн дарга ажилтныхаа ур чадварыг HR самбарт үнэлэх (одоо ${A.mgrDone}/${A.n}).`]:null,
-    A.n<HEADCOUNT?["users",`Үлдсэн ${HEADCOUNT-A.n} ажилтныг бөглүүлэх${A.missing.length?": "+A.missing.join(", "):""}.`]:null,
-    A.low.length?["book",`60%-иас доош ${A.low.length} ажилтанд ажлын байрны сургалт, давтан шалгалт.`]:null,
-    A.train[0]?["cap",`Хамгийн их хүссэн сургалтыг эхлүүлэх: ${A.train.slice(0,3).map(t=>t[0]).join(", ")}.`]:null,
-    wk("Урамшуулал")?["wallet","Урамшууллын журмыг ажилтнуудад тайлбарлаж, шалгуурыг ил болгох."]:null,
-    wk("сургалтад")?["list","Жилийн сургалтын төлөвлөгөөг алба бүрээр гаргах."]:null,
-    wk("аюулгүй")?["shield","Ажлын байрны аюулгүй байдлын үзлэг (тоос, цемент, ачилт буулгалт)."]:null,
-    A.hot.length?["chat",`Анхаарах албадын даргатай тусад нь уулзах: ${A.hot.map(d=>d.d).join(", ")}.`]:null].filter(Boolean);
-  const hs=Math.ceil(steps.length/2),colW=(CW-0.5)/2;
-  steps.forEach(([ic,t],i)=>{const cx=X+(i<hs?0:colW+0.5),cy=TOP-0.1+(i%hs)*1.2;
-    const first=i===0,fg=first?"FFFFFF":T.ink;
-    nx.addShape("roundRect",{x:cx,y:cy,w:colW,h:1.05,rectRadius:0.08,fill:{color:first?T.ink:"FFFFFF"},line:{color:T.ink,width:1.5}});
-    (first?ring:disc)(nx,ic,cx+0.22,cy+0.27,0.5);
-    tx(nx,String(i+1).padStart(2,"0"),{x:cx+0.85,y:cy+0.27,w:0.5,h:0.5,fontSize:16,bold:true,color:T.muted,valign:"middle"});
-    tx(nx,t,{x:cx+1.4,y:cy+0.1,w:colW-1.6,h:0.85,fontSize:10.5,bold:first,color:fg,valign:"middle"})});
+  const hs=Math.ceil(steps.length/2),colW=(CW-0.4)/2;
+  steps.forEach(([ic,t],i)=>{const cx=X+(i<hs?0:colW+0.4),cy=2.4+(i%hs)*1.15;
+    const first=i===0;
+    nx.addShape("roundRect",{x:cx,y:cy,w:colW,h:1.0,rectRadius:0.08,fill:{color:first?T.ink:"FFFFFF"},line:{color:first?T.ink:"D9D9D6",width:0.75}});
+    (first?ring:disc)(nx,ic,cx+0.22,cy+0.25,0.5);
+    tx(nx,String(i+1).padStart(2,"0"),{x:cx+0.85,y:cy+0.25,w:0.5,h:0.5,fontSize:16,bold:true,color:T.muted,valign:"middle"});
+    tx(nx,t,{x:cx+1.4,y:cy+0.08,w:colW-1.6,h:0.84,fontSize:10.5,bold:first,color:first?"FFFFFF":T.ink,valign:"middle"})});
 
   // Back page: mirrors the cover band
   const b=pptx.addSlide();b.background={color:"EFEFED"};
