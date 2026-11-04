@@ -357,31 +357,50 @@ function renderSummary(){
   try{const all=JSON.parse(localStorage.getItem(SNAP)||"{}");prev=all.cur&&all.cur.day!==today?all.cur:all.prev||null;
     localStorage.setItem(SNAP,JSON.stringify({prev,cur:{day:today,at:Date.now(),n,K,enps:P.hidden?null:P.enps,overall:P.hidden?null:P.overall}}))}catch(e){}
   const was=(v,pv,unit="")=>pv==null||pv===v?"":` <small class="muted">(${fmtDay(prev.at)}: ${pv}${unit})</small>`;
-  const li=(arr)=>arr.length?`<ul class="sum-ul">${arr.map(x=>`<li>${x}</li>`).join("")}</ul>`:"";
+  const st=(v,g=70,w=50)=>v==null?"":v>=g?"good":v>=w?"warn":"bad",eSt=v=>v<0?"bad":v<=30?"warn":"good";
+  const sgn=v=>(v>0?"+":"")+v;
   const sec=(no,title,body)=>`<section class="pp-sec"><div class="tag"><b>${no}</b>${title}</div>${body}</section>`;
+  const head=(icon,t)=>`<h4 class="sum-h">${ic(icon)}${t}</h4>`;
+  const note=t=>t?`<p class="sum-note">${ic("check")}<span>${t}</span></p>`:"";
+  const bars=(rows,{max=100,fmt=v=>v+"%",cls=v=>st(v)}={})=>`<div class="deptbars sum-bars">${rows.map(([l,v,sub])=>`<div class="db"><span>${l}${sub!=null?` <small>(${sub})</small>`:""}</span><span class="t"><i style="width:${Math.min(100,v/max*100)}%" class="${cls(v)}"></i></span><span class="v ${cls(v)}">${fmt(v)}</span></div>`).join("")}</div>`;
+  const tbl=(cols,rows)=>`<table class="sum-tbl"><thead><tr>${cols.map(c=>`<th>${c}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+  const kpi=(icon,label,val,cls,sub,delta)=>`<div class="kpi">${ic(icon)}<div><span class="kpi-l">${label}</span><b class="kpi-v ${cls}">${val}</b><span class="kpi-s">${sub}${delta||""}</span></div></div>`;
+  const pr=Math.round(n/HEADCOUNT*100);
   $("#view").innerHTML=`<div class="stack" style="gap:24px">${tabs("sum")}
   ${msg?`<div class="err">${esc(msg)}</div>`:""}
-  <article class="passport sum"><header class="pp-head">${PRINT}<div class="pp-id"><div><div class="pp-kicker">Нэгдсэн анализ · ${fmtDate(Date.now())}</div><h2>Ажилтны үнэлгээ: ${n} хүн (${HEADCOUNT}-аас ${Math.round(n/HEADCOUNT*100)}%)</h2>
+  <article class="passport sum"><header class="pp-head">${PRINT}<div class="pp-id"><div><div class="pp-kicker">Нэгдсэн анализ · ${fmtDate(Date.now())}</div><h2>Ажилтны үнэлгээ: ${n} хүн (${HEADCOUNT}-аас ${pr}%)</h2>
     <div class="pp-meta">${prev?`Харьцуулалт: ${fmtDay(prev.at)}-нд ${prev.n} хүнтэй байсан.`:"Дараагийн өдөр нээхэд өнөөдрийнхтэй харьцуулна."}</div></div></div></header>
   ${!n?`<div class="pp-sec"><p>Одоогоор бөглөсөн ажилтан алга.</p></div>`:`
-  ${sec("01","Мэдлэг",`<p><b>${K}%</b>${was(K,prev?.K,"%")}. Ажлын мэдлэг ${part("job")}%, нийтлэг мэдлэг ${part("common")}%.</p>
-    ${li([`Албаар: ${done.map(x=>`${esc(x.d)} <b>${x.k}%</b> <small class="muted">(${x.n})</small>`).join(", ")}.`,
-      missing.length?`Эхлээгүй алба: ${esc(missing.join(", "))}.`:"",
-      low.length?`60%-иас доош ${low.length} хүн: ${low.map(s=>`${esc(s.name)} (${esc(s.position)}) <b>${kPct(s)}%</b>`).join(", ")}.`:"60%-иас доош хүн алга.",
-      gap.length?`Ярилцаж тодруулах ${gap.length} хүн: ${gap.map(s=>`${esc(s.name)} (${esc(s.position)}): мэдлэг ${kPct(s)}%, өөрийн үнэлгээ ${selfAvg(s).toFixed(1)}`).join("; ")}.`:""].filter(Boolean))}`)}
-  ${sec("02","Ур чадвар, сургалт",`${li([`Хамгийн бага: ${comp.slice(0,2).map(c=>`${esc(c.t)} (${c.v.toFixed(1)})`).join(", ")}. Хамгийн өндөр: ${esc(comp[comp.length-1].t)} (${comp[comp.length-1].v.toFixed(1)}).`,
-      train.length?`Хүссэн сургалт: ${train.map(([t,c])=>`${esc(t)} <b>${c}</b>`).join(", ")}.`:"",
-      other.length?`Өөрөө бичсэн: ${esc(other.join("; "))}.`:""].filter(Boolean))}`)}`}
-  ${sec("03","Сэтгэл ханамж",P.hidden?`<p>${P.n} хариулт ирсэн. ${MIN_GROUP}-аас дээш болмогц дүн гарна.</p>`:`<p><b>${P.overall}%</b> эерэг${was(P.overall,prev?.overall,"%")}, eNPS <b>${P.enps>0?"+":""}${P.enps}</b>${was(P.enps,prev?.enps)}. Нэг жилийн дараа энд ажиллана гэсэн ${P.stay}%.</p>
-    ${li([weak.length?`Хамгийн сул: ${weak.map(x=>`${esc(x.t)} <b>${x.v}%</b>`).join("; ")}`:"",
-      strong.length?`Сайн тал: ${strong.map(x=>`${esc(x.t)} <b>${x.v}%</b>`).join("; ")}`:"",
-      ...hot.map(d=>`<b>${esc(d.d)}</b> анхаарах: eNPS ${d.enps>0?"+":""}${d.enps}${d.bad.length?", "+d.bad.map(([g,v])=>`${esc(g)} ${v}%`).join(", "):""}.`),
-      Object.keys(P.leave||{}).length?`Гарах шалтгаан: ${Object.entries(P.leave).sort((a,b)=>b[1]-a[1]).map(([l,c])=>`${esc(l)} ${c}`).join(", ")}.`:""].filter(Boolean))}`)}
-  ${P.hidden?"":sec("04","Сэтгэгдэл",`<p>${likes.length?`Таалагддаг зүйлд ${likes.length}-аас ${likeTeam} нь хамт олноо дурджээ.`:""} Өөрчлөх саналын сэдэв:</p>
-    ${themes.length?`<div class="sum-themes">${themes.map(x=>`<details><summary>${esc(x.t)} <b>${x.list.length}</b></summary>${li(x.list.map(esc))}</details>`).join("")}</div>`:"<p class=\"muted\">Санал алга.</p>"}`)}
-  ${sec("05","Хийх зүйл",li([`Удирдлагын үнэлгээ <b>${mgrDone}/${n}</b>.${mgrDone<n?" Алба бүрийн дарга нар паспорт дээр үнэлгээгээ оруулна.":""}`,
+  <section class="pp-sec"><div class="sum-kpis">
+    ${kpi("users","Оролцоо",`${n}/${HEADCOUNT}`,st(pr,80,50),missing.length?`Эхлээгүй: ${esc(missing.join(", "))}`:"Бүх алба оролцсон",was(n,prev?.n))}
+    ${kpi("book","Мэдлэг",K+"%",st(K),`Ажлын ${part("job")}% · нийтлэг ${part("common")}%`,was(K,prev?.K,"%"))}
+    ${kpi("smile","Сэтгэл ханамж",P.hidden?"—":P.overall+"%",P.hidden?"":st(P.overall),"4–5 гэж хариулсан хувь",P.hidden?"":was(P.overall,prev?.overall,"%"))}
+    ${kpi("thumb","eNPS",P.hidden?"—":sgn(P.enps),P.hidden?"":eSt(P.enps),P.hidden?"":`Үлдэх хүсэл ${P.stay}%`,P.hidden?"":was(P.enps,prev?.enps))}
+  </div></section>
+  ${sec("01","Мэдлэг",`<div class="sum-grid">
+    <div>${head("building","Албаар · хүний тоо хаалтанд")}${bars(done.map(x=>[esc(x.d),x.k,x.n]),{cls:v=>st(v,75,60)})}</div>
+    <div class="sum-card">${head("alert",`60%-иас доош · ${low.length} хүн`)}${low.length?tbl(["Нэр","Албан тушаал","Мэдлэг"],low.map(s=>[esc(s.name),esc(s.position),`<b class="${st(kPct(s),75,60)}">${kPct(s)}%</b>`])):'<p class="muted">Алга.</p>'}
+      ${gap.length?`${head("chat",`Өөрийн үнэлгээ зөрсөн · ${gap.length} хүн`)}${tbl(["Нэр","Албан тушаал","Мэдлэг","Өөрөө"],gap.map(s=>[esc(s.name),esc(s.position),kPct(s)+"%",selfAvg(s).toFixed(1)+"/5"]))}`:""}</div></div>
+    ${note(done.length?`Хамгийн өндөр: ${esc(done[0].d)} ${done[0].k}%. Хамгийн бага: ${esc(done[done.length-1].d)} ${done[done.length-1].k}%.`:"")}`)}
+  ${sec("02","Ур чадвар, сургалт",`<div class="sum-grid">
+    <div>${head("award","Өөрийн үнэлгээ · 5-аас")}${bars([...comp].reverse().map(c=>[esc(c.t),+c.v.toFixed(1)]),{max:5,fmt:v=>v.toFixed(1),cls:v=>v>=4?"good":v>=3.5?"":"warn"})}</div>
+    <div>${head("cap","Хүссэн сургалт · хүний тоо")}${train.length?bars(train.map(([t,c])=>[esc(t),c]),{max:train[0][1],fmt:v=>String(v),cls:()=>""}):'<p class="muted">Алга.</p>'}
+      ${other.length?`<p class="sum-small">Өөрөө бичсэн: ${esc(other.join("; "))}</p>`:""}</div></div>
+    ${note(train.length?`Эхний ээлжийн сургалт: ${train.slice(0,3).map(([t,c])=>`${esc(t)} (${c})`).join(", ")}.`:"")}`)}`}
+  ${sec("03","Сэтгэл ханамж",P.hidden?`<p>${P.n} хариулт ирсэн. ${MIN_GROUP}-аас дээш болмогц дүн гарна.</p>`:`
+    ${head("smile","Чиглэлээр · 4–5 гэж хариулсан хувь")}${bars([...P.byGroup].sort((a,b)=>a.v-b.v).map(x=>[esc(x.g),x.v]))}
+    <div class="sum-cols">
+      <div class="sum-card">${head("down","Сул тал")}${weak.length?`<ul class="sum-list">${weak.map(x=>`<li><b class="${st(x.v)}">${x.v}%</b><span>${esc(x.t)}</span></li>`).join("")}</ul>`:'<p class="muted">50%-иас доош асуулт алга.</p>'}</div>
+      <div class="sum-card">${head("up","Сайн тал")}${strong.length?`<ul class="sum-list">${strong.map(x=>`<li><b class="${st(x.v)}">${x.v}%</b><span>${esc(x.t)}</span></li>`).join("")}</ul>`:'<p class="muted">Алга.</p>'}</div>
+      <div class="sum-card">${head("out","Гарвал шалтгаан нь")}<ul class="sum-list">${Object.entries(P.leave||{}).sort((a,b)=>b[1]-a[1]).map(([l,c])=>`<li><b>${c}</b><span>${esc(l)}</span></li>`).join("")}</ul></div>
+    </div>
+    ${hot.length?`${head("alert","Анхаарах алба")}${tbl(["Алба","Хүн","eNPS","45%-иас доош чиглэл"],hot.map(d=>[`<b>${esc(d.d)}</b>`,d.n,`<b class="${eSt(d.enps)}">${sgn(d.enps)}</b>`,d.bad.map(([g,v])=>`${esc(g)} <b class="${v<30?"bad":"warn"}">${v}%</b>`).join(" · ")||"—"]))}`:""}
+    ${note(weak.length?`Хамгийн сул: ${esc(weak[0].t.replace(/\.$/,""))} (${weak[0].v}%).`:"")}`)}
+  ${P.hidden?"":sec("04","Сэтгэгдэл",`${likes.length?`<p>Таалагддаг зүйлд <b>${likes.length}-аас ${likeTeam}</b> нь хамт олноо дурджээ. Өөрчлөх саналын сэдэв:</p>`:""}
+    ${themes.length?`<div class="sum-themes">${themes.map(x=>`<details class="sum-card"><summary><span>${esc(x.t)}</span><b>${x.list.length}</b></summary><ul class="sum-ul">${x.list.map(t=>`<li>${esc(t)}</li>`).join("")}</ul></details>`).join("")}</div>`:"<p class=\"muted\">Санал алга.</p>"}`)}
+  ${sec("05","Хийх зүйл",`<ol class="sum-steps">${[`Удирдлагын үнэлгээ <b>${mgrDone}/${n}</b>.${mgrDone<n?" Алба бүрийн дарга нар паспорт дээр үнэлгээгээ оруулна.":""}`,
     n<HEADCOUNT?`${HEADCOUNT-n} ажилтан бөглөөгүй байна${missing.length?", ялангуяа "+esc(missing.join(", ")):""}.`:"",
-    suspect.length?`Шалгах бичлэг: ${suspect.map(s=>`${esc(s.name)} (${mmss(s.durationSec||0)})`).join(", ")}. Туршилт эсвэл хэт богино хугацаанд бөглөсөн бол устгана уу.`:""].filter(Boolean)))}
+    suspect.length?`Шалгах бичлэг: ${suspect.map(s=>`${esc(s.name)} (${mmss(s.durationSec||0)})`).join(", ")}. Туршилт эсвэл хэт богино хугацаанд бөглөсөн бол устгана уу.`:""].filter(Boolean).map(t=>`<li>${t}</li>`).join("")}</ol>`)}
   </article></div>`;
 }
 const fmtDay=t=>{const d=new Date(t);return String(d.getMonth()+1).padStart(2,"0")+"."+String(d.getDate()).padStart(2,"0")};

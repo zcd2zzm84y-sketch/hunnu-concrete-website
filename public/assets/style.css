@@ -550,3 +550,41 @@ footer .inner a:hover{color:var(--fg);text-decoration:underline;text-underline-o
 .sum-themes{display:grid;gap:6px}
 .sum-themes summary{cursor:pointer;font-size:15px}
 .sum-themes .sum-ul{margin:6px 0 4px;color:var(--muted)}
+
+/* combined analysis: KPI tiles, two-column blocks, cards, tables */
+.sum-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:3px;padding:14px}
+.kpi>.ic{flex:none;width:38px;height:38px;padding:9px;border-radius:50%;background:var(--fg);color:var(--bg)}
+.kpi>div{display:flex;flex-direction:column;min-width:0}
+.kpi-l{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.kpi-v{font-size:30px;line-height:1.15;font-weight:800}
+.kpi-s{font-size:12px;color:var(--muted)}
+.sum .good{color:var(--good)} .sum .warn{color:var(--warn)} .sum .bad{color:var(--bad)}
+.sum-bars .t i{background:var(--muted)} .sum-bars .t i.good{background:var(--good)} .sum-bars .t i.warn{background:var(--warn)} .sum-bars .t i.bad{background:var(--bad)}
+.sum-bars .v{font-weight:700}
+.sum-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:20px;align-items:start}
+.sum-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.sum-card{background:var(--sunk);border-radius:3px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.sum-h{display:flex;align-items:center;gap:8px;margin:0 0 6px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.sum-h .ic{width:16px;height:16px}
+.sum-card .sum-h+.sum-h,.sum-card .sum-tbl+.sum-h{margin-top:10px}
+.sum-tbl{border-collapse:collapse;width:100%;font-size:13px}
+.sum-tbl th{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+.sum-tbl td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.sum-tbl tr:last-child td{border-bottom:0}
+.sum-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.sum-list li{display:grid;grid-template-columns:52px 1fr;gap:8px;font-size:13px;line-height:1.4;padding-top:8px;border-top:1px solid var(--line)}
+.sum-list li:first-child{border-top:0;padding-top:0}
+.sum-list b{font-size:16px}
+.sum-note{display:flex;gap:10px;align-items:center;margin:4px 0 0!important;padding:10px 14px;background:var(--sunk);border-radius:3px;font-weight:700;font-size:14px!important}
+.sum-note .ic{flex:none;width:18px;height:18px}
+.sum-small{font-size:13px;color:var(--muted);margin:8px 0 0!important}
+.sum-themes{grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+.sum-themes details.sum-card{gap:0}
+.sum-themes summary{display:flex;justify-content:space-between;gap:10px;font-weight:700}
+.sum-themes summary b{color:var(--muted);font-size:18px}
+.sum-steps{margin:0;padding-left:22px;display:grid;gap:8px;font-size:15px}
+@media (max-width:820px){.sum-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.sum-grid,.sum-cols{grid-template-columns:1fr}}
+@media print{.sum-note,.sum-card{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+.sum-note{align-self:stretch}
+.sum-bars .db{grid-template-columns:minmax(0,1.7fr) minmax(0,2fr) 48px}
