@@ -5,7 +5,7 @@ import {$,esc,avg,fmtDate,mmss,lvl,initials,setBand,gauge,radarMulti,ic} from ".
 
 const KEY="hunnu-admin-key";
 let key=(()=>{try{return sessionStorage.getItem(KEY)||""}catch(e){return""}})();
-let staff=[],pulse=null,apps=[],bank={},openings=[],editOpen=false,selS=null,selA=null,appFilter="",deptFilter="",msg="",view=["sum","staff","pulse","app"].includes(location.hash.slice(1))?location.hash.slice(1):"sum";
+let staff=[],pulse=null,apps=[],bank={},openings=[],roster=[],rosterEdit=false,editOpen=false,selS=null,selA=null,appFilter="",deptFilter="",msg="",view=["sum","staff","pulse","app"].includes(location.hash.slice(1))?location.hash.slice(1):"sum";
 
 async function api(method,body){
   const res=await fetch("api/admin",{method,headers:{"x-admin-key":key,"content-type":"application/json"},body:body?JSON.stringify(body):undefined});
@@ -16,7 +16,7 @@ async function api(method,body){
 }
 let role="admin";
 async function load(){
-  try{const j=await api("GET");role=j.role||"admin";document.body.classList.toggle("role-manager",role==="manager");staff=j.staff;pulse=j.pulse;apps=j.applicants||[];bank=j.bank||{};openings=j.openings||[];msg="";if(!selS&&staff.length)selS=staff[0].id;if(!selA&&apps.length)selA=apps[0].id;render()}
+  try{const j=await api("GET");role=j.role||"admin";document.body.classList.toggle("role-manager",role==="manager");staff=j.staff;pulse=j.pulse;apps=j.applicants||[];bank=j.bank||{};openings=j.openings||[];roster=j.roster||[];msg="";if(!selS&&staff.length)selS=staff[0].id;if(!selA&&apps.length)selA=apps[0].id;render()}
   catch(e){if(e.auth)return login(e.message);msg="Ачаалж чадсангүй: "+e.message;render()}
 }
 const PRINT=`<button type="button" id="print" class="pp-print" title="Хэвлэх" aria-label="Хэвлэх">${ic("printer")}</button>`;
@@ -352,7 +352,7 @@ if(key){$("#view").innerHTML='<p class="muted">Ачаалж байна…</p>';l
 const SNAP="hunnu-sum-snap";
 function renderSummary(){
   setBand("Нэгдсэн","анализ.","Ажилтны үнэлгээ, сэтгэл ханамжийн дүгнэлт. Хуудсыг шинэчлэх бүрт одоогийн өгөгдлөөр дахин тооцно.");
-  const A=analyze(staff,pulse),{n,P,K,part,done,missing,low,gap,comp,train,other,mgrDone,suspect,weak,strong,hot,likes,themes,likeTeam}=A;
+  const A=analyze(staff,pulse,roster),{n,target,notDone,unmatched,P,K,part,done,missing,low,gap,comp,train,other,mgrDone,suspect,weak,strong,hot,likes,themes,likeTeam}=A;
   const today=new Date().toDateString();let prev=null;
   try{const all=JSON.parse(localStorage.getItem(SNAP)||"{}");prev=all.cur&&all.cur.day!==today?all.cur:all.prev||null;
     localStorage.setItem(SNAP,JSON.stringify({prev,cur:{day:today,at:Date.now(),n,K,enps:P.hidden?null:P.enps,overall:P.hidden?null:P.overall}}))}catch(e){}
@@ -365,18 +365,19 @@ function renderSummary(){
   const bars=(rows,{max=100,fmt=v=>v+"%",cls=v=>st(v)}={})=>`<div class="deptbars sum-bars">${rows.map(([l,v,sub])=>`<div class="db"><span>${l}${sub!=null?` <small>(${sub})</small>`:""}</span><span class="t"><i style="width:${Math.min(100,v/max*100)}%" class="${cls(v)}"></i></span><span class="v ${cls(v)}">${fmt(v)}</span></div>`).join("")}</div>`;
   const tbl=(cols,rows)=>`<table class="sum-tbl"><thead><tr>${cols.map(c=>`<th>${c}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
   const kpi=(icon,label,val,cls,sub,delta)=>`<div class="kpi">${ic(icon)}<div><span class="kpi-l">${label}</span><b class="kpi-v ${cls}">${val}</b><span class="kpi-s">${sub}${delta||""}</span></div></div>`;
-  const pr=Math.round(n/HEADCOUNT*100);
+  const pr=Math.round(Math.min(n,target)/target*100);
   $("#view").innerHTML=`<div class="stack" style="gap:24px">${tabs("sum")}
   ${msg?`<div class="err">${esc(msg)}</div>`:""}
-  <article class="passport sum"><header class="pp-head">${PRINT}<div class="pp-id"><div><div class="pp-kicker">Нэгдсэн анализ · ${fmtDate(Date.now())}</div><h2>Ажилтны үнэлгээ: ${n} хүн (${HEADCOUNT}-аас ${pr}%)</h2>
+  <article class="passport sum"><header class="pp-head">${PRINT}<div class="pp-id"><div><div class="pp-kicker">Нэгдсэн анализ · ${fmtDate(Date.now())}</div><h2>Ажилтны үнэлгээ: ${n} хүн (${target}-аас ${pr}%)</h2>
     <div class="pp-meta">${prev?`Харьцуулалт: ${fmtDay(prev.at)}-нд ${prev.n} хүнтэй байсан.`:"Дараагийн өдөр нээхэд өнөөдрийнхтэй харьцуулна."}</div></div></div></header>
-  ${!n?`<div class="pp-sec"><p>Одоогоор бөглөсөн ажилтан алга.</p></div>`:`
+  ${!n?`<div class="pp-sec"><p>Одоогоор бөглөсөн ажилтан алга.</p></div>${rosterSec(notDone,unmatched)}`:`
   <section class="pp-sec"><div class="sum-kpis">
-    ${kpi("users","Оролцоо",`${n}/${HEADCOUNT}`,st(pr,80,50),missing.length?`Эхлээгүй: ${esc(missing.join(", "))}`:"Бүх алба оролцсон",was(n,prev?.n))}
+    ${kpi("users","Оролцоо",`${n}/${target}`,st(pr,80,50),roster.length?`${pr}% · бөглөөгүй ${notDone.length}`:missing.length?`Эхлээгүй: ${esc(missing.join(", "))}`:"Бүх алба оролцсон",was(n,prev?.n))}
     ${kpi("book","Мэдлэг",K+"%",st(K),`Ажлын ${part("job")}% · нийтлэг ${part("common")}%`,was(K,prev?.K,"%"))}
     ${kpi("smile","Сэтгэл ханамж",P.hidden?"—":P.overall+"%",P.hidden?"":st(P.overall),"4–5 гэж хариулсан хувь",P.hidden?"":was(P.overall,prev?.overall,"%"))}
     ${kpi("thumb","eNPS",P.hidden?"—":sgn(P.enps),P.hidden?"":eSt(P.enps),P.hidden?"":`Үлдэх хүсэл ${P.stay}%`,P.hidden?"":was(P.enps,prev?.enps))}
   </div></section>
+  ${rosterSec(notDone,unmatched)}
   ${sec("01","Мэдлэг",`<div class="sum-grid">
     <div>${head("building","Албаар · хүний тоо хаалтанд")}${bars(done.map(x=>[esc(x.d),x.k,x.n]),{cls:v=>st(v,75,60)})}</div>
     <div class="sum-card">${head("alert",`60%-иас доош · ${low.length} хүн`)}${low.length?tbl(["Нэр","Албан тушаал","Мэдлэг"],low.map(s=>[esc(s.name),esc(s.position),`<b class="${st(kPct(s),75,60)}">${kPct(s)}%</b>`])):'<p class="muted">Алга.</p>'}
@@ -399,8 +400,30 @@ function renderSummary(){
   ${P.hidden?"":sec("04","Сэтгэгдэл",`${likes.length?`<p>Таалагддаг зүйлд <b>${likes.length}-аас ${likeTeam}</b> нь хамт олноо дурджээ. Өөрчлөх саналын сэдэв:</p>`:""}
     ${themes.length?`<div class="sum-themes">${themes.map(x=>`<details class="sum-card"><summary><span>${esc(x.t)}</span><b>${x.list.length}</b></summary><ul class="sum-ul">${x.list.map(t=>`<li>${esc(t)}</li>`).join("")}</ul></details>`).join("")}</div>`:"<p class=\"muted\">Санал алга.</p>"}`)}
   ${sec("05","Хийх зүйл",`<ol class="sum-steps">${[`Удирдлагын үнэлгээ <b>${mgrDone}/${n}</b>.${mgrDone<n?" Алба бүрийн дарга нар паспорт дээр үнэлгээгээ оруулна.":""}`,
-    n<HEADCOUNT?`${HEADCOUNT-n} ажилтан бөглөөгүй байна${missing.length?", ялангуяа "+esc(missing.join(", ")):""}.`:"",
+    roster.length?(notDone.length?`${notDone.length} ажилтан бөглөөгүй байна (дээрх жагсаалт).`:""):n<target?`${target-n} ажилтан бөглөөгүй байна${missing.length?", ялангуяа "+esc(missing.join(", ")):""}.`:"",
     suspect.length?`Шалгах бичлэг: ${suspect.map(s=>`${esc(s.name)} (${mmss(s.durationSec||0)})`).join(", ")}. Туршилт эсвэл хэт богино хугацаанд бөглөсөн бол устгана уу.`:""].filter(Boolean).map(t=>`<li>${t}</li>`).join("")}</ol>`)}
   </article></div>`;
+  bindRoster();
+}
+// Who is in scope (HR's list): one line per person «Алба | Нэр | Албан тушаал»; empty list falls back to HEADCOUNT
+function rosterSec(notDone,unmatched){
+  const head=(icon,t)=>`<h4 class="sum-h">${ic(icon)}${t}</h4>`;
+  const tbl=(cols,rows)=>`<table class="sum-tbl"><thead><tr>${cols.map(c=>`<th>${c}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+  const byDept={};notDone.forEach(r=>(byDept[r.dept||"—"]=byDept[r.dept||"—"]||[]).push(r));
+  const txt=roster.map(r=>[r.dept,r.name,r.position].join(" | ")).join("\n");
+  return `<section class="pp-sec"><div class="row spread"><div class="tag"><b>00</b>Оролцоо${roster.length?` · ${roster.length} хүнээс`:""}</div>${role==="admin"?`<button type="button" id="rsEdit">${ic("edit")}Жагсаалт засах</button>`:""}</div>
+    ${rosterEdit?`<label class="f">Хамрагдах ажилтнууд, мөр бүрт «Алба | Нэр | Албан тушаал». Түр ажилтан, гарсан, жирэмсний амралттай хүнийг оруулахгүй.<textarea id="rsTxt" rows="14" spellcheck="false">${esc(txt)}</textarea></label>
+      <div class="row"><button type="button" class="primary" id="rsSave">${ic("check")}Хадгалах</button><button type="button" id="rsNo">${ic("x")}Болих</button><span id="rsMsg" class="muted"></span></div>`
+    :!roster.length?`<p class="muted">Хамрагдах ажилтны жагсаалт оруулаагүй тул оролцоог ${HEADCOUNT} хүнээс тооцож байна. «Жагсаалт засах» дарж оруулбал бөглөөгүй хүмүүс нэрээрээ харагдана.</p>`
+    :`<div class="sum-grid"><div class="sum-card">${head("alert",`Бөглөөгүй · ${notDone.length} хүн`)}${notDone.length?tbl(["Алба","Нэр","Албан тушаал"],Object.entries(byDept).flatMap(([d,l])=>l.map((r,i)=>[i?"":`<b>${esc(d)}</b>`,esc(r.name),esc(r.position)]))):'<p class="good"><b>Бүгд бөглөсөн.</b></p>'}</div>
+      ${unmatched.length?`<div class="sum-card">${head("chat",`Жагсаалттай тааруулж чадаагүй · ${unmatched.length}`)}<p class="sum-small" style="margin:0!important">Нэрээ өөрөөр бичсэн эсвэл жагсаалтад байхгүй хүн. Жагсаалтын нэрийг засвал таарна.</p>${tbl(["Нэр","Албан тушаал"],unmatched.map(s=>[esc(s.name),esc(s.position)]))}</div>`:""}</div>`}
+  </section>`;
+}
+function bindRoster(){
+  const e=$("#rsEdit");if(e)e.onclick=()=>{rosterEdit=true;render()};
+  const no=$("#rsNo");if(no)no.onclick=()=>{rosterEdit=false;render()};
+  const sv=$("#rsSave");if(sv)sv.onclick=async()=>{
+    const list=$("#rsTxt").value.split("\n").map(l=>l.split("|").map(x=>x.trim())).filter(a=>a.some(Boolean)).map(a=>a.length>=3?{dept:a[0],name:a[1],position:a[2]}:{dept:"",name:a[0],position:a[1]||""});
+    try{const j=await api("POST",{action:"roster",roster:list});roster=j.roster;rosterEdit=false;render()}catch(err){if(err.auth)return login(err.message);$("#rsMsg").textContent="Хадгалж чадсангүй: "+err.message}};
 }
 const fmtDay=t=>{const d=new Date(t);return String(d.getMonth()+1).padStart(2,"0")+"."+String(d.getDate()).padStart(2,"0")};

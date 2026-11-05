@@ -95,10 +95,10 @@ export function buildDeck(pptx,A,{date,logo,icons={}}){
     rows.forEach(([v,t,c],i)=>{const ry=y+0.65+i*0.62;rule(s,ry,i?"E3E3E3":T.ink,x,w,i?0.5:0.75);
       tx(s,v,{x,y:ry+0.07,w:vw,h:0.48,fontSize:17,bold:true,color:c||T.ink,valign:"middle"});
       tx(s,t,{x:x+vw+0.05,y:ry+0.07,w:w-vw-0.05,h:0.48,fontSize:fs,color:T.body,valign:"middle"})})};
-  const part=Math.round(A.n/HEADCOUNT*100);
+  const HC=A.target||HEADCOUNT,part=Math.round(Math.min(A.n,HC)/HC*100);
   const wk=t=>A.weak.some(x=>x.t.includes(t));
   const steps=[A.mgrDone<A.n?["award",`Алба бүрийн дарга ажилтныхаа ур чадварыг HR самбарт үнэлэх (одоо ${A.mgrDone}/${A.n}).`]:null,
-    A.n<HEADCOUNT?["users",`Үлдсэн ${HEADCOUNT-A.n} ажилтныг бөглүүлэх${A.missing.length?": "+A.missing.join(", "):""}.`]:null,
+    A.n<HC?["users",`Үлдсэн ${A.notDone?.length||HC-A.n} ажилтныг бөглүүлэх${!A.notDone?.length&&A.missing.length?": "+A.missing.join(", "):""}.`]:null,
     wk("Урамшуулал")?["wallet","Урамшууллын журмыг ажилтнуудад тайлбарлаж, шалгуурыг ил болгох."]:null,
     A.train[0]?["cap",`Хамгийн их хүссэн сургалтыг эхлүүлэх: ${A.train.slice(0,3).map(t=>t[0]).join(", ")}.`]:null,
     A.low.length?["book",`60%-иас доош ${A.low.length} ажилтанд ажлын байрны сургалт, давтан шалгалт.`]:null,
@@ -113,12 +113,12 @@ export function buildDeck(pptx,A,{date,logo,icons={}}){
   tx(c,"ХҮНИЙ НӨӨЦИЙН АЛБА",{x:X,y:4.85,w:6,h:0.22,fontSize:9,bold:true,color:T.ink,charSpacing:1});
   box(c,0,5.25,W,1.42,T.ink);
   tx(c,[{text:"Ажилтны үнэлгээ ",options:{color:"FFFFFF"}},{text:"2026.",options:{color:T.muted}}],{x:X,y:5.25,w:CW,h:1.42,fontSize:43,bold:true,valign:"middle"});
-  tx(c,`Нэгдсэн дүн · ${A.n} ажилтны хариулт (${HEADCOUNT}-ийн ${part}%) · Hunnu Concrete | Хүннү Конкрет`,{x:X,y:6.85,w:CW,h:0.25,fontSize:10,color:T.body});
+  tx(c,`Нэгдсэн дүн · ${A.n} ажилтны хариулт (${HC}-ийн ${part}%) · Hunnu Concrete | Хүннү Конкрет`,{x:X,y:6.85,w:CW,h:0.25,fontSize:10,color:T.body});
 
   // Key results
   const o=page("ГОЛ ДҮН");
-  pair(o,`${A.n} ажилтан санал өглөө,`,P.hidden?`нийт ${HEADCOUNT}-ийн ${part}%.`:`${P.overall}% нь сэтгэл хангалуун байна.`);
-  const kpi=[[`${A.n}/${HEADCOUNT}`,"Оролцоо",A.missing.length?`Эхлээгүй: ${A.missing.join(", ")}`:"Бүх алба оролцсон","users",good(part,80,50)],
+  pair(o,`${A.n} ажилтан санал өглөө,`,P.hidden?`нийт ${HC}-ийн ${part}%.`:`${P.overall}% нь сэтгэл хангалуун байна.`);
+  const kpi=[[`${A.n}/${HC}`,"Оролцоо",A.missing.length?`Эхлээгүй: ${A.missing.join(", ")}`:"Бүх алба оролцсон","users",good(part,80,50)],
     [pct(A.K),"Мэдлэг",`Ажлын ${A.part("job")}% · нийтлэг ${A.part("common")}%`,"book",good(A.K)],
     [P.hidden?"—":pct(P.overall),"Сэтгэл ханамж","4–5 гэж хариулсан хувь","smile",P.hidden?T.ink:good(P.overall)],
     [P.hidden?"—":sign(P.enps),"eNPS","Найздаа санал болгох (−100…+100)","thumb",P.hidden?T.ink:enpsC(P.enps)]];

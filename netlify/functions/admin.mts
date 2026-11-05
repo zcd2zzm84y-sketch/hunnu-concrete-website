@@ -28,13 +28,13 @@ export default async (req: Request) => {
   const role = roleOf(req)
   if (!role) return json({ error: "Нууц үг буруу байна." }, 401)
   if (req.method === "GET") {
-    const [rows, pulse, apps, openings] = await Promise.all([readAll(staffStore()), readAll(pulseStore()), readAll(applicantStore()), getOpenings()])
+    const [rows, pulse, apps, openings, roster] = await Promise.all([readAll(staffStore()), readAll(pulseStore()), readAll(applicantStore()), getOpenings(), settingsStore().get("roster", { type: "json" })])
     const newest = (a: any, b: any) => b.submittedAt - a.submittedAt
     rows.sort(newest); apps.sort(newest)
     // Answer key only for the questions that were actually asked, so HR can review mistakes
     const ids = new Set([...rows, ...apps].flatMap((r: any) => r.questions || []))
     const bank = Object.fromEntries([...ids].filter(id => KMAP[id]).map(id => [id, KMAP[id]]))
-    return json({ role, staff: rows, pulse: summarizePulse(pulse), applicants: apps, bank, openings })
+    return json({ role, staff: rows, pulse: summarizePulse(pulse), applicants: apps, bank, openings, roster: Array.isArray(roster) ? roster : [] })
   }
   let body: any
   try { body = await req.json() } catch { return json({ error: "Хүсэлт буруу байна." }, 400) }
@@ -44,6 +44,14 @@ export default async (req: Request) => {
     const list = [...new Set((Array.isArray(body.openings) ? body.openings : []).map(String).filter(isPosition))]
     await settingsStore().setJSON("openings", list)
     return json({ ok: true, openings: list })
+  }
+  // Staff in scope of the assessment (HR's list): base for the participation rate and the "not yet taken" list
+  if (body?.action === "roster") {
+    const list = (Array.isArray(body.roster) ? body.roster : []).slice(0, 300)
+      .map((r: any) => ({ dept: clip(r?.dept, 80), name: clip(r?.name, 80), position: clip(r?.position, 80) }))
+      .filter((r: any) => r.name)
+    await settingsStore().setJSON("roster", list)
+    return json({ ok: true, roster: list })
   }
   // Clears staff passports and pulse answers before the real survey starts; applicants are kept
   if (body?.action === "purgeSurvey") {
