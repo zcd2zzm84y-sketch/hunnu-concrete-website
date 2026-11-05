@@ -1,6 +1,6 @@
 import {DEPTS,FAMILY,COMP,ANCHOR,PULSE,MIN_GROUP,PROX,proximity,HEADCOUNT} from "./data.mjs";
 import {interviewGuide,stageGuide,REJECT,assess} from "./interview.mjs";
-import {analyze} from "./analysis.mjs";
+import {analyze,matchRoster} from "./analysis.mjs";
 import {$,esc,avg,fmtDate,mmss,lvl,initials,setBand,gauge,radarMulti,ic} from "./ui.mjs";
 
 const KEY="hunnu-admin-key";
@@ -16,7 +16,7 @@ async function api(method,body){
 }
 let role="admin";
 async function load(){
-  try{const j=await api("GET");role=j.role||"admin";document.body.classList.toggle("role-manager",role==="manager");staff=j.staff;pulse=j.pulse;apps=j.applicants||[];bank=j.bank||{};openings=j.openings||[];roster=j.roster||[];msg="";if(!selS&&staff.length)selS=staff[0].id;if(!selA&&apps.length)selA=apps[0].id;render()}
+  try{const j=await api("GET");role=j.role||"admin";document.body.classList.toggle("role-manager",role==="manager");staff=j.staff;pulse=j.pulse;apps=j.applicants||[];bank=j.bank||{};openings=j.openings||[];roster=j.roster||[];applyNames();msg="";if(!selS&&staff.length)selS=staff[0].id;if(!selA&&apps.length)selA=apps[0].id;render()}
   catch(e){if(e.auth)return login(e.message);msg="Ачаалж чадсангүй: "+e.message;render()}
 }
 const PRINT=`<button type="button" id="print" class="pp-print" title="Хэвлэх" aria-label="Хэвлэх">${ic("printer")}</button>`;
@@ -147,7 +147,7 @@ function staffPassport(s){
   const qids=s.questions||[];const wrong=qids.map(id=>bank[id]).filter(q=>q&&s.answers?.[q.id]!==q.a);
   const devNeeds=COMP.filter(c=>(s.mgr?.[c.id]||s.self?.[c.id]||5)<=2).map(c=>c.t);
   return `<article class="passport">
-    <header class="pp-head">${PRINT}<div class="pp-id"><span class="avatar">${esc(initials(s.name))}</span><div style="min-width:0"><div class="pp-kicker">Ажилтны паспорт · ${"HS-"+String(s.id).slice(-8).toUpperCase()}</div><h2>${esc(s.name)}</h2><div class="pp-meta">${esc(s.position)} · ${esc(s.dept)}</div></div></div>
+    <header class="pp-head">${PRINT}<div class="pp-id"><span class="avatar">${esc(initials(s.name))}</span><div style="min-width:0"><div class="pp-kicker">Ажилтны паспорт · ${"HS-"+String(s.id).slice(-8).toUpperCase()}</div><h2>${esc(s.name)}</h2>${s.rawName&&s.rawName!==s.name?`<div class="pp-meta">Өөрөө бичсэн нэр: ${esc(s.rawName)}</div>`:""}<div class="pp-meta">${esc(s.position)} · ${esc(s.dept)}</div></div></div>
       <div class="pp-total"><div class="big">${k}%</div><span class="pill ${lvl(k).k}">Мэдлэг: ${lvl(k).t}</span></div></header>
     <dl class="pp-facts"><div><dt>Ажилласан</dt><dd>${esc(s.tenure)}</dd></div><div><dt>Ажлын бүлэг</dt><dd>${esc(FAMILY[s.family]||"—")}</dd></div><div><dt>Огноо</dt><dd>${fmtDate(s.submittedAt)}</dd></div><div><dt>Зарцуулсан</dt><dd>${mmss(s.durationSec||0)}</dd></div></dl>
     ${(s.durationSec||0)<240?`<div class="flags"><div class="flag bad">Хэт богино хугацаанд (${mmss(s.durationSec||0)}) бөглөсөн. Хариулт бодит бус байж болзошгүй.</div></div>`:""}
@@ -172,7 +172,7 @@ function staffPassport(s){
 }
 
 function bindStaff(s){
-  const save=async patch=>{try{const j=await api("POST",{action:"update",id:s.id,patch});Object.assign(s,j.row);return true}catch(e){if(e.auth)return login(e.message);$("#sMsg").textContent="Хадгалж чадсангүй: "+e.message;return false}};
+  const save=async patch=>{try{const j=await api("POST",{action:"update",id:s.id,patch});Object.assign(s,j.row);applyNames();return true}catch(e){if(e.auth)return login(e.message);$("#sMsg").textContent="Хадгалж чадсангүй: "+e.message;return false}};
   document.querySelectorAll(".mgr-list [data-c]").forEach(b=>b.onclick=async()=>{if(await save({mgr:{...(s.mgr||{}),[b.dataset.c]:+b.dataset.n}})){const y=window.scrollY;renderAll();window.scrollTo(0,y)}});
   $("#sSave").onclick=async()=>{if(await save({plan:$("#sPlan").value,hrNote:$("#sNote").value}))$("#sMsg").textContent="Хадгалагдлаа."};
   $("#sDel").onclick=()=>{$("#sDelRow").innerHTML=`<span style="font-size:14px">${esc(s.name)}-ийн үнэлгээг устгах уу?</span><button type="button" class="danger" id="sYes">${ic("trash")}Тийм, устгах</button><button type="button" id="sNo">${ic("x")}Болих</button>`;
@@ -406,6 +406,12 @@ function renderSummary(){
   bindRoster();
 }
 // Who is in scope (HR's list): one line per person «Алба | Нэр | Албан тушаал»; empty list falls back to HEADCOUNT
+// Show HR's spelling of each name (from the roster) instead of what the employee typed; stored records are not changed
+function applyNames(){
+  staff.forEach(s=>{if(s.rawName==null)s.rawName=s.name});
+  const m=new Map((roster.length?matchRoster(roster,staff).pairs:[]).map(([r,st])=>[st,r.name]));
+  staff.forEach(s=>{s.name=m.get(s)||s.rawName});
+}
 function rosterSec(notDone,unmatched){
   const head=(icon,t)=>`<h4 class="sum-h">${ic(icon)}${t}</h4>`;
   const tbl=(cols,rows)=>`<table class="sum-tbl"><thead><tr>${cols.map(c=>`<th>${c}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
@@ -424,6 +430,6 @@ function bindRoster(){
   const no=$("#rsNo");if(no)no.onclick=()=>{rosterEdit=false;render()};
   const sv=$("#rsSave");if(sv)sv.onclick=async()=>{
     const list=$("#rsTxt").value.split("\n").map(l=>l.split("|").map(x=>x.trim())).filter(a=>a.some(Boolean)).map(a=>a.length>=3?{dept:a[0],name:a[1],position:a[2]}:{dept:"",name:a[0],position:a[1]||""});
-    try{const j=await api("POST",{action:"roster",roster:list});roster=j.roster;rosterEdit=false;render()}catch(err){if(err.auth)return login(err.message);$("#rsMsg").textContent="Хадгалж чадсангүй: "+err.message}};
+    try{const j=await api("POST",{action:"roster",roster:list});roster=j.roster;applyNames();rosterEdit=false;render()}catch(err){if(err.auth)return login(err.message);$("#rsMsg").textContent="Хадгалж чадсангүй: "+err.message}};
 }
 const fmtDay=t=>{const d=new Date(t);return String(d.getMonth()+1).padStart(2,"0")+"."+String(d.getDate()).padStart(2,"0")};

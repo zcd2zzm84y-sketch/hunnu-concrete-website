@@ -14,11 +14,11 @@ const lev=(a,b)=>{const d=Array.from({length:b.length+1},(_,i)=>i);for(let i=1;i
 const keys=t=>{const w=String(t||"").split(/\s+/).map(nameKey).filter(k=>k.length>=3);return w.length?w:[nameKey(t)]};
 const near=(a,b)=>a===b||(a.length>=5&&b.length>=5&&(a.startsWith(b.slice(0,6))||b.startsWith(a.slice(0,6))||lev(a,b)<=2));
 export function matchRoster(roster,staff){
-  const R=roster.map((r,i)=>({...r,i,k:nameKey(r.name),p:posKey(r.position)})),S=staff.map(s=>({s,ks:keys(s.name),p:posKey(s.position)})),done=new Map(),used=new Set();
+  const R=roster.map((r,i)=>({...r,i,k:nameKey(r.name),p:posKey(r.position)})),S=staff.map(s=>({s,ks:keys(s.rawName??s.name),p:posKey(s.position)})),done=new Map(),used=new Set();
   const samePos=(r,x)=>r.p&&x.p&&(r.p===x.p||r.p.startsWith(x.p)||x.p.startsWith(r.p));
   const pass=ok=>S.forEach(x=>{if(used.has(x.s))return;const c=R.filter(r=>!done.has(r.i)&&r.k&&ok(r,x));if(c.length){done.set(c[0].i,x.s);used.add(x.s)}});
   pass((r,x)=>x.ks.includes(r.k)&&samePos(r,x));pass((r,x)=>x.ks.includes(r.k));pass((r,x)=>x.ks.some(k=>near(r.k,k))&&samePos(r,x));pass((r,x)=>x.ks.some(k=>near(r.k,k)));
-  return{notDone:R.filter(r=>!done.has(r.i)),unmatched:staff.filter(s=>!used.has(s))};
+  return{notDone:R.filter(r=>!done.has(r.i)),unmatched:staff.filter(s=>!used.has(s)),pairs:[...done].map(([i,st])=>[roster[i],st])};
 }
 export function analyze(staff,pulse,roster=[]){
   const n=staff.length,P=pulse||{n:0,hidden:true};
