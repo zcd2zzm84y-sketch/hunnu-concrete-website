@@ -4,11 +4,11 @@ import { assess } from "../../public/assets/interview.mjs"
 
 // Emails HR a short summary (Resend, or the Netlify form "new-applicant" as fallback) and, if set, posts to Teams. Never fails the submission.
 async function notify(site: string, row: any) {
-  const pct = row.max ? Math.round(row.score / row.max * 100) : 0, r = assess(row)
+  const pct = row.max ? `${Math.round(row.score / row.max * 100)}%` : "HR оффист өгнө", r = assess(row)
   const body = new URLSearchParams({
     // Field names are the labels HR sees in the email, so they are in Mongolian
     "form-name": "new-applicant", "Нэр": row.name, "Албан тушаал": `${row.position} (${row.dept})`, "Утас": row.phone || "",
-    "Шалгалтын оноо": `${pct}%`, "Зөвлөмж": `${r.verdict} (${r.score}/100)`, "Гэрийн хаяг": [row.district, row.khoroo ? row.khoroo + "-р хороо" : ""].filter(Boolean).join(", "),
+    "Шалгалтын оноо": pct, "Зөвлөмж": `${r.verdict} (${r.score}/100)`, "Гэрийн хаяг": [row.district, row.khoroo ? row.khoroo + "-р хороо" : ""].filter(Boolean).join(", "),
     "HR самбар": "https://hunnu.asia/talent/admin#app",
   })
   // With RESEND_API_KEY the alert comes from info@hunnu.asia; otherwise from Netlify's form notification
@@ -28,7 +28,7 @@ async function notify(site: string, row: any) {
 <tr><td style="padding:0 28px"><div style="border-top:2px solid #333333;font-size:0;line-height:0">&nbsp;</div><div style="width:48px;border-top:2px solid #f2c200;font-size:0;line-height:0">&nbsp;</div><div style="${F};font-size:16px;font-weight:700;color:#333333;letter-spacing:.5px;margin-top:12px">АЖЛЫН АНКЕТ</div><div style="${F};font-size:12px;color:#4E5452;margin-top:2px">Шинэ горилогч бүртгүүллээ</div></td></tr>
 ${sec("Ажлын байр", tr("Албан тушаал", row.position) + tr("Алба", row.dept))}
 ${sec("Горилогч", tr("Овог нэр", row.name) + tr("Утас", row.phone) + (row.email ? tr("Имэйл", row.email) : "") + tr("Гэрийн хаяг", body.get("Гэрийн хаяг") || ""))}
-${sec("Үнэлгээ", tr("Шалгалтын оноо", `${pct}%`) + tr("Зөвлөмж", `${badge(r.verdict)} <span style="font-weight:400;color:#4E5452">${r.score}/100</span>`, true))}
+${sec("Үнэлгээ", tr("Шалгалт", pct) + tr("Зөвлөмж", `${badge(r.verdict)} <span style="font-weight:400;color:#4E5452">${r.score}/100</span>`, true))}
 <tr><td style="padding:22px 28px 26px"><a href="https://hunnu.asia/talent/admin#app" style="${F};display:inline-block;background:#333333;color:#ffffff;font-size:14px;font-weight:700;padding:11px 20px;text-decoration:none;border-radius:4px">HR самбарт нээх</a></td></tr>
 <tr><td style="padding:14px 28px;border-top:1px solid #e3e5e4;${F};font-size:11px;color:#4E5452;line-height:1.6"><b style="color:#333333">Хүннү Конкрет ХХК</b> · Хүний нөөц 8806 6831 · 7575 4040 · info@hunnu.asia · <a href="https://hunnu.asia/" style="color:#4E5452">www.hunnu.asia</a><br>Энэ мэдэгдлийг ажлын анкетын системээс автоматаар илгээв.</td></tr>
 </table></td></tr></table></body></html>`
@@ -49,7 +49,7 @@ ${sec("Үнэлгээ", tr("Шалгалтын оноо", `${pct}%`) + tr("Зө�
       type: "AdaptiveCard", $schema: "http://adaptivecards.io/schemas/adaptive-card.json", version: "1.4",
       body: [
         { type: "TextBlock", text: "Шинэ ажлын анкет ирлээ", weight: "Bolder", size: "Medium" },
-        { type: "FactSet", facts: [fact("Нэр", row.name), fact("Албан тушаал", `${row.position} (${row.dept})`), fact("Утас", row.phone), fact("Шалгалт", `${pct}%`), fact("Зөвлөмж", `${r.verdict} (${r.score}/100)`), fact("Гэр", body.get("Гэрийн хаяг") || "")] },
+        { type: "FactSet", facts: [fact("Нэр", row.name), fact("Албан тушаал", `${row.position} (${row.dept})`), fact("Утас", row.phone), fact("Шалгалт", pct), fact("Зөвлөмж", `${r.verdict} (${r.score}/100)`), fact("Гэр", body.get("Гэрийн хаяг") || "")] },
       ],
       actions: [{ type: "Action.OpenUrl", title: "HR самбарт харах", url: "https://hunnu.asia/talent/admin#app" }],
     }

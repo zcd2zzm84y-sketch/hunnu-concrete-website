@@ -539,7 +539,7 @@ footer .inner a:hover{color:var(--fg);text-decoration:underline;text-underline-o
 .topbar .logo-link+.theme-tg{margin-left:auto}
 
 /* leader login (MANAGER_KEY): read-only except the skill-rating buttons */
-.role-manager #sSave,.role-manager #sDelRow,.role-manager #aSave,.role-manager #aDelRow,.role-manager #opEdit,.role-manager #pg,.role-manager #pgRow,.role-manager .tpl{display:none!important}
+.role-manager #sSave,.role-manager #sDelRow,.role-manager #aSave,.role-manager #aDelRow,.role-manager #opEdit,.role-manager #pg,.role-manager #pgRow,.role-manager .tpl,.role-manager #exStart{display:none!important}
 .role-manager [data-st],.role-manager [data-r],.role-manager [data-iq],.role-manager [data-ck],.role-manager [data-rj]{pointer-events:none}
 .role-manager #view textarea[readonly]{background:var(--sunk)}
 #roleNote{margin-top:12px}

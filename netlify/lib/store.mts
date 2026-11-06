@@ -1,6 +1,6 @@
 import { getStore } from "@netlify/blobs"
-import { PULSE, COMP, MIN_GROUP, LEAVE, DEPTS, APP_N_COMMON, APP_N_JOB, migrateRole } from "../../public/assets/data.mjs"
-import { KMAP, jobPool, commonPool } from "./bank.mjs"
+import { PULSE, COMP, MIN_GROUP, LEAVE, DEPTS, migrateRole } from "../../public/assets/data.mjs"
+import { KMAP, jobPool } from "./bank.mjs"
 
 export const staffStore = () => getStore({ name: "staff", consistency: "strong" })
 // Anonymous answers: random keys, month only, nothing that ties them to a person
@@ -104,7 +104,7 @@ const EDU = ["Бүрэн дунд", "Мэргэжлийн (ТМС, коллеж)
 const EXP = ["Туршлагагүй", "1 жил хүртэл", "1–3 жил", "3–5 жил", "5-аас дээш жил"]
 const LIC = ["A", "B", "C", "D", "E", "M"]
 
-// The test set must be the one the server could have drawn: general items plus the position's own job pool
+// Online application is the form only; the knowledge test is taken later at the HR office (see scoreTest / functions/exam.mts)
 export function cleanApplicant(s: any) {
   const dept = clip(s?.dept, 80), position = clip(s?.position, 120)
   if (!DEPTS[dept as keyof typeof DEPTS]?.some((p: any) => p[0] === position)) throw new Error("Албан тушаал буруу байна.")
@@ -112,29 +112,30 @@ export function cleanApplicant(s: any) {
   if (name.length < 3) throw new Error("Овог нэрээ бүтэн бичнэ үү.")
   if (phone.replace(/\D/g, "").length < 8) throw new Error("Утасны дугаараа зөв бичнэ үү.")
   if (s?.consent !== true) throw new Error("Мэдээлэл ашиглах зөвшөөрөл шаардлагатай.")
-  const { fam, pool } = jobPool(dept, position)
-  const jobIds = new Set(pool.map((q: any) => q.id))
-  const questions: string[] = [...new Set<string>((Array.isArray(s?.questions) ? s.questions : []).map(String))]
-  const commonIds = new Set(commonPool("apply", fam))
-  const common = questions.filter(id => commonIds.has(id)), job = questions.filter(id => jobIds.has(id) && !commonIds.has(id))
-  if (common.length !== APP_N_COMMON || job.length !== APP_N_JOB || questions.length !== APP_N_COMMON + APP_N_JOB) throw new Error("Шалгалтын асуулт буруу байна. Хуудсаа шинэчлээд дахин эхэлнэ үү.")
-  const answers: Record<string, number> = {}
-  const byPart = { common: { c: 0, t: common.length }, job: { c: 0, t: job.length } }
-  let score = 0
-  for (const id of questions) {
-    const a = int(s?.answers?.[id], 0, KMAP[id].o.length - 1)
-    if (a !== null) answers[id] = a
-    if (a === KMAP[id].a) { score++; byPart[common.includes(id) ? "common" : "job"].c++ }
-  }
+  const { fam } = jobPool(dept, position)
   return {
     name, phone, email: clip(s?.email, 120).trim(), birthYear: int(s?.birthYear, 1950, 2010),
     district: clip(s?.district, 80), khoroo: int(s?.khoroo, 1, 45), area: clip(s?.area, 120), dept, position, family: fam,
     edu: EDU.includes(s?.edu) ? s.edu : "", major: clip(s?.major, 120), exp: EXP.includes(s?.exp) ? s.exp : "",
     lastJob: clip(s?.lastJob, 200), license: (Array.isArray(s?.license) ? s.license : []).filter((x: string) => LIC.includes(x)),
     startDate: clip(s?.startDate, 10), salary: clip(s?.salary, 40), why: clip(s?.why, 1500),
-    startedAt: Number(s?.startedAt) || null, durationSec: int(s?.durationSec, 0, 86400) ?? 0,
-    timedOut: s?.timedOut === true, away: int(s?.away, 0, 999) ?? 0,
-    questions, common, answers, score, max: questions.length, byPart, self: cleanSelf(s?.self),
+    // Filled in by the office test
+    tested: false, startedAt: null, durationSec: 0, timedOut: false, away: 0,
+    questions: [] as string[], common: [] as string[], answers: {} as Record<string, number>, score: 0, max: 0, byPart: {}, self: {} as Record<string, number>,
     status: "new", interview: {}, hrNote: "",
   }
+}
+
+// Scores an office test. The question set comes from the server-side record (drawn when HR started the test), never from the browser.
+export function scoreTest(exam: { order: string[], common: string[] }, src: any) {
+  const questions = exam.order.filter(id => KMAP[id]), common = exam.common.filter(id => questions.includes(id))
+  const answers: Record<string, number> = {}
+  const byPart = { common: { c: 0, t: common.length }, job: { c: 0, t: questions.length - common.length } }
+  let score = 0
+  for (const id of questions) {
+    const a = int(src?.answers?.[id], 0, KMAP[id].o.length - 1)
+    if (a !== null) answers[id] = a
+    if (a === KMAP[id].a) { score++; byPart[common.includes(id) ? "common" : "job"].c++ }
+  }
+  return { questions, common, answers, score, max: questions.length, byPart, self: cleanSelf(src?.self), away: int(src?.away, 0, 999) ?? 0 }
 }

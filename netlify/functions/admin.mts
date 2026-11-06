@@ -1,6 +1,6 @@
 import type { Config } from "@netlify/functions"
 import { staffStore, pulseStore, applicantStore, settingsStore, getOpenings, isPosition, summarizePulse, json, clip, STATUS } from "../lib/store.mts"
-import { KMAP } from "../lib/bank.mjs"
+import { KMAP, draw } from "../lib/bank.mjs"
 import { COMP } from "../../public/assets/data.mjs"
 import { createHash, randomBytes } from "node:crypto"
 
@@ -54,6 +54,7 @@ export default async (req: Request) => {
     const [rows, pulse, apps, openings, roster] = await Promise.all([readAll(staffStore()), readAll(pulseStore()), readAll(applicantStore()), getOpenings(), settingsStore().get("roster", { type: "json" })])
     const newest = (a: any, b: any) => b.submittedAt - a.submittedAt
     rows.sort(newest); apps.sort(newest)
+    apps.forEach((a: any) => { if (a.exam) a.exam = { issuedAt: a.exam.issuedAt, startedAt: a.exam.startedAt } })
     // Answer key only for the questions that were actually asked, so HR can review mistakes
     const ids = new Set([...rows, ...apps].flatMap((r: any) => r.questions || []))
     const bank = Object.fromEntries([...ids].filter(id => KMAP[id]).map(id => [id, KMAP[id]]))
@@ -101,6 +102,15 @@ export default async (req: Request) => {
     const [staff, pulse] = await Promise.all([wipe(staffStore()), wipe(pulseStore())])
     return json({ ok: true, staff, pulse })
   }
+  // HR starts the knowledge test at the office: draw a fresh question set and hand back a one-time link token
+  if (body?.action === "examStart") {
+    const id = clip(body?.id, 80), cur: any = await applicantStore().get(id, { type: "json" })
+    if (!cur) return json({ error: "Олдсонгүй." }, 404)
+    const token = randomBytes(18).toString("base64url"), { order, common } = draw("apply", cur.dept, cur.position)
+    const exam = { hash: sha(token), issuedAt: Date.now(), startedAt: null, order, common }
+    await applicantStore().setJSON(id, { ...cur, exam })
+    return json({ ok: true, token, row: { ...cur, exam: { issuedAt: exam.issuedAt } } })
+  }
   const store = body?.kind === "app" ? applicantStore() : staffStore()
   const id = clip(body?.id, 80)
   const cur: any = await store.get(id, { type: "json" })
@@ -135,7 +145,7 @@ export default async (req: Request) => {
     }
     if ("hrNote" in p) next.hrNote = clip(p.hrNote, 3000)
     await store.setJSON(id, next)
-    return json({ ok: true, row: next })
+    return json({ ok: true, row: next.exam ? { ...next, exam: { issuedAt: next.exam.issuedAt, startedAt: next.exam.startedAt } } : next })
   }
   return json({ error: "Үйлдэл буруу." }, 400)
 }
