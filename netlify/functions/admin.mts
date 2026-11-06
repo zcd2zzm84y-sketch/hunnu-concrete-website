@@ -2,14 +2,20 @@ import type { Config } from "@netlify/functions"
 import { staffStore, pulseStore, applicantStore, settingsStore, getOpenings, isPosition, summarizePulse, json, clip, STATUS } from "../lib/store.mts"
 import { KMAP } from "../lib/bank.mjs"
 import { COMP } from "../../public/assets/data.mjs"
+import { createHash, randomBytes } from "node:crypto"
 
 // HR (ADMIN_KEY) can do everything; leaders (MANAGER_KEY) can read results and enter their own skill ratings only
-const roleOf = (req: Request) => {
+// Rating-only accounts (HR creates them): a department head sees only their departments' names and positions and enters 1–5 skill ratings.
+// Only a hash of each code is stored; the code itself is shown once when created.
+const sha = (t: string) => createHash("sha256").update(t).digest("hex")
+const getRaters = async (): Promise<any[]> => { const r = await settingsStore().get("raters", { type: "json" }); return Array.isArray(r) ? r : [] }
+const roleOf = async (req: Request): Promise<{ role: string, rater?: any } | null> => {
   const k = req.headers.get("x-admin-key"), admin = Netlify.env.get("ADMIN_KEY"), mgr = Netlify.env.get("MANAGER_KEY")
   if (!k) return null
-  if (admin && k === admin) return "admin"
-  if (mgr && k === mgr) return "manager"
-  return null
+  if (admin && k === admin) return { role: "admin" }
+  if (mgr && k === mgr) return { role: "manager" }
+  const h = sha(k.trim().toUpperCase()), rater = (await getRaters()).find(r => r.hash === h)
+  return rater ? { role: "rater", rater } : null
 }
 
 async function readAll(store: ReturnType<typeof staffStore>) {
@@ -25,8 +31,25 @@ const scores = (src: any) => {
 }
 
 export default async (req: Request) => {
-  const role = roleOf(req)
-  if (!role) return json({ error: "Нууц үг буруу байна." }, 401)
+  const who = await roleOf(req)
+  if (!who) return json({ error: "Нууц үг буруу байна." }, 401)
+  const role = who.role
+  if (role === "rater") {
+    const depts: string[] = who.rater.depts || []
+    if (req.method === "GET") {
+      const [rows, roster] = await Promise.all([readAll(staffStore()), settingsStore().get("roster", { type: "json" })])
+      const mine = rows.filter((r: any) => depts.includes(r.dept)).map((r: any) => ({ id: r.id, name: r.name, position: r.position, dept: r.dept, mgr: r.mgr || {} }))
+      return json({ role, label: who.rater.label, depts, staff: mine, roster: (Array.isArray(roster) ? roster : []).filter((r: any) => depts.includes(r.dept)) })
+    }
+    let b: any
+    try { b = await req.json() } catch { return json({ error: "Хүсэлт буруу байна." }, 400) }
+    if (b?.action !== "update" || b?.kind === "app" || !b?.patch?.mgr || Object.keys(b.patch).some(k => k !== "mgr")) return json({ error: "Энэ эрхээр зөвхөн ур чадварын үнэлгээ оруулна." }, 403)
+    const id = clip(b.id, 80), cur: any = await staffStore().get(id, { type: "json" })
+    if (!cur || !depts.includes(cur.dept)) return json({ error: "Олдсонгүй." }, 404)
+    const next = { ...cur, mgr: scores(b.patch.mgr) }
+    await staffStore().setJSON(id, next)
+    return json({ ok: true, row: { id, name: cur.name, position: cur.position, dept: cur.dept, mgr: next.mgr } })
+  }
   if (req.method === "GET") {
     const [rows, pulse, apps, openings, roster] = await Promise.all([readAll(staffStore()), readAll(pulseStore()), readAll(applicantStore()), getOpenings(), settingsStore().get("roster", { type: "json" })])
     const newest = (a: any, b: any) => b.submittedAt - a.submittedAt
@@ -34,7 +57,8 @@ export default async (req: Request) => {
     // Answer key only for the questions that were actually asked, so HR can review mistakes
     const ids = new Set([...rows, ...apps].flatMap((r: any) => r.questions || []))
     const bank = Object.fromEntries([...ids].filter(id => KMAP[id]).map(id => [id, KMAP[id]]))
-    return json({ role, staff: rows, pulse: summarizePulse(pulse), applicants: apps, bank, openings, roster: Array.isArray(roster) ? roster : [] })
+    const raters = role === "admin" ? (await getRaters()).map(r => ({ id: r.id, label: r.label, depts: r.depts, createdAt: r.createdAt })) : []
+    return json({ role, staff: rows, pulse: summarizePulse(pulse), applicants: apps, bank, openings, roster: Array.isArray(roster) ? roster : [], raters })
   }
   let body: any
   try { body = await req.json() } catch { return json({ error: "Хүсэлт буруу байна." }, 400) }
@@ -44,6 +68,20 @@ export default async (req: Request) => {
     const list = [...new Set((Array.isArray(body.openings) ? body.openings : []).map(String).filter(isPosition))]
     await settingsStore().setJSON("openings", list)
     return json({ ok: true, openings: list })
+  }
+  if (body?.action === "raterAdd") {
+    const label = clip(body.label, 80).trim(), depts = (Array.isArray(body.depts) ? body.depts : []).map((d: any) => clip(d, 80)).filter(Boolean).slice(0, 12)
+    if (!label || !depts.length) return json({ error: "Нэр болон алба сонгоно уу." }, 400)
+    const code = "HUN-" + randomBytes(6).toString("base64url").replace(/[-_]/g, "x").slice(0, 8).toUpperCase()
+    const list = await getRaters()
+    list.push({ id: randomBytes(6).toString("hex"), label, depts, hash: sha(code), createdAt: Date.now() })
+    await settingsStore().setJSON("raters", list)
+    return json({ ok: true, code, raters: list.map(r => ({ id: r.id, label: r.label, depts: r.depts, createdAt: r.createdAt })) })
+  }
+  if (body?.action === "raterDel") {
+    const list = (await getRaters()).filter(r => r.id !== clip(body.id, 40))
+    await settingsStore().setJSON("raters", list)
+    return json({ ok: true, raters: list.map(r => ({ id: r.id, label: r.label, depts: r.depts, createdAt: r.createdAt })) })
   }
   // Staff in scope of the assessment (HR's list): base for the participation rate and the "not yet taken" list
   if (body?.action === "roster") {

@@ -5,7 +5,7 @@ import {$,esc,avg,fmtDate,mmss,lvl,initials,setBand,gauge,radarMulti,ic} from ".
 
 const KEY="hunnu-admin-key";
 let key=(()=>{try{return sessionStorage.getItem(KEY)||""}catch(e){return""}})();
-let staff=[],pulse=null,apps=[],bank={},openings=[],roster=[],rosterEdit=false,editOpen=false,selS=null,selA=null,appFilter="",deptFilter="",msg="",view=["sum","staff","pulse","app"].includes(location.hash.slice(1))?location.hash.slice(1):"sum";
+let staff=[],pulse=null,apps=[],bank={},openings=[],roster=[],raters=[],raterLabel="",newCode=null,rosterEdit=false,editOpen=false,selS=null,selA=null,appFilter="",deptFilter="",msg="",view=["sum","staff","pulse","app"].includes(location.hash.slice(1))?location.hash.slice(1):"sum";
 
 async function api(method,body){
   const res=await fetch("api/admin",{method,headers:{"x-admin-key":key,"content-type":"application/json"},body:body?JSON.stringify(body):undefined});
@@ -16,7 +16,7 @@ async function api(method,body){
 }
 let role="admin";
 async function load(){
-  try{const j=await api("GET");role=j.role||"admin";document.body.classList.toggle("role-manager",role==="manager");staff=j.staff;pulse=j.pulse;apps=j.applicants||[];bank=j.bank||{};openings=j.openings||[];roster=j.roster||[];applyNames();msg="";if(!selS&&staff.length)selS=staff[0].id;if(!selA&&apps.length)selA=apps[0].id;render()}
+  try{const j=await api("GET");role=j.role||"admin";document.body.classList.toggle("role-manager",role==="manager");staff=j.staff;pulse=j.pulse;apps=j.applicants||[];bank=j.bank||{};openings=j.openings||[];roster=j.roster||[];raters=j.raters||[];raterLabel=j.label||"";applyNames();msg="";if(!selS&&staff.length)selS=staff[0].id;if(!selA&&apps.length)selA=apps[0].id;render()}
   catch(e){if(e.auth)return login(e.message);msg="Ачаалж чадсангүй: "+e.message;render()}
 }
 const PRINT=`<button type="button" id="print" class="pp-print" title="Хэвлэх" aria-label="Хэвлэх">${ic("printer")}</button>`;
@@ -53,6 +53,7 @@ function tabs(cur){
   return `<div class="row spread"><nav class="tabs" aria-label="Үр дүнгийн хэсэг">${[["sum","Нэгдсэн анализ","report"],["staff","Ажилтны паспорт","users"],["pulse","Сэтгэл ханамж","heart"],["app","Горилогчид"+(apps.some(a=>a.status==="new")?" ("+apps.filter(a=>a.status==="new").length+")":""),"userPlus"]].map(([v,t,i])=>`<button type="button" data-view="${v}" ${v===cur?'aria-current="page"':""}>${ic(i)}${t}</button>`).join("")}</nav><div class="row">${cur!=="pulse"&&cur!=="sum"?`<button type="button" id="xls">${ic("download")}Excel татах</button>`:""}<button type="button" id="reload">${ic("refresh")}Шинэчлэх</button><button type="button" id="logout">${ic("logout")}Гарах</button></div></div>`;
 }
 function render(){
+  if(role==="rater"){renderRater();return}
   if(view==="sum")renderSummary();else if(view==="pulse")renderPulse();else if(view==="app")renderApps();else renderStaffHr();
   // Leaders: everything is visible, but only the skill-rating buttons save (the server enforces the same)
   if(role==="manager"){document.querySelectorAll("#view textarea,#view input[type=text]").forEach(e=>e.readOnly=true);const t=document.querySelector("nav.tabs");if(t&&!$("#roleNote"))t.closest(".row").insertAdjacentHTML("afterend",'<div class="note" id="roleNote">Удирдлагын эрх: үр дүнг харах, ажилтны ур чадварыг 1–5 үнэлэх. Бусад мэдээллийг өөрчлөхгүй.</div>')}
@@ -378,6 +379,7 @@ function renderSummary(){
     ${kpi("thumb","eNPS",P.hidden?"—":sgn(P.enps),P.hidden?"":eSt(P.enps),P.hidden?"":`Үлдэх хүсэл ${P.stay}%`,P.hidden?"":was(P.enps,prev?.enps))}
   </div></section>
   ${rosterSec(notDone,unmatched)}
+  ${raterSec()}
   ${sec("01","Мэдлэг",`<div class="sum-grid">
     <div>${head("building","Албаар · хүний тоо хаалтанд")}${bars(done.map(x=>[esc(x.d),x.k,x.n]),{cls:v=>st(v,75,60)})}</div>
     <div class="sum-card">${head("alert",`60%-иас доош · ${low.length} хүн`)}${low.length?tbl(["Нэр","Албан тушаал","Мэдлэг"],low.map(s=>[esc(s.name),esc(s.position),`<b class="${st(kPct(s),75,60)}">${kPct(s)}%</b>`])):'<p class="muted">Алга.</p>'}
@@ -403,7 +405,7 @@ function renderSummary(){
     roster.length?(notDone.length?`${notDone.length} ажилтан бөглөөгүй байна (дээрх жагсаалт).`:""):n<target?`${target-n} ажилтан бөглөөгүй байна${missing.length?", ялангуяа "+esc(missing.join(", ")):""}.`:"",
     suspect.length?`Шалгах бичлэг: ${suspect.map(s=>`${esc(s.name)} (${mmss(s.durationSec||0)})`).join(", ")}. Туршилт эсвэл хэт богино хугацаанд бөглөсөн бол устгана уу.`:""].filter(Boolean).map(t=>`<li>${t}</li>`).join("")}</ol>`)}
   </article></div>`;
-  bindRoster();
+  bindRoster();bindRaters();
 }
 // Who is in scope (HR's list): one line per person «Алба | Нэр | Албан тушаал»; empty list falls back to HEADCOUNT
 // Show HR's spelling of each name (from the roster) instead of what the employee typed; stored records are not changed
@@ -411,6 +413,46 @@ function applyNames(){
   staff.forEach(s=>{if(s.rawName==null)s.rawName=s.name});
   const m=new Map((roster.length?matchRoster(roster,staff).pairs:[]).map(([r,st])=>[st,r.name]));
   staff.forEach(s=>{s.name=m.get(s)||s.rawName});
+}
+// Rating-only accounts: HR creates a code per department head; the code is shown once
+function raterSec(){
+  if(role!=="admin")return "";
+  const D=Object.keys(DEPTS);
+  return `<section class="pp-sec"><div class="tag"><b>!</b>Удирдлагын үнэлгээний эрх</div>
+    <p class="sum-small" style="margin:0!important">Алба бүрийн даргад өгөх код. Код нь зөвхөн сонгосон албаны ажилтны нэр, албан тушаалыг харуулж, 8 ур чадварыг 1–5-аар үнэлүүлнэ. Оноо, сэтгэл ханамж, бусад мэдээлэл харагдахгүй. Нэвтрэх хаяг: hunnu.asia/talent/admin.html</p>
+    ${newCode?`<div class="sum-note">${ic("check")}<span>Шинэ код: <b style="font-family:var(--mono);font-size:18px">${esc(newCode)}</b> · Одоо хуулж аваарай, дахин харагдахгүй.</span></div>`:""}
+    ${raters.length?`<table class="sum-tbl"><thead><tr><th>Хэнд</th><th>Алба</th><th></th></tr></thead><tbody>${raters.map(r=>`<tr><td><b>${esc(r.label)}</b></td><td>${esc((r.depts||[]).join(", "))}</td><td style="text-align:right"><button type="button" class="danger" data-rdel="${esc(r.id)}">${ic("trash")}Хаах</button></td></tr>`).join("")}</tbody></table>`:""}
+    <div class="sum-card"><label class="f">Хэнд (жишээ: Чанарын албаны дарга)<input type="text" id="rtLabel" maxlength="80"></label>
+      <div class="chips">${D.map(d=>`<label class="chip"><input type="checkbox" data-rdept="${esc(d)}"> ${esc(d)}</label>`).join("")}</div>
+      <div class="row"><button type="button" class="primary" id="rtAdd">${ic("userPlus")}Код үүсгэх</button><span id="rtMsg" class="muted"></span></div></div>
+  </section>`;
+}
+function bindRaters(){
+  const a=$("#rtAdd");if(!a)return;
+  document.querySelectorAll("[data-rdept]").forEach(i=>i.onchange=()=>i.closest(".chip").classList.toggle("on",i.checked));
+  a.onclick=async()=>{const label=$("#rtLabel").value.trim(),depts=[...document.querySelectorAll("[data-rdept]:checked")].map(x=>x.dataset.rdept);
+    if(!label||!depts.length){$("#rtMsg").textContent="Нэр бичиж, алба сонгоно уу.";return}
+    try{const j=await api("POST",{action:"raterAdd",label,depts});raters=j.raters;newCode=j.code;render()}catch(e){if(e.auth)return login(e.message);$("#rtMsg").textContent="Үүсгэж чадсангүй: "+e.message}};
+  document.querySelectorAll("[data-rdel]").forEach(b=>b.onclick=async()=>{if(!confirm("Энэ кодыг хаах уу? Тэр хүн дахин нэвтэрч чадахгүй."))return;
+    try{const j=await api("POST",{action:"raterDel",id:b.dataset.rdel});raters=j.raters;newCode=null;render()}catch(e){if(e.auth)return login(e.message)}});
+}
+// Department head view: names and positions of their departments, 1–5 skill ratings, nothing else
+function renderRater(){
+  setBand("Удирдлагын","үнэлгээ.",`${raterLabel}: ажилтан бүрийн ур чадварыг 1–5-аар үнэлнэ үү. Дарсан даруйд хадгалагдана.`);
+  const by={};staff.forEach(s=>(by[s.dept]=by[s.dept]||[]).push(s));
+  const done=staff.filter(s=>COMP.every(c=>s.mgr?.[c.id])).length;
+  $("#view").innerHTML=`<div class="stack" style="gap:20px">
+    <div class="row spread"><div class="tag"><b>${done}/${staff.length}</b>Үнэлсэн ажилтан</div><div class="row"><button type="button" id="reload">${ic("refresh")}Шинэчлэх</button><button type="button" id="logout">${ic("logout")}Гарах</button></div></div>
+    ${msg?`<div class="err">${esc(msg)}</div>`:""}
+    <div class="sheet"><p class="sum-small" style="margin:0!important">${[1,2,3,4,5].map(n=>`<b>${n}</b> ${ANCHOR[n]}`).join(" · ")}</p></div>
+    ${!staff.length?'<div class="sheet"><p style="margin:0">Таны албанаас үнэлгээ бөглөсөн ажилтан хараахан алга.</p></div>':Object.entries(by).map(([d,l])=>`<div class="stack" style="gap:12px"><h3 style="margin:0">${esc(d)}</h3>
+      ${l.map(s=>`<article class="sheet stack" style="gap:10px"><div class="row spread"><div><b style="font-size:17px">${esc(s.name)}</b><div class="muted" style="font-size:13px">${esc(s.position)}</div></div>${COMP.every(c=>s.mgr?.[c.id])?'<span class="pill good">Үнэлсэн</span>':'<span class="pill idle">Дутуу</span>'}</div>
+        <div class="mgr-list">${COMP.map(c=>`<div class="mg"><div><b>${c.t}</b><small>${esc(c.d||"")}</small></div><div class="score5">${[1,2,3,4,5].map(n=>`<button type="button" data-sid="${esc(s.id)}" data-c="${c.id}" data-n="${n}" class="${s.mgr?.[c.id]===n?"on":""}" title="${ANCHOR[n]}">${n}</button>`).join("")}</div></div>`).join("")}</div></article>`).join("")}</div>`).join("")}
+  </div>`;
+  $("#reload").onclick=()=>load();$("#logout").onclick=logout;
+  document.querySelectorAll("[data-sid]").forEach(b=>b.onclick=async()=>{const s=staff.find(x=>x.id===b.dataset.sid);if(!s)return;
+    try{const j=await api("POST",{action:"update",id:s.id,patch:{mgr:{...(s.mgr||{}),[b.dataset.c]:+b.dataset.n}}});s.mgr=j.row.mgr;msg="";const y=window.scrollY;renderRater();window.scrollTo(0,y)}
+    catch(e){if(e.auth)return login(e.message);msg="Хадгалж чадсангүй: "+e.message;renderRater()}});
 }
 function rosterSec(notDone,unmatched){
   const head=(icon,t)=>`<h4 class="sum-h">${ic(icon)}${t}</h4>`;
