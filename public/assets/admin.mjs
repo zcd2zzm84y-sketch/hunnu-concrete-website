@@ -506,15 +506,15 @@ const fmtDay=t=>{const d=new Date(t);return String(d.getMonth()+1).padStart(2,"0
 // Department contacts: one row per company number, grouped by shared mailbox; HR records who holds each number
 const DOMAIN="hunnuconcrete.mn";
 const CROWS=[
-  {k:"77017575",n:"7701-7575",a:"Захиргаа",em:"info",land:true,h:"Оффис",for:"Албан бичиг, гэрээ, хамтын ажиллагаа"},
+  {k:"77017575",n:"7701-7575",a:"Захиргаа",em:"info",land:true,h:"Оффис",for:"Компанийн ерөнхий хаяг. Албан бичиг, гэрээ, хамтын ажиллагааны санал"},
   {k:"93090935",n:"9309-0935",a:"Үйлдвэр",em:"info",for:"Үйлдвэрлэл, засвар, тээвэр, Үйлдвэр 2.0"},
-  {k:"legal",n:"",a:"Хууль, эрх зүй",em:"info",for:"Гэрээ, нэхэмжлэл, албан шаардлага"},
-  {k:"75754040",n:"7575-4040",a:"Систем хөгжүүлэлт",em:"info",land:true,h:"Оффис",for:"REPORT360, эрх, тоног төхөөрөмж"},
-  {k:"93090906",n:"9309-0906",a:"Маркетинг, борлуулалт",em:"sales",h:"Хангал.Б",for:"Үнийн санал, захиалга, хүргэлт"},
-  {k:"93090908",n:"9309-0908",a:"Маркетинг, борлуулалт",em:"sales",second:true},
-  {k:"93090932",n:"9309-0932",a:"Чанарын алба",em:"sales",for:"Шинжилгээ, гэрчилгээ, гомдол"},
-  {k:"93090938",n:"9309-0938",a:"Санхүү",em:"finance",for:"Нэхэмжлэх, төлбөр, тооцоо"},
-  {k:"93090931",n:"9309-0931",a:"Хүний нөөц",em:"hr",for:"Анкет, ажилтны асуудал, тодорхойлолт"}
+  {k:"legal",n:"",a:"Хууль, эрх зүй",em:"info",for:"Гэрээний төсөл, нэхэмжлэл, албан шаардлага. 9309-09 цувралаас шинэ SIM авна"},
+  {k:"75754040",n:"7575-4040",a:"Систем хөгжүүлэлт",em:"info",land:true,h:"Оффис",for:"REPORT360 — Hunnu Concrete, эрх, тоног төхөөрөмж"},
+  {k:"93090906",n:"9309-0906",a:"Маркетинг, борлуулалт",em:"sales",h:"Хангал.Б",for:"Үнийн санал, бетон захиалга, хүргэлтийн цаг"},
+  {k:"93090908",n:"9309-0908",a:"Маркетинг, борлуулалт",em:"sales",second:true,for:"Борлуулалтын 2 дахь дугаар"},
+  {k:"93090932",n:"9309-0932",a:"Чанарын алба",em:"sales",for:"Шинжилгээний дүн, гэрчилгээ, гомдол"},
+  {k:"93090938",n:"9309-0938",a:"Санхүү",em:"finance",for:"Нэхэмжлэх, төлбөр, тооцоо нийлэх акт"},
+  {k:"93090931",n:"9309-0931",a:"Хүний нөөц",em:"hr",for:"Ажлын анкет, ажилтны асуудал, тодорхойлолт"}
 ];
 let simEdit=null;
 const fmtD=d=>d?d.replace(/-/g,"."):"";
@@ -530,11 +530,12 @@ function renderContacts(){
         ${people.length?"":'<small class="muted">Нэр сонгохын тулд доорх ажилтны жагсаалтыг бөглөнө үү.</small>'}`}
     if(!r.n)return '<span class="pill idle">Дугаар авна</span>';
     if(!h)return '<span class="pill warn">Олгоогүй</span>';
-    return `<b>${esc(h)}</b>${v.date?`<small class="muted c-date">${fmtD(v.date)}-нд олгосон</small>`:""}`};
+    return `<b>${esc(h)}</b>${v.date?`<small class="muted c-date">${fmtD(v.date)}</small>`:""}`};
   const rows=groups.map(g=>g.map((r,j)=>`<tr${j===0?' class="c-grp"':""}>
-    <td>${r.second?'<span class="muted">2 дахь дугаар</span>':`<b>${esc(r.a)}</b><small class="muted c-for">${esc(r.for)}</small>`}</td>
+    <td>${r.second?'<span class="muted">〃</span>':`<b>${esc(r.a)}</b>`}</td>
     <td class="c-num">${r.n?`<a href="tel:+976${r.k}">${r.n}</a>${r.land?'<small class="muted">суурин</small>':""}`:'<span class="muted">—</span>'}</td>
     ${j===0?`<td rowspan="${g.length}" class="c-mail"><a href="mailto:${r.em}@${DOMAIN}">${r.em}@${DOMAIN}</a></td>`:""}
+    <td class="c-for">${esc(r.for)}</td>
     <td class="c-who">${who(r)}</td>
     <td class="c-act">${ed&&r.n&&simEdit!==r.k?`<button type="button" class="c-pen" data-se="${r.k}" title="Засах" aria-label="${esc(r.n)} засах">${ic("edit")}</button>`:""}</td></tr>`).join("")).join("");
   const byDept={};people.forEach(r=>(byDept[r.dept||"—"]=byDept[r.dept||"—"]||[]).push(r));
@@ -544,10 +545,24 @@ function renderContacts(){
   ${msg?`<div class="err">${esc(msg)}</div>`:""}
   <article class="passport sum">
   <section class="pp-sec"><div class="tag"><b>01</b>Утас, имэйл · ${CROWS.filter(r=>r.n).length} дугаар · 4 имэйл${free?` · олгоогүй ${free}`:""}</div>
-    <div style="overflow-x:auto"><table class="sum-tbl c-tbl"><thead><tr><th>Алба</th><th>Утас</th><th>Имэйл</th><th>Одоо хэнд</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div style="overflow-x:auto"><table class="sum-tbl c-tbl"><thead><tr><th>Алба</th><th>Утас</th><th>Имэйл</th><th>Юугаар хандах</th><th>Одоо хэнд</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
     <span id="simMsg" class="muted"></span>
   </section>
-  <section class="pp-sec"><div class="row spread"><div class="tag"><b>02</b>Ажилтны жагсаалт${people.length?` · ${people.length} хүн`:""}</div>${ed?`<button type="button" id="pplEdit">${ic("edit")}Жагсаалт засах</button>`:""}</div>
+  <section class="pp-sec"><div class="tag"><b>02</b>Хэрэглээ</div>
+    <div class="sum-grid">
+      <div class="sum-card"><h4 class="sum-h">${ic("send")}Имэйлийн гарын үсгийн жишээ</h4>
+        <div class="c-sig"><b>[Нэр Овог]</b><span class="muted">Борлуулалтын менежер</span><b>Hunnu Concrete | Хүннү Конкрет</b><span class="c-num">sales@${DOMAIN} · 9309-0906</span><span class="muted">${DOMAIN}</span></div>
+        <p class="sum-small" style="margin:0!important">Хувийн хаягийн оронд албаны хаягийг тавьснаар харилцагч хүнээс биш албаас хариу авна.</p></div>
+      <div class="sum-card"><h4 class="sum-h">${ic("check")}Хэрэгжүүлэх алхам</h4>
+        <ol class="c-steps">
+          <li><b>Нэршлийг батлах.</b> 4 хаягийг (info, sales, finance, hr) удирдлагаар баталгаажуулна.</li>
+          <li><b>Имэйл нээх.</b> Microsoft 365-д 4 хуваалцсан шуудан нээж, албаны ажилтнуудад эрх өгнө. Нэмэлт лиценз шаардахгүй.</li>
+          <li><b>Дугаар.</b> G-Mobile-ийн 9309-09xx цувралаас компанийн нэр дээр SIM авсан. Захиргаа суурин 7701-7575-аа хэрэглэнэ. Хуулийн албаны дугаарыг G-Mobile-оос авна.</li>
+          <li><b>Нийтлэх.</b> Вэбсайт, нэхэмжлэх, гэрээний загвар, Teams «HUN | …» бүлгүүдэд тавина.</li>
+        </ol></div>
+    </div>
+  </section>
+  <section class="pp-sec"><div class="row spread"><div class="tag"><b>03</b>Ажилтны жагсаалт${people.length?` · ${people.length} хүн`:""}</div>${ed?`<button type="button" id="pplEdit">${ic("edit")}Жагсаалт засах</button>`:""}</div>
     ${peopleEdit?`<label class="f">Одоо ажиллаж буй ажилтнууд, мөр бүрт «Алба | Нэр | Албан тушаал». Ажлаас гарсан хүнийг эндээс устгана.<textarea id="pplTxt" rows="16" spellcheck="false">${esc(txt)}</textarea></label>
       <div class="row"><button type="button" class="primary" id="pplSave">${ic("check")}Хадгалах</button><button type="button" id="pplNo">${ic("x")}Болих</button>${roster.length?`<button type="button" id="pplRoster">${ic("copy")}Үнэлгээний жагсаалтаас хуулах</button>`:""}<span id="pplMsg" class="muted"></span></div>`
     :!people.length?`<p class="muted">Жагсаалт хоосон. «Жагсаалт засах» дарж одоо ажиллаж буй хүмүүсийг оруулбал дугаар олгохдоо нэрээр нь сонгоно.</p>`
