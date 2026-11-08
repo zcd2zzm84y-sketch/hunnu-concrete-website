@@ -589,27 +589,36 @@ footer .inner a:hover{color:var(--fg);text-decoration:underline;text-underline-o
 .sum-note{align-self:stretch}
 .sum-bars .db{grid-template-columns:minmax(0,1.7fr) minmax(0,2fr) 48px}
 /* HR: department contacts */
-.c-tbl{font-size:15px}
-.c-tbl td{vertical-align:middle;padding:10px 10px}
-.c-tbl tr.c-grp td{border-top:1px solid var(--muted)}
+.c-tbl{font-size:15px;table-layout:fixed;min-width:980px}
+.c-tbl th{padding:8px 12px}
+.c-tbl td{vertical-align:middle;padding:12px;height:64px;border-bottom:1px solid var(--line)}
+.c-tbl tr.c-grp td{border-top:2px solid var(--fg)}
 .c-tbl tbody tr:first-child td{border-top:0}
-.c-tbl small{display:block;font-size:13px;margin-top:2px}
+.c-tbl small{display:block;font-size:12px;margin-top:3px;color:var(--muted);font-family:inherit;font-weight:400}
 .c-tbl a{color:inherit;text-decoration:none}
 .c-tbl a:hover{text-decoration:underline}
+.c-dept{font-weight:700}
 .c-num{font-family:var(--mono);font-weight:600;white-space:nowrap}
-.c-num small{font-family:inherit;font-weight:400}
-.c-mail{text-align:center;font-weight:600;border-left:1px solid var(--line);border-right:1px solid var(--line);white-space:nowrap;background:var(--sunk)}
-.c-who b{font-weight:600}
-.c-act{width:44px;text-align:right}
+.c-num small{font-family:"Inter",system-ui,sans-serif}
+.c-mail{font-weight:600;border-left:1px solid var(--line);border-right:1px solid var(--line);word-break:break-all}
+.c-for{color:var(--fg);line-height:1.45}
+.c-st{display:inline-flex;align-items:center;gap:8px;font-weight:600}
+.c-st::before{content:"";width:8px;height:8px;border-radius:50%;flex:none;background:currentColor}
+.c-ok{color:var(--fg)}.c-ok::before{background:var(--good)}
+.c-todo{color:var(--warn)}
+.c-new{color:var(--muted)}
+.c-who small{padding-left:16px}
+.c-act{text-align:right;padding-left:0!important;padding-right:4px!important}
 .c-pen{padding:6px 8px;border-color:transparent;background:transparent}
 .c-pen:hover{border-color:var(--line);background:var(--surface)}
 .c-pen svg{margin:0}
 .c-edit{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .c-edit select,.c-edit input{width:auto;padding:9px 10px;font-size:15px;min-width:170px}
 .c-edit input#seD{min-width:0;width:120px;font-family:var(--mono)}
+.c-editrow td{height:auto;background:var(--sunk);border-top:0}
+.c-elab{font-weight:700;margin-right:4px}
 .c-dl{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
 .c-edit button{padding:7px 12px}
 .c-ppl summary{cursor:pointer;font-weight:600;margin-bottom:8px}
-.c-for{color:var(--fg);min-width:220px}
 .c-sig{display:flex;flex-direction:column;gap:3px;border-left:3px solid #f2c200;padding:2px 0 2px 14px;margin:6px 0 10px;font-size:14px}
 .c-steps{margin:4px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:1.5}
