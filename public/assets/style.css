@@ -588,37 +588,44 @@ footer .inner a:hover{color:var(--fg);text-decoration:underline;text-underline-o
 @media print{.sum-note,.sum-card{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 .sum-note{align-self:stretch}
 .sum-bars .db{grid-template-columns:minmax(0,1.7fr) minmax(0,2fr) 48px}
-/* HR: department contacts */
-.c-tbl{font-size:15px;table-layout:fixed;min-width:980px}
-.c-tbl th{padding:8px 12px}
-.c-tbl td{vertical-align:middle;padding:12px;height:64px;border-bottom:1px solid var(--line)}
-.c-tbl tr.c-grp td{border-top:2px solid var(--fg)}
-.c-tbl tbody tr:first-child td{border-top:0}
-.c-tbl small{display:block;font-size:12px;margin-top:3px;color:var(--muted);font-family:inherit;font-weight:400}
+/* HR: department contacts (same look as the contacts directory page) */
+.c-page{display:flex;flex-direction:column;gap:28px}
+.c-sec .sum-card{background:var(--surface);border:1px solid var(--line)}
+.c-h2{font-size:12px;letter-spacing:.28em;text-transform:uppercase;font-weight:700;margin:0 0 14px}
+.c-note{margin:-6px 0 12px;font-size:13px;color:var(--muted)}
+.c-saved{color:var(--good);font-weight:600}
+.c-box{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:3px}
+.c-tbl{border-collapse:collapse;width:100%;min-width:760px;font-size:14px}
+.c-tbl th,.c-tbl td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+.c-tbl th{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#fff;font-weight:700;background:#333333;white-space:nowrap}
+.c-tbl tbody tr:last-child td{border-bottom:0}
 .c-tbl a{color:inherit;text-decoration:none}
 .c-tbl a:hover{text-decoration:underline}
-.c-dept{font-weight:700}
-.c-num{font-family:var(--mono);font-weight:600;white-space:nowrap}
-.c-num small{font-family:"Inter",system-ui,sans-serif}
-.c-mail{font-weight:600;border-left:1px solid var(--line);border-right:1px solid var(--line);word-break:break-all}
-.c-for{color:var(--fg);line-height:1.45}
-.c-st{display:inline-flex;align-items:center;gap:8px;font-weight:600}
-.c-st::before{content:"";width:8px;height:8px;border-radius:50%;flex:none;background:currentColor}
-.c-ok{color:var(--fg)}.c-ok::before{background:var(--good)}
-.c-todo{color:var(--warn)}
-.c-new{color:var(--muted)}
-.c-who small{padding-left:16px}
-.c-act{text-align:right;padding-left:0!important;padding-right:4px!important}
+.c-t1 td{white-space:nowrap}
+.c-t1 td.c-for{white-space:normal;min-width:260px}
+.c-t1 tr.c-grp td{border-top:2px solid var(--line)}
+.c-t1 tbody tr:first-child td{border-top:0}
+.c-mail{text-align:center;font-family:var(--mono);border-left:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)!important}
+.c-num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.c-tag{display:inline-block;font-family:"Inter",system-ui,sans-serif;font-size:11px;font-weight:600;padding:1px 7px;border-radius:2px;background:var(--sunk);color:var(--muted);margin-left:8px;vertical-align:1px}
+.c-ph{color:#8a5a00}
+.c-t2 td{white-space:nowrap;height:52px}
+.c-t2 tr.c-on td{background:var(--sunk)}
+.c-st{display:inline-block;font-size:11px;font-weight:600;padding:1px 8px;border-radius:2px}
+.c-sok{background:var(--good-soft);color:var(--good)}
+.c-stodo{background:var(--bg);color:var(--fg);border:1px solid var(--line)}
+.c-snew{background:#f6ead2;color:#8a5a00}
+.c-act{width:48px;text-align:right;padding-right:8px!important}
 .c-pen{padding:6px 8px;border-color:transparent;background:transparent}
-.c-pen:hover{border-color:var(--line);background:var(--surface)}
+.c-pen:hover{border-color:var(--line);background:var(--sunk)}
 .c-pen svg{margin:0}
-.c-edit{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.c-edit select,.c-edit input{width:auto;padding:9px 10px;font-size:15px;min-width:170px}
-.c-edit input#seD{min-width:0;width:120px;font-family:var(--mono)}
-.c-editrow td{height:auto;background:var(--sunk);border-top:0}
+.c-editrow td{background:var(--sunk);white-space:normal}
+.c-edit{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .c-elab{font-weight:700;margin-right:4px}
+.c-edit select,.c-edit input{width:auto;padding:9px 10px;font-size:15px;min-width:200px}
+.c-edit input#seD{min-width:0;width:120px;font-family:var(--mono)}
 .c-dl{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
-.c-edit button{padding:7px 12px}
+.c-edit button{padding:8px 14px}
 .c-ppl summary{cursor:pointer;font-weight:600;margin-bottom:8px}
 .c-sig{display:flex;flex-direction:column;gap:3px;border-left:3px solid #f2c200;padding:2px 0 2px 14px;margin:6px 0 10px;font-size:14px}
 .c-steps{margin:4px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:1.5}
