@@ -588,3 +588,8 @@ footer .inner a:hover{color:var(--fg);text-decoration:underline;text-underline-o
 @media print{.sum-note,.sum-card{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 .sum-note{align-self:stretch}
 .sum-bars .db{grid-template-columns:minmax(0,1.7fr) minmax(0,2fr) 48px}
+/* HR: department contacts */
+.c-tbl tr.c-grp td{border-top:2px solid var(--fg)}
+.c-tbl tbody tr:first-child td{border-top:0}
+.c-mail{vertical-align:middle!important;text-align:center;font-family:var(--mono);font-weight:600;border-left:1px solid var(--line);border-right:1px solid var(--line);white-space:nowrap}
+.c-mail a{color:inherit}

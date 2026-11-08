@@ -24,6 +24,14 @@ async function readAll(store: ReturnType<typeof staffStore>) {
   return rows.filter(Boolean)
 }
 
+// Department phone/SIM matrix: which numbers exist is fixed in the page; HR records who holds each one and since when
+const SIM_KEYS = ["77017575", "93090906", "93090908", "93090932", "93090931", "93090935", "93090938", "legal", "75754040"]
+const getSims = async (): Promise<Record<string, any>> => { const v: any = await settingsStore().get("sims", { type: "json" }); return v && typeof v === "object" && !Array.isArray(v) ? v : {} }
+// Current employees (HR keeps it; people who leave are removed here); used for the SIM holder picker
+const cleanPeople = (src: any) => (Array.isArray(src) ? src : []).slice(0, 300)
+  .map((r: any) => ({ dept: clip(r?.dept, 80).trim(), name: clip(r?.name, 80).trim(), position: clip(r?.position, 80).trim() }))
+  .filter((r: any) => r.name)
+
 const scores = (src: any) => {
   const out: Record<string, number> = {}
   for (const c of COMP) { const v = Number(src?.[c.id]); if (Number.isInteger(v) && v >= 1 && v <= 5) out[c.id] = v }
@@ -51,7 +59,7 @@ export default async (req: Request) => {
     return json({ ok: true, row: { id, name: cur.name, position: cur.position, dept: cur.dept, mgr: next.mgr } })
   }
   if (req.method === "GET") {
-    const [rows, pulse, apps, openings, roster] = await Promise.all([readAll(staffStore()), readAll(pulseStore()), readAll(applicantStore()), getOpenings(), settingsStore().get("roster", { type: "json" })])
+    const [rows, pulse, apps, openings, roster, sims, people] = await Promise.all([readAll(staffStore()), readAll(pulseStore()), readAll(applicantStore()), getOpenings(), settingsStore().get("roster", { type: "json" }), getSims(), settingsStore().get("people", { type: "json" })])
     const newest = (a: any, b: any) => b.submittedAt - a.submittedAt
     rows.sort(newest); apps.sort(newest)
     apps.forEach((a: any) => { if (a.exam) a.exam = { issuedAt: a.exam.issuedAt, startedAt: a.exam.startedAt } })
@@ -59,7 +67,7 @@ export default async (req: Request) => {
     const ids = new Set([...rows, ...apps].flatMap((r: any) => r.questions || []))
     const bank = Object.fromEntries([...ids].filter(id => KMAP[id]).map(id => [id, KMAP[id]]))
     const raters = role === "admin" ? (await getRaters()).map(r => ({ id: r.id, label: r.label, depts: r.depts, code: r.code || "", createdAt: r.createdAt })) : []
-    return json({ role, staff: rows, pulse: summarizePulse(pulse), applicants: apps, bank, openings, roster: Array.isArray(roster) ? roster : [], raters })
+    return json({ role, staff: rows, pulse: summarizePulse(pulse), applicants: apps, bank, openings, roster: Array.isArray(roster) ? roster : [], raters, sims, people: Array.isArray(people) ? people : [] })
   }
   let body: any
   try { body = await req.json() } catch { return json({ error: "Хүсэлт буруу байна." }, 400) }
@@ -83,6 +91,20 @@ export default async (req: Request) => {
     const list = (await getRaters()).filter(r => r.id !== clip(body.id, 40))
     await settingsStore().setJSON("raters", list)
     return json({ ok: true, raters: list.map(r => ({ id: r.id, label: r.label, depts: r.depts, code: r.code || "", createdAt: r.createdAt })) })
+  }
+  if (body?.action === "sim") {
+    const k = clip(body.k, 20)
+    if (!SIM_KEYS.includes(k)) return json({ error: "Дугаар олдсонгүй." }, 400)
+    const holder = clip(body.holder, 80).trim(), date = /^\d{4}-\d{2}-\d{2}$/.test(String(body.date || "")) ? String(body.date) : ""
+    const sims = await getSims()
+    if (holder || date) sims[k] = { holder, date, at: Date.now() }; else delete sims[k]
+    await settingsStore().setJSON("sims", sims)
+    return json({ ok: true, sims })
+  }
+  if (body?.action === "people") {
+    const list = cleanPeople(body.people)
+    await settingsStore().setJSON("people", list)
+    return json({ ok: true, people: list })
   }
   // Staff in scope of the assessment (HR's list): base for the participation rate and the "not yet taken" list
   if (body?.action === "roster") {

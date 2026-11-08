@@ -5,7 +5,7 @@ import {$,esc,avg,fmtDate,mmss,lvl,initials,setBand,gauge,radarMulti,ic} from ".
 
 const KEY="hunnu-admin-key";
 let key=(()=>{try{return sessionStorage.getItem(KEY)||""}catch(e){return""}})();
-let staff=[],pulse=null,apps=[],bank={},openings=[],roster=[],raters=[],raterLabel="",newCode=null,rosterEdit=false,editOpen=false,selS=null,selA=null,appFilter="",deptFilter="",msg="",view=["sum","staff","pulse","app"].includes(location.hash.slice(1))?location.hash.slice(1):"sum";
+let staff=[],pulse=null,apps=[],bank={},openings=[],roster=[],raters=[],sims={},people=[],peopleEdit=false,raterLabel="",newCode=null,rosterEdit=false,editOpen=false,selS=null,selA=null,appFilter="",deptFilter="",msg="",view=["sum","staff","pulse","app","contacts"].includes(location.hash.slice(1))?location.hash.slice(1):"sum";
 
 async function api(method,body){
   const res=await fetch("api/admin",{method,headers:{"x-admin-key":key,"content-type":"application/json"},body:body?JSON.stringify(body):undefined});
@@ -16,7 +16,7 @@ async function api(method,body){
 }
 let role="admin";
 async function load(){
-  try{const j=await api("GET");role=j.role||"admin";document.body.classList.toggle("role-manager",role==="manager");staff=j.staff;pulse=j.pulse;apps=j.applicants||[];bank=j.bank||{};openings=j.openings||[];roster=j.roster||[];raters=j.raters||[];raterLabel=j.label||"";applyNames();msg="";if(!selS&&staff.length)selS=staff[0].id;if(!selA&&apps.length)selA=apps[0].id;render()}
+  try{const j=await api("GET");role=j.role||"admin";document.body.classList.toggle("role-manager",role==="manager");staff=j.staff;pulse=j.pulse;apps=j.applicants||[];bank=j.bank||{};openings=j.openings||[];roster=j.roster||[];raters=j.raters||[];sims=j.sims||{};people=j.people||[];raterLabel=j.label||"";applyNames();msg="";if(!selS&&staff.length)selS=staff[0].id;if(!selA&&apps.length)selA=apps[0].id;render()}
   catch(e){if(e.auth)return login(e.message);msg="Ачаалж чадсангүй: "+e.message;render()}
 }
 const PRINT=`<button type="button" id="print" class="pp-print" title="Хэвлэх" aria-label="Хэвлэх">${ic("printer")}</button>`;
@@ -50,16 +50,19 @@ function login(err){
   if(matchMedia("(hover:hover)").matches)$("#pw").focus();
 }
 function tabs(cur){
-  return `<div class="row spread"><nav class="tabs" aria-label="Үр дүнгийн хэсэг">${[["sum","Нэгдсэн анализ","report"],["staff","Ажилтны паспорт","users"],["pulse","Сэтгэл ханамж","heart"],["app","Горилогчид"+(apps.some(a=>a.status==="new")?" ("+apps.filter(a=>a.status==="new").length+")":""),"userPlus"]].map(([v,t,i])=>`<button type="button" data-view="${v}" ${v===cur?'aria-current="page"':""}>${ic(i)}${t}</button>`).join("")}</nav><div class="row">${cur!=="pulse"&&cur!=="sum"?`<button type="button" id="xls">${ic("download")}Excel татах</button>`:""}<button type="button" id="reload">${ic("refresh")}Шинэчлэх</button><button type="button" id="logout">${ic("logout")}Гарах</button></div></div>`;
+  return `<div class="row spread"><nav class="tabs" aria-label="Үр дүнгийн хэсэг">${[["sum","Нэгдсэн анализ","report"],["staff","Ажилтны паспорт","users"],["pulse","Сэтгэл ханамж","heart"],["app","Горилогчид"+(apps.some(a=>a.status==="new")?" ("+apps.filter(a=>a.status==="new").length+")":""),"userPlus"],["contacts","Холбоо барих","phone"]].map(([v,t,i])=>`<button type="button" data-view="${v}" ${v===cur?'aria-current="page"':""}>${ic(i)}${t}</button>`).join("")}</nav><div class="row">${cur==="staff"||cur==="app"?`<button type="button" id="xls">${ic("download")}Excel татах</button>`:""}<button type="button" id="reload">${ic("refresh")}Шинэчлэх</button><button type="button" id="logout">${ic("logout")}Гарах</button></div></div>`;
 }
-function render(){
-  if(role==="rater"){renderRater();return}
-  if(view==="sum")renderSummary();else if(view==="pulse")renderPulse();else if(view==="app")renderApps();else renderStaffHr();
-  // Leaders: everything is visible, but only the skill-rating buttons save (the server enforces the same)
-  if(role==="manager"){document.querySelectorAll("#view textarea,#view input[type=text]").forEach(e=>e.readOnly=true);const t=document.querySelector("nav.tabs");if(t&&!$("#roleNote"))t.closest(".row").insertAdjacentHTML("afterend",'<div class="note" id="roleNote">Удирдлагын эрх: үр дүнг харах, ажилтны ур чадварыг 1–5 үнэлэх. Бусад мэдээллийг өөрчлөхгүй.</div>')}
+function bindTabs(){
   document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>{view=b.dataset.view;history.replaceState(null,"","#"+view);render()});
   const r=$("#reload");if(r)r.onclick=()=>{r.disabled=true;load()};
   const o=$("#logout");if(o)o.onclick=logout;
+}
+function render(){
+  if(role==="rater"){renderRater();return}
+  if(view==="sum")renderSummary();else if(view==="pulse")renderPulse();else if(view==="app")renderApps();else if(view==="contacts")renderContacts();else renderStaffHr();
+  // Leaders: everything is visible, but only the skill-rating buttons save (the server enforces the same)
+  if(role==="manager"){document.querySelectorAll("#view textarea,#view input[type=text]").forEach(e=>e.readOnly=true);const t=document.querySelector("nav.tabs");if(t&&!$("#roleNote"))t.closest(".row").insertAdjacentHTML("afterend",'<div class="note" id="roleNote">Удирдлагын эрх: үр дүнг харах, ажилтны ур чадварыг 1–5 үнэлэх. Бусад мэдээллийг өөрчлөхгүй.</div>')}
+  bindTabs();
   const x=$("#xls");if(x)x.onclick=()=>view==="app"?exportApps():exportStaff();
   const pr=$("#print");if(pr)pr.onclick=()=>{document.querySelectorAll("#detail details").forEach(d=>d.open=true);window.print()};
 }
@@ -499,3 +502,75 @@ function bindRoster(){
     try{const j=await api("POST",{action:"roster",roster:list});roster=j.roster;applyNames();rosterEdit=false;render()}catch(err){if(err.auth)return login(err.message);$("#rsMsg").textContent="Хадгалж чадсангүй: "+err.message}};
 }
 const fmtDay=t=>{const d=new Date(t);return String(d.getMonth()+1).padStart(2,"0")+"."+String(d.getDate()).padStart(2,"0")};
+
+// Department contacts: 8 departments, 4 shared mailboxes, one phone each; HR records who holds each SIM
+const CDEPT=[
+  {n:"Захиргаа",em:"info",mob:"7701-7575",land:true,for:"Компанийн ерөнхий хаяг. Албан бичиг, гэрээ, хамтын ажиллагааны санал"},
+  {n:"Маркетинг, борлуулалт",em:"sales",mob:"9309-0906 · 9309-0908",for:"Үнийн санал, бетон захиалга, хүргэлтийн цаг"},
+  {n:"Чанарын алба",em:"sales",mob:"9309-0932",for:"Шинжилгээний дүн, гэрчилгээ, гомдол"},
+  {n:"Үйлдвэр",em:"info",mob:"9309-0935",for:"Үйлдвэрлэл, засвар, тээвэр, Үйлдвэр 2.0"},
+  {n:"Хууль, эрх зүй",em:"info",mob:"9309-09__",for:"Гэрээний төсөл, нэхэмжлэл, албан шаардлага. Дугаарыг G-Mobile-оос авна"},
+  {n:"Систем хөгжүүлэлт",em:"info",mob:"7575-4040",land:true,for:"REPORT360 — Hunnu Concrete, эрх, тоног төхөөрөмж"},
+  {n:"Санхүү",em:"finance",mob:"9309-0938",for:"Нэхэмжлэх, төлбөр, тооцоо нийлэх акт"},
+  {n:"Хүний нөөц",em:"hr",mob:"9309-0931",for:"Ажлын анкет, ажилтны асуудал, тодорхойлолт"}
+];
+const CSIM=[
+  {k:"77017575",n:"7701-7575",op:"Суурин",a:"Захиргаа",h:"Оффис",st:"ok"},
+  {k:"93090906",n:"9309-0906",op:"G-Mobile",a:"Маркетинг, борлуулалт",h:"Хангал.Б",st:"ok"},
+  {k:"93090908",n:"9309-0908",op:"G-Mobile",a:"Маркетинг, борлуулалт (2)",h:"",st:"ok"},
+  {k:"93090932",n:"9309-0932",op:"G-Mobile",a:"Чанарын алба",h:"",st:"todo"},
+  {k:"93090931",n:"9309-0931",op:"G-Mobile",a:"Хүний нөөц",h:"",st:"todo"},
+  {k:"93090935",n:"9309-0935",op:"G-Mobile",a:"Үйлдвэр",h:"",st:"todo"},
+  {k:"93090938",n:"9309-0938",op:"G-Mobile",a:"Санхүү",h:"",st:"todo"},
+  {k:"legal",n:"9309-09__",op:"G-Mobile",a:"Хууль, эрх зүй",h:"",st:"new"},
+  {k:"75754040",n:"7575-4040",op:"Суурин",a:"Систем хөгжүүлэлт",h:"Систем хөгжүүлэлт",st:"ok"}
+];
+const DOMAIN="hunnuconcrete.mn";
+function renderContacts(){
+  setBand("Холбоо","барих.","Алба бүрийн утас, имэйл, компанийн дугаар хэнд байгаа.");
+  const ed=role==="admin";
+  const tel=d=>d.mob.split(" · ").map(m=>m.includes("_")?`<span class="muted">${m} (авна)</span>`:`<a href="tel:+976${m.replace(/\D/g,"")}" style="font-family:var(--mono);white-space:nowrap;color:inherit">${m}</a>`).join("<br>")+(d.land?' <small class="muted">суурин</small>':"");
+  const groups=["info","sales","finance","hr"].map(k=>CDEPT.filter(d=>d.em===k));
+  const rows=groups.map(g=>g.map((d,j)=>`<tr${j===0?' class="c-grp"':""}><td><b>${esc(d.n)}</b></td><td>${tel(d)}</td>${j===0?`<td rowspan="${g.length}" class="c-mail"><a href="mailto:${d.em}@${DOMAIN}">${d.em}@${DOMAIN}</a></td>`:""}<td>${esc(d.for)}</td></tr>`).join("")).join("");
+  const stOf=m=>{const v=sims[m.k]||{};return m.st==="todo"&&v.holder?"given":m.st};
+  const SL={ok:["good","Бэлэн"],given:["good","Олгосон"],todo:["warn","Олгох"],new:["idle","Авах"]};
+  const mx=CSIM.map(m=>{const v=sims[m.k]||{},h=v.holder??m.h,[c,t]=SL[stOf(m)];
+    return `<tr><td style="font-family:var(--mono);white-space:nowrap"><b>${m.n}</b></td><td>${esc(m.a)}<div class="muted" style="font-size:12px">${m.op}</div></td>
+      <td><input type="text" list="cPpl" data-sim="${m.k}" data-f="holder" value="${esc(h)}" placeholder="${m.st==="new"?"Дугаар аваагүй":"Нэр сонгох"}" ${ed?"":"disabled"} style="padding:6px 8px;min-width:150px"></td>
+      <td><input type="date" data-sim="${m.k}" data-f="date" value="${esc(v.date||"")}" ${ed?"":"disabled"} style="padding:6px 8px"></td>
+      <td><span class="pill ${c}">${t}</span></td></tr>`}).join("");
+  const byDept={};people.forEach(r=>(byDept[r.dept||"—"]=byDept[r.dept||"—"]||[]).push(r));
+  const txt=people.map(r=>[r.dept,r.name,r.position].join(" | ")).join("\n");
+  $("#view").innerHTML=`<div class="stack" style="gap:24px">${tabs("contacts")}
+  ${msg?`<div class="err">${esc(msg)}</div>`:""}
+  <article class="passport sum">
+  <section class="pp-sec"><div class="tag"><b>01</b>Алба бүрийн холбоо барих</div>
+    <p class="sum-small" style="margin:0!important">8 алба · 4 имэйл (@${DOMAIN}) · алба бүрд нэг утас. Имэйл нь хуваалцсан шуудан, хэд хэдэн алба нэг хаягаар ажиллана.</p>
+    <div style="overflow-x:auto"><table class="sum-tbl c-tbl"><thead><tr><th>Алба</th><th>Утас</th><th>Имэйл</th><th>Юуны тухай</th></tr></thead><tbody>${rows}</tbody></table></div>
+  </section>
+  <section class="pp-sec"><div class="tag"><b>02</b>Дугаарын матриц</div>
+    <p class="sum-small" style="margin:0!important">Компанийн дугаар одоо хэнд байгаа, хэзээ олгосон. Нэрийг доорх ажилтны жагсаалтаас сонгоно. Өөрчилмөгц хадгалагдана.${ed?"":" Энэ эрхээр зөвхөн харна."}</p>
+    <div style="overflow-x:auto"><table class="sum-tbl"><thead><tr><th>Дугаар</th><th>Алба</th><th>Одоо хэнд</th><th>Олгосон огноо</th><th>Төлөв</th></tr></thead><tbody>${mx}</tbody></table></div>
+    <span id="simMsg" class="muted"></span>
+    <datalist id="cPpl">${people.map(p=>`<option value="${esc(p.name)}">${esc([p.dept,p.position].filter(Boolean).join(" · "))}</option>`).join("")}</datalist>
+  </section>
+  <section class="pp-sec"><div class="row spread"><div class="tag"><b>03</b>Ажилтны жагсаалт${people.length?` · ${people.length} хүн`:""}</div>${ed?`<button type="button" id="pplEdit">${ic("edit")}Жагсаалт засах</button>`:""}</div>
+    ${peopleEdit?`<label class="f">Одоо ажиллаж буй ажилтнууд, мөр бүрт «Алба | Нэр | Албан тушаал». Ажлаас гарсан хүнийг эндээс устгана.<textarea id="pplTxt" rows="16" spellcheck="false">${esc(txt)}</textarea></label>
+      <div class="row"><button type="button" class="primary" id="pplSave">${ic("check")}Хадгалах</button><button type="button" id="pplNo">${ic("x")}Болих</button>${roster.length?`<button type="button" id="pplRoster">${ic("copy")}Үнэлгээний жагсаалтаас хуулах</button>`:""}<span id="pplMsg" class="muted"></span></div>`
+    :!people.length?`<p class="muted">Ажилтны жагсаалт хоосон байна. «Жагсаалт засах» дарж одоо ажиллаж буй хүмүүсийг оруулбал матрицын «Одоо хэнд» талбарт сонгогдоно.</p>`
+    :`<p class="sum-small" style="margin:0!important">Ажлаас гарсан хүнийг «Жагсаалт засах»-аас устгана. Тэр хүнд дугаар байвал матрицаас өөр хүнд шилжүүлнэ.</p>
+      <div style="overflow-x:auto"><table class="sum-tbl"><thead><tr><th>Алба</th><th>Нэр</th><th>Албан тушаал</th></tr></thead><tbody>${Object.entries(byDept).flatMap(([d,l])=>l.map((r,i)=>`<tr><td>${i?"":`<b>${esc(d)}</b>`}</td><td>${esc(r.name)}</td><td>${esc(r.position)}</td></tr>`)).join("")}</tbody></table></div>`}
+  </section>
+  </article></div>`;
+  if(!ed)return;
+  document.querySelectorAll("[data-sim]").forEach(i=>i.onchange=async()=>{
+    const k=i.dataset.sim,row=document.querySelectorAll(`[data-sim="${k}"]`),val={};row.forEach(x=>val[x.dataset.f]=x.value.trim());
+    try{const j=await api("POST",{action:"sim",k,holder:val.holder||"",date:val.date||""});sims=j.sims;const y=window.scrollY;renderContacts();bindTabs();window.scrollTo(0,y);$("#simMsg").textContent="Хадгаллаа."}
+    catch(e){if(e.auth)return login(e.message);$("#simMsg").textContent="Хадгалж чадсангүй: "+e.message}});
+  $("#pplEdit").onclick=()=>{peopleEdit=true;render()};
+  const no=$("#pplNo");if(no)no.onclick=()=>{peopleEdit=false;render()};
+  const fr=$("#pplRoster");if(fr)fr.onclick=()=>{$("#pplTxt").value=roster.map(r=>[r.dept,r.name,r.position].join(" | ")).join("\n")};
+  const sv=$("#pplSave");if(sv)sv.onclick=async()=>{
+    const list=$("#pplTxt").value.split("\n").map(l=>l.split("|").map(x=>x.trim())).filter(a=>a.some(Boolean)).map(a=>a.length>=3?{dept:a[0],name:a[1],position:a[2]}:{dept:"",name:a[0],position:a[1]||""});
+    try{const j=await api("POST",{action:"people",people:list});people=j.people;peopleEdit=false;render()}catch(err){if(err.auth)return login(err.message);$("#pplMsg").textContent="Хадгалж чадсангүй: "+err.message}};
+}
