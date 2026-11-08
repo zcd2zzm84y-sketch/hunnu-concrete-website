@@ -58,7 +58,7 @@ export default async (req: Request) => {
     // Answer key only for the questions that were actually asked, so HR can review mistakes
     const ids = new Set([...rows, ...apps].flatMap((r: any) => r.questions || []))
     const bank = Object.fromEntries([...ids].filter(id => KMAP[id]).map(id => [id, KMAP[id]]))
-    const raters = role === "admin" ? (await getRaters()).map(r => ({ id: r.id, label: r.label, depts: r.depts, createdAt: r.createdAt })) : []
+    const raters = role === "admin" ? (await getRaters()).map(r => ({ id: r.id, label: r.label, depts: r.depts, code: r.code || "", createdAt: r.createdAt })) : []
     return json({ role, staff: rows, pulse: summarizePulse(pulse), applicants: apps, bank, openings, roster: Array.isArray(roster) ? roster : [], raters })
   }
   let body: any
@@ -75,14 +75,14 @@ export default async (req: Request) => {
     if (!label || !depts.length) return json({ error: "Нэр болон алба сонгоно уу." }, 400)
     const code = "HUN-" + randomBytes(6).toString("base64url").replace(/[-_]/g, "x").slice(0, 8).toUpperCase()
     const list = await getRaters()
-    list.push({ id: randomBytes(6).toString("hex"), label, depts, hash: sha(code), createdAt: Date.now() })
+    list.push({ id: randomBytes(6).toString("hex"), label, depts, hash: sha(code), code, createdAt: Date.now() })
     await settingsStore().setJSON("raters", list)
-    return json({ ok: true, code, raters: list.map(r => ({ id: r.id, label: r.label, depts: r.depts, createdAt: r.createdAt })) })
+    return json({ ok: true, code, raters: list.map(r => ({ id: r.id, label: r.label, depts: r.depts, code: r.code || "", createdAt: r.createdAt })) })
   }
   if (body?.action === "raterDel") {
     const list = (await getRaters()).filter(r => r.id !== clip(body.id, 40))
     await settingsStore().setJSON("raters", list)
-    return json({ ok: true, raters: list.map(r => ({ id: r.id, label: r.label, depts: r.depts, createdAt: r.createdAt })) })
+    return json({ ok: true, raters: list.map(r => ({ id: r.id, label: r.label, depts: r.depts, code: r.code || "", createdAt: r.createdAt })) })
   }
   // Staff in scope of the assessment (HR's list): base for the participation rate and the "not yet taken" list
   if (body?.action === "roster") {

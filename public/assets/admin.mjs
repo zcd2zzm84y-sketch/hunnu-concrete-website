@@ -442,9 +442,9 @@ function raterSec(){
   if(role!=="admin")return "";
   const D=Object.keys(DEPTS);
   return `<section class="pp-sec"><div class="tag"><b>!</b>Удирдлагын үнэлгээний эрх</div>
-    <p class="sum-small" style="margin:0!important">Алба бүрийн даргад өгөх код. Код нь зөвхөн сонгосон албаны ажилтны нэр, албан тушаалыг харуулж, 8 ур чадварыг 1–5-аар үнэлүүлнэ. Оноо, сэтгэл ханамж, бусад мэдээлэл харагдахгүй. Нэвтрэх хаяг: hunnu.asia/talent/admin.html</p>
-    ${newCode?`<div class="sum-note">${ic("check")}<span>Шинэ код: <b style="font-family:var(--mono);font-size:18px">${esc(newCode)}</b> · Одоо хуулж аваарай, дахин харагдахгүй.</span></div>`:""}
-    ${raters.length?`<table class="sum-tbl"><thead><tr><th>Хэнд</th><th>Алба</th><th></th></tr></thead><tbody>${raters.map(r=>`<tr><td><b>${esc(r.label)}</b></td><td>${esc((r.depts||[]).join(", "))}</td><td style="text-align:right"><button type="button" class="danger" data-rdel="${esc(r.id)}">${ic("trash")}Хаах</button></td></tr>`).join("")}</tbody></table>`:""}
+    <p class="sum-small" style="margin:0!important">Алба бүрийн даргад өгөх код. Код нь зөвхөн сонгосон албаны ажилтны нэр, албан тушаалыг харуулж, 8 ур чадварыг 1–5-аар үнэлүүлнэ. Оноо, сэтгэл ханамж, бусад мэдээлэл харагдахгүй. Нэвтрэх хаяг: hunnu.asia/talent/admin.html. Код энд хадгалагдана. Хэрэггүй болсон кодыг «Хаах»-аар устгана.</p>
+    
+    ${raters.length?`<table class="sum-tbl"><thead><tr><th>Хэнд</th><th>Алба</th><th>Код</th><th></th></tr></thead><tbody>${raters.map(r=>`<tr${r.code&&r.code===newCode?' style="background:var(--surface-2,#f4f4f4)"':""}><td><b>${esc(r.label)}</b></td><td>${esc((r.depts||[]).join(", "))}</td><td>${r.code?`<b style="font-family:var(--mono);font-size:16px">${esc(r.code)}</b>`:'<span class="muted">хуучин, дахин үүсгэнэ</span>'}</td><td style="text-align:right;white-space:nowrap">${r.code?`<button type="button" data-rcopy="${esc(r.code)}">${ic("copy")}Хуулах</button> `:""}<button type="button" class="danger" data-rdel="${esc(r.id)}">${ic("trash")}Хаах</button></td></tr>`).join("")}</tbody></table>`:""}
     <div class="sum-card"><label class="f">Хэнд (жишээ: Чанарын албаны дарга)<input type="text" id="rtLabel" maxlength="80"></label>
       <div class="chips">${D.map(d=>`<label class="chip"><input type="checkbox" data-rdept="${esc(d)}"> ${esc(d)}</label>`).join("")}</div>
       <div class="row"><button type="button" class="primary" id="rtAdd">${ic("userPlus")}Код үүсгэх</button><span id="rtMsg" class="muted"></span></div></div>
@@ -456,6 +456,7 @@ function bindRaters(){
   a.onclick=async()=>{const label=$("#rtLabel").value.trim(),depts=[...document.querySelectorAll("[data-rdept]:checked")].map(x=>x.dataset.rdept);
     if(!label||!depts.length){$("#rtMsg").textContent="Нэр бичиж, алба сонгоно уу.";return}
     try{const j=await api("POST",{action:"raterAdd",label,depts});raters=j.raters;newCode=j.code;render()}catch(e){if(e.auth)return login(e.message);$("#rtMsg").textContent="Үүсгэж чадсангүй: "+e.message}};
+  document.querySelectorAll("[data-rcopy]").forEach(b=>b.onclick=async()=>{try{await navigator.clipboard.writeText(b.dataset.rcopy);b.innerHTML=ic("check")+"Хуулсан"}catch(e){prompt("Кодыг хуулна уу:",b.dataset.rcopy)}});
   document.querySelectorAll("[data-rdel]").forEach(b=>b.onclick=async()=>{if(!confirm("Энэ кодыг хаах уу? Тэр хүн дахин нэвтэрч чадахгүй."))return;
     try{const j=await api("POST",{action:"raterDel",id:b.dataset.rdel});raters=j.raters;newCode=null;render()}catch(e){if(e.auth)return login(e.message)}});
 }
