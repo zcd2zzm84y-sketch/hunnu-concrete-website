@@ -523,21 +523,20 @@ function renderContacts(){
   const ed=role==="admin";
   const groups=["info","sales","finance","hr"].map(k=>CROWS.filter(d=>d.em===k));
   const who=r=>{const v=sims[r.k]||{},h=v.holder??r.h??"";
-    if(simEdit===r.k){const names=people.map(p=>p.name);if(h&&!names.includes(h))names.unshift(h);
-      return `<div class="c-edit"><select id="seH"><option value="">— хоосон —</option>${names.map(n=>`<option${n===h?" selected":""}>${esc(n)}</option>`).join("")}</select>
-        <label class="c-dl">Олгосон<input type="text" id="seD" inputmode="numeric" maxlength="10" placeholder="2026.11.08" value="${esc(fmtD(v.date)||fmtD(new Date().toISOString().slice(0,10)))}"></label>
-        <button type="button" class="primary" id="seOk">${ic("check")}Хадгалах</button><button type="button" id="seNo">${ic("x")}Болих</button></div>
-        ${people.length?"":'<small class="muted">Нэр сонгохын тулд доорх ажилтны жагсаалтыг бөглөнө үү.</small>'}`}
-    if(!r.n)return '<span class="pill idle">Дугаар авна</span>';
-    if(!h)return '<span class="pill warn">Олгоогүй</span>';
-    return `<b>${esc(h)}</b>${v.date?`<small class="muted c-date">${fmtD(v.date)}</small>`:""}`};
-  const rows=groups.map(g=>g.map((r,j)=>`<tr${j===0?' class="c-grp"':""}>
-    <td>${r.second?'<span class="muted">〃</span>':`<b>${esc(r.a)}</b>`}</td>
-    <td class="c-num">${r.n?`<a href="tel:+976${r.k}">${r.n}</a>${r.land?'<small class="muted">суурин</small>':""}`:'<span class="muted">—</span>'}</td>
-    ${j===0?`<td rowspan="${g.length}" class="c-mail"><a href="mailto:${r.em}@${DOMAIN}">${r.em}@${DOMAIN}</a></td>`:""}
+    if(!h)return r.n?'<span class="c-st c-todo">Олгоогүй</span>':'<span class="c-st c-new">Дугаар авна</span>';
+    return `<span class="c-st c-ok">${esc(h)}</span>${v.date?`<small>${fmtD(v.date)}</small>`:""}`};
+  const form=r=>{const v=sims[r.k]||{},h=v.holder??r.h??"",names=people.map(p=>p.name);if(h&&!names.includes(h))names.unshift(h);
+    return `<tr class="c-editrow"><td colspan="2"></td><td colspan="3"><div class="c-edit"><span class="c-elab">${r.n||"Хууль, эрх зүй"} хэнд:</span><select id="seH"><option value="">— хоосон —</option>${names.map(n=>`<option${n===h?" selected":""}>${esc(n)}</option>`).join("")}</select>
+      <label class="c-dl">Олгосон<input type="text" id="seD" inputmode="numeric" maxlength="10" placeholder="2026.11.08" value="${esc(fmtD(v.date)||fmtD(new Date().toISOString().slice(0,10)))}"></label>
+      <button type="button" class="primary" id="seOk">${ic("check")}Хадгалах</button><button type="button" id="seNo">${ic("x")}Болих</button></div>
+      ${people.length?"":'<small>Нэр сонгохын тулд доорх ажилтны жагсаалтыг бөглөнө үү.</small>'}</td></tr>`};
+  const rows=groups.map(g=>{const span=g.length+(g.some(r=>r.k===simEdit)?1:0);return g.map((r,j)=>`<tr${j===0?' class="c-grp"':""}>
+    <td class="c-dept">${r.second?`<span class="muted">${esc(r.a)}</span>`:esc(r.a)}</td>
+    <td class="c-num">${r.n?`<a href="tel:+976${r.k}">${r.n}</a><small>${r.land?"Суурин":"Гар утас"}</small>`:'<span class="muted">—</span><small>G-Mobile-оос авна</small>'}</td>
+    ${j===0?`<td rowspan="${span}" class="c-mail"><a href="mailto:${r.em}@${DOMAIN}">${r.em}@${DOMAIN}</a></td>`:""}
     <td class="c-for">${esc(r.for)}</td>
     <td class="c-who">${who(r)}</td>
-    <td class="c-act">${ed&&r.n&&simEdit!==r.k?`<button type="button" class="c-pen" data-se="${r.k}" title="Засах" aria-label="${esc(r.n)} засах">${ic("edit")}</button>`:""}</td></tr>`).join("")).join("");
+    <td class="c-act">${ed&&simEdit!==r.k?`<button type="button" class="c-pen" data-se="${r.k}" title="Засах" aria-label="${esc(r.n||r.a)} засах">${ic("edit")}</button>`:""}</td></tr>${simEdit===r.k?form(r):""}`).join("")}).join("");
   const byDept={};people.forEach(r=>(byDept[r.dept||"—"]=byDept[r.dept||"—"]||[]).push(r));
   const txt=people.map(r=>[r.dept,r.name,r.position].join(" | ")).join("\n");
   const free=CROWS.filter(r=>r.n&&!((sims[r.k]||{}).holder??r.h)).length;
@@ -545,7 +544,7 @@ function renderContacts(){
   ${msg?`<div class="err">${esc(msg)}</div>`:""}
   <article class="passport sum">
   <section class="pp-sec"><div class="tag"><b>01</b>Утас, имэйл · ${CROWS.filter(r=>r.n).length} дугаар · 4 имэйл${free?` · олгоогүй ${free}`:""}</div>
-    <div style="overflow-x:auto"><table class="sum-tbl c-tbl"><thead><tr><th>Алба</th><th>Утас</th><th>Имэйл</th><th>Юугаар хандах</th><th>Одоо хэнд</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div style="overflow-x:auto"><table class="sum-tbl c-tbl"><colgroup><col style="width:17%"><col style="width:13%"><col style="width:21%"><col><col style="width:16%"><col style="width:48px"></colgroup><thead><tr><th>Алба</th><th>Утас</th><th>Имэйл</th><th>Юугаар хандах</th><th>Одоо хэнд</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
     <span id="simMsg" class="muted"></span>
   </section>
   <section class="pp-sec"><div class="tag"><b>02</b>Хэрэглээ</div>
