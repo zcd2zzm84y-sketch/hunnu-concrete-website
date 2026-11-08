@@ -503,70 +503,68 @@ function bindRoster(){
 }
 const fmtDay=t=>{const d=new Date(t);return String(d.getMonth()+1).padStart(2,"0")+"."+String(d.getDate()).padStart(2,"0")};
 
-// Department contacts: 8 departments, 4 shared mailboxes, one phone each; HR records who holds each SIM
-const CDEPT=[
-  {n:"Захиргаа",em:"info",mob:"7701-7575",land:true,for:"Компанийн ерөнхий хаяг. Албан бичиг, гэрээ, хамтын ажиллагааны санал"},
-  {n:"Маркетинг, борлуулалт",em:"sales",mob:"9309-0906 · 9309-0908",for:"Үнийн санал, бетон захиалга, хүргэлтийн цаг"},
-  {n:"Чанарын алба",em:"sales",mob:"9309-0932",for:"Шинжилгээний дүн, гэрчилгээ, гомдол"},
-  {n:"Үйлдвэр",em:"info",mob:"9309-0935",for:"Үйлдвэрлэл, засвар, тээвэр, Үйлдвэр 2.0"},
-  {n:"Хууль, эрх зүй",em:"info",mob:"9309-09__",for:"Гэрээний төсөл, нэхэмжлэл, албан шаардлага. Дугаарыг G-Mobile-оос авна"},
-  {n:"Систем хөгжүүлэлт",em:"info",mob:"7575-4040",land:true,for:"REPORT360 — Hunnu Concrete, эрх, тоног төхөөрөмж"},
-  {n:"Санхүү",em:"finance",mob:"9309-0938",for:"Нэхэмжлэх, төлбөр, тооцоо нийлэх акт"},
-  {n:"Хүний нөөц",em:"hr",mob:"9309-0931",for:"Ажлын анкет, ажилтны асуудал, тодорхойлолт"}
-];
-const CSIM=[
-  {k:"77017575",n:"7701-7575",op:"Суурин",a:"Захиргаа",h:"Оффис",st:"ok"},
-  {k:"93090906",n:"9309-0906",op:"G-Mobile",a:"Маркетинг, борлуулалт",h:"Хангал.Б",st:"ok"},
-  {k:"93090908",n:"9309-0908",op:"G-Mobile",a:"Маркетинг, борлуулалт (2)",h:"",st:"ok"},
-  {k:"93090932",n:"9309-0932",op:"G-Mobile",a:"Чанарын алба",h:"",st:"todo"},
-  {k:"93090931",n:"9309-0931",op:"G-Mobile",a:"Хүний нөөц",h:"",st:"todo"},
-  {k:"93090935",n:"9309-0935",op:"G-Mobile",a:"Үйлдвэр",h:"",st:"todo"},
-  {k:"93090938",n:"9309-0938",op:"G-Mobile",a:"Санхүү",h:"",st:"todo"},
-  {k:"legal",n:"9309-09__",op:"G-Mobile",a:"Хууль, эрх зүй",h:"",st:"new"},
-  {k:"75754040",n:"7575-4040",op:"Суурин",a:"Систем хөгжүүлэлт",h:"Систем хөгжүүлэлт",st:"ok"}
-];
+// Department contacts: one row per company number, grouped by shared mailbox; HR records who holds each number
 const DOMAIN="hunnuconcrete.mn";
+const CROWS=[
+  {k:"77017575",n:"7701-7575",a:"Захиргаа",em:"info",land:true,h:"Оффис",for:"Албан бичиг, гэрээ, хамтын ажиллагаа"},
+  {k:"93090935",n:"9309-0935",a:"Үйлдвэр",em:"info",for:"Үйлдвэрлэл, засвар, тээвэр, Үйлдвэр 2.0"},
+  {k:"legal",n:"",a:"Хууль, эрх зүй",em:"info",for:"Гэрээ, нэхэмжлэл, албан шаардлага"},
+  {k:"75754040",n:"7575-4040",a:"Систем хөгжүүлэлт",em:"info",land:true,h:"Оффис",for:"REPORT360, эрх, тоног төхөөрөмж"},
+  {k:"93090906",n:"9309-0906",a:"Маркетинг, борлуулалт",em:"sales",h:"Хангал.Б",for:"Үнийн санал, захиалга, хүргэлт"},
+  {k:"93090908",n:"9309-0908",a:"Маркетинг, борлуулалт",em:"sales",second:true},
+  {k:"93090932",n:"9309-0932",a:"Чанарын алба",em:"sales",for:"Шинжилгээ, гэрчилгээ, гомдол"},
+  {k:"93090938",n:"9309-0938",a:"Санхүү",em:"finance",for:"Нэхэмжлэх, төлбөр, тооцоо"},
+  {k:"93090931",n:"9309-0931",a:"Хүний нөөц",em:"hr",for:"Анкет, ажилтны асуудал, тодорхойлолт"}
+];
+let simEdit=null;
+const fmtD=d=>d?d.replace(/-/g,"."):"";
 function renderContacts(){
   setBand("Холбоо","барих.","Алба бүрийн утас, имэйл, компанийн дугаар хэнд байгаа.");
   const ed=role==="admin";
-  const tel=d=>d.mob.split(" · ").map(m=>m.includes("_")?`<span class="muted">${m} (авна)</span>`:`<a href="tel:+976${m.replace(/\D/g,"")}" style="font-family:var(--mono);white-space:nowrap;color:inherit">${m}</a>`).join("<br>")+(d.land?' <small class="muted">суурин</small>':"");
-  const groups=["info","sales","finance","hr"].map(k=>CDEPT.filter(d=>d.em===k));
-  const rows=groups.map(g=>g.map((d,j)=>`<tr${j===0?' class="c-grp"':""}><td><b>${esc(d.n)}</b></td><td>${tel(d)}</td>${j===0?`<td rowspan="${g.length}" class="c-mail"><a href="mailto:${d.em}@${DOMAIN}">${d.em}@${DOMAIN}</a></td>`:""}<td>${esc(d.for)}</td></tr>`).join("")).join("");
-  const stOf=m=>{const v=sims[m.k]||{};return m.st==="todo"&&v.holder?"given":m.st};
-  const SL={ok:["good","Бэлэн"],given:["good","Олгосон"],todo:["warn","Олгох"],new:["idle","Авах"]};
-  const mx=CSIM.map(m=>{const v=sims[m.k]||{},h=v.holder??m.h,[c,t]=SL[stOf(m)];
-    return `<tr><td style="font-family:var(--mono);white-space:nowrap"><b>${m.n}</b></td><td>${esc(m.a)}<div class="muted" style="font-size:12px">${m.op}</div></td>
-      <td><input type="text" list="cPpl" data-sim="${m.k}" data-f="holder" value="${esc(h)}" placeholder="${m.st==="new"?"Дугаар аваагүй":"Нэр сонгох"}" ${ed?"":"disabled"} style="padding:6px 8px;min-width:150px"></td>
-      <td><input type="date" data-sim="${m.k}" data-f="date" value="${esc(v.date||"")}" ${ed?"":"disabled"} style="padding:6px 8px"></td>
-      <td><span class="pill ${c}">${t}</span></td></tr>`}).join("");
+  const groups=["info","sales","finance","hr"].map(k=>CROWS.filter(d=>d.em===k));
+  const who=r=>{const v=sims[r.k]||{},h=v.holder??r.h??"";
+    if(simEdit===r.k){const names=people.map(p=>p.name);if(h&&!names.includes(h))names.unshift(h);
+      return `<div class="c-edit"><select id="seH"><option value="">— хоосон —</option>${names.map(n=>`<option${n===h?" selected":""}>${esc(n)}</option>`).join("")}</select>
+        <label class="c-dl">Олгосон<input type="text" id="seD" inputmode="numeric" maxlength="10" placeholder="2026.11.08" value="${esc(fmtD(v.date)||fmtD(new Date().toISOString().slice(0,10)))}"></label>
+        <button type="button" class="primary" id="seOk">${ic("check")}Хадгалах</button><button type="button" id="seNo">${ic("x")}Болих</button></div>
+        ${people.length?"":'<small class="muted">Нэр сонгохын тулд доорх ажилтны жагсаалтыг бөглөнө үү.</small>'}`}
+    if(!r.n)return '<span class="pill idle">Дугаар авна</span>';
+    if(!h)return '<span class="pill warn">Олгоогүй</span>';
+    return `<b>${esc(h)}</b>${v.date?`<small class="muted c-date">${fmtD(v.date)}-нд олгосон</small>`:""}`};
+  const rows=groups.map(g=>g.map((r,j)=>`<tr${j===0?' class="c-grp"':""}>
+    <td>${r.second?'<span class="muted">2 дахь дугаар</span>':`<b>${esc(r.a)}</b><small class="muted c-for">${esc(r.for)}</small>`}</td>
+    <td class="c-num">${r.n?`<a href="tel:+976${r.k}">${r.n}</a>${r.land?'<small class="muted">суурин</small>':""}`:'<span class="muted">—</span>'}</td>
+    ${j===0?`<td rowspan="${g.length}" class="c-mail"><a href="mailto:${r.em}@${DOMAIN}">${r.em}@${DOMAIN}</a></td>`:""}
+    <td class="c-who">${who(r)}</td>
+    <td class="c-act">${ed&&r.n&&simEdit!==r.k?`<button type="button" class="c-pen" data-se="${r.k}" title="Засах" aria-label="${esc(r.n)} засах">${ic("edit")}</button>`:""}</td></tr>`).join("")).join("");
   const byDept={};people.forEach(r=>(byDept[r.dept||"—"]=byDept[r.dept||"—"]||[]).push(r));
   const txt=people.map(r=>[r.dept,r.name,r.position].join(" | ")).join("\n");
+  const free=CROWS.filter(r=>r.n&&!((sims[r.k]||{}).holder??r.h)).length;
   $("#view").innerHTML=`<div class="stack" style="gap:24px">${tabs("contacts")}
   ${msg?`<div class="err">${esc(msg)}</div>`:""}
   <article class="passport sum">
-  <section class="pp-sec"><div class="tag"><b>01</b>Алба бүрийн холбоо барих</div>
-    <p class="sum-small" style="margin:0!important">8 алба · 4 имэйл (@${DOMAIN}) · алба бүрд нэг утас. Имэйл нь хуваалцсан шуудан, хэд хэдэн алба нэг хаягаар ажиллана.</p>
-    <div style="overflow-x:auto"><table class="sum-tbl c-tbl"><thead><tr><th>Алба</th><th>Утас</th><th>Имэйл</th><th>Юуны тухай</th></tr></thead><tbody>${rows}</tbody></table></div>
-  </section>
-  <section class="pp-sec"><div class="tag"><b>02</b>Дугаарын матриц</div>
-    <p class="sum-small" style="margin:0!important">Компанийн дугаар одоо хэнд байгаа, хэзээ олгосон. Нэрийг доорх ажилтны жагсаалтаас сонгоно. Өөрчилмөгц хадгалагдана.${ed?"":" Энэ эрхээр зөвхөн харна."}</p>
-    <div style="overflow-x:auto"><table class="sum-tbl"><thead><tr><th>Дугаар</th><th>Алба</th><th>Одоо хэнд</th><th>Олгосон огноо</th><th>Төлөв</th></tr></thead><tbody>${mx}</tbody></table></div>
+  <section class="pp-sec"><div class="tag"><b>01</b>Утас, имэйл · ${CROWS.filter(r=>r.n).length} дугаар · 4 имэйл${free?` · олгоогүй ${free}`:""}</div>
+    <div style="overflow-x:auto"><table class="sum-tbl c-tbl"><thead><tr><th>Алба</th><th>Утас</th><th>Имэйл</th><th>Одоо хэнд</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
     <span id="simMsg" class="muted"></span>
-    <datalist id="cPpl">${people.map(p=>`<option value="${esc(p.name)}">${esc([p.dept,p.position].filter(Boolean).join(" · "))}</option>`).join("")}</datalist>
   </section>
-  <section class="pp-sec"><div class="row spread"><div class="tag"><b>03</b>Ажилтны жагсаалт${people.length?` · ${people.length} хүн`:""}</div>${ed?`<button type="button" id="pplEdit">${ic("edit")}Жагсаалт засах</button>`:""}</div>
+  <section class="pp-sec"><div class="row spread"><div class="tag"><b>02</b>Ажилтны жагсаалт${people.length?` · ${people.length} хүн`:""}</div>${ed?`<button type="button" id="pplEdit">${ic("edit")}Жагсаалт засах</button>`:""}</div>
     ${peopleEdit?`<label class="f">Одоо ажиллаж буй ажилтнууд, мөр бүрт «Алба | Нэр | Албан тушаал». Ажлаас гарсан хүнийг эндээс устгана.<textarea id="pplTxt" rows="16" spellcheck="false">${esc(txt)}</textarea></label>
       <div class="row"><button type="button" class="primary" id="pplSave">${ic("check")}Хадгалах</button><button type="button" id="pplNo">${ic("x")}Болих</button>${roster.length?`<button type="button" id="pplRoster">${ic("copy")}Үнэлгээний жагсаалтаас хуулах</button>`:""}<span id="pplMsg" class="muted"></span></div>`
-    :!people.length?`<p class="muted">Ажилтны жагсаалт хоосон байна. «Жагсаалт засах» дарж одоо ажиллаж буй хүмүүсийг оруулбал матрицын «Одоо хэнд» талбарт сонгогдоно.</p>`
-    :`<p class="sum-small" style="margin:0!important">Ажлаас гарсан хүнийг «Жагсаалт засах»-аас устгана. Тэр хүнд дугаар байвал матрицаас өөр хүнд шилжүүлнэ.</p>
-      <div style="overflow-x:auto"><table class="sum-tbl"><thead><tr><th>Алба</th><th>Нэр</th><th>Албан тушаал</th></tr></thead><tbody>${Object.entries(byDept).flatMap(([d,l])=>l.map((r,i)=>`<tr><td>${i?"":`<b>${esc(d)}</b>`}</td><td>${esc(r.name)}</td><td>${esc(r.position)}</td></tr>`)).join("")}</tbody></table></div>`}
+    :!people.length?`<p class="muted">Жагсаалт хоосон. «Жагсаалт засах» дарж одоо ажиллаж буй хүмүүсийг оруулбал дугаар олгохдоо нэрээр нь сонгоно.</p>`
+    :`<details class="c-ppl"><summary>Жагсаалтыг харах</summary><div style="overflow-x:auto"><table class="sum-tbl"><thead><tr><th>Алба</th><th>Нэр</th><th>Албан тушаал</th></tr></thead><tbody>${Object.entries(byDept).flatMap(([d,l])=>l.map((r,i)=>`<tr><td>${i?"":`<b>${esc(d)}</b>`}</td><td>${esc(r.name)}</td><td>${esc(r.position)}</td></tr>`)).join("")}</tbody></table></div></details>
+      <p class="sum-small" style="margin:0!important">Ажлаас гарсан хүнийг «Жагсаалт засах»-аас устгана. Тэр хүнд дугаар байвал дээрээс өөр хүнд шилжүүлнэ.</p>`}
   </section>
   </article></div>`;
   if(!ed)return;
-  document.querySelectorAll("[data-sim]").forEach(i=>i.onchange=async()=>{
-    const k=i.dataset.sim,row=document.querySelectorAll(`[data-sim="${k}"]`),val={};row.forEach(x=>val[x.dataset.f]=x.value.trim());
-    try{const j=await api("POST",{action:"sim",k,holder:val.holder||"",date:val.date||""});sims=j.sims;const y=window.scrollY;renderContacts();bindTabs();window.scrollTo(0,y);$("#simMsg").textContent="Хадгаллаа."}
-    catch(e){if(e.auth)return login(e.message);$("#simMsg").textContent="Хадгалж чадсангүй: "+e.message}});
+  const rerender=()=>{const y=window.scrollY;renderContacts();bindTabs();window.scrollTo(0,y)};
+  document.querySelectorAll("[data-se]").forEach(b=>b.onclick=()=>{simEdit=b.dataset.se;rerender()});
+  const no2=$("#seNo");if(no2)no2.onclick=()=>{simEdit=null;rerender()};
+  const ok=$("#seOk");if(ok)ok.onclick=async()=>{
+    const raw=$("#seD").value.trim(),m=raw.match(/^(\d{4})\D(\d{1,2})\D(\d{1,2})$/),date=m?`${m[1]}-${m[2].padStart(2,"0")}-${m[3].padStart(2,"0")}`:"";
+    if(raw&&!m){$("#simMsg").textContent="Огноог 2026.11.08 хэлбэрээр бичнэ үү.";$("#seD").focus();return}
+    ok.disabled=true;
+    try{const j=await api("POST",{action:"sim",k:simEdit,holder:$("#seH").value,date});sims=j.sims;simEdit=null;rerender();$("#simMsg").textContent="Хадгаллаа."}
+    catch(e){if(e.auth)return login(e.message);ok.disabled=false;$("#simMsg").textContent="Хадгалж чадсангүй: "+e.message}};
   $("#pplEdit").onclick=()=>{peopleEdit=true;render()};
   const no=$("#pplNo");if(no)no.onclick=()=>{peopleEdit=false;render()};
   const fr=$("#pplRoster");if(fr)fr.onclick=()=>{$("#pplTxt").value=roster.map(r=>[r.dept,r.name,r.position].join(" | ")).join("\n")};
