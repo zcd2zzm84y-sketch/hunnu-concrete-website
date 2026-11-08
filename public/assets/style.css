@@ -14,13 +14,13 @@
   --fg:#ececea; --muted:#a2a2a0; --band:#0f0f0f; --band-fg:#ffffff; --band-dim:#8a8a88;
   --accent:#9db0c2; --accent-fg:#141414; --accent-soft:#283038; --sel:#ececea; --sel-fg:#1a1a1a;
   --good:#6cc493; --good-soft:#1c3427; --warn:#e2b25a; --warn-soft:#3a2f18; --bad:#f08a80; --bad-soft:#3d2220;
-  --logo-filter:invert(1) brightness(1.1); color-scheme:dark}}
+  --logo-filter:invert(1) contrast(.6) brightness(1.3); color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#1a1a1a; --surface:#242424; --sunk:#2c2c2c; --line:#3a3a3a;
   --fg:#ececea; --muted:#a2a2a0; --band:#0f0f0f; --band-fg:#ffffff; --band-dim:#8a8a88;
   --accent:#9db0c2; --accent-fg:#141414; --accent-soft:#283038; --sel:#ececea; --sel-fg:#1a1a1a;
   --good:#6cc493; --good-soft:#1c3427; --warn:#e2b25a; --warn-soft:#3a2f18; --bad:#f08a80; --bad-soft:#3d2220;
-  --logo-filter:invert(1) brightness(1.1); color-scheme:dark}
+  --logo-filter:invert(1) contrast(.6) brightness(1.3); color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:15px;line-height:1.55}
@@ -524,8 +524,8 @@ footer .inner a{color:inherit;text-decoration:none}
 footer .inner a:hover{color:var(--fg);text-decoration:underline;text-underline-offset:3px}
 
 /* dark theme last so it wins over the brand overrides above: system setting, or the top-bar switch (data-theme) */
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121413;--surface:#1b1e1d;--sunk:#232625;--line:#2f3331;--fg:#eceeed;--band-fg:#eceeed;--muted:#a3a9a6;--band-dim:#a3a9a6;--accent:#e6e8eb;--accent-fg:#14171c;--accent-soft:#262a2d;--sel:#e6e8eb;--sel-fg:#14171c;--brand-dark:#1b1e1d}}
-:root[data-theme="dark"]{--bg:#121413;--surface:#1b1e1d;--sunk:#232625;--line:#2f3331;--fg:#eceeed;--band-fg:#eceeed;--muted:#a3a9a6;--band-dim:#a3a9a6;--accent:#e6e8eb;--accent-fg:#14171c;--accent-soft:#262a2d;--sel:#e6e8eb;--sel-fg:#14171c;--brand-dark:#1b1e1d}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#262626;--surface:#333333;--sunk:#2b2b2b;--line:#454545;--fg:#f2f2f2;--band-fg:#ffffff;--muted:#a6a6a6;--band-dim:#a6a6a6;--accent:#e6e6e6;--accent-fg:#222222;--accent-soft:#3d3d3d;--sel:#e6e6e6;--sel-fg:#222222;--brand-dark:#333333}}
+:root[data-theme="dark"]{--bg:#262626;--surface:#333333;--sunk:#2b2b2b;--line:#454545;--fg:#f2f2f2;--band-fg:#ffffff;--muted:#a6a6a6;--band-dim:#a6a6a6;--accent:#e6e6e6;--accent-fg:#222222;--accent-soft:#3d3d3d;--sel:#e6e6e6;--sel-fg:#222222;--brand-dark:#333333}
 /* same look as the hunnu.asia header buttons: flat light-grey tile, no border */
 .theme-tg{width:44px;height:44px;padding:0;border:0;border-radius:12px;background:#f0f0f0;color:#1f2322;cursor:pointer;transition:background .15s}
 .theme-tg:hover{background:#e4e4e4}
@@ -588,3 +588,33 @@ footer .inner a:hover{color:var(--fg);text-decoration:underline;text-underline-o
 @media print{.sum-note,.sum-card{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 .sum-note{align-self:stretch}
 .sum-bars .db{grid-template-columns:minmax(0,1.7fr) minmax(0,2fr) 48px}
+
+/* HR dashboard login: full-screen dark gate (#333, yellow dot + button), same in light and dark mode */
+body.gate-mode{background:#333}
+body.gate-mode .topbar,body.gate-mode .band,body.gate-mode footer{display:none}
+body.gate-mode main{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:24px 16px;background:#333}
+body.gate-mode main>.inner{width:100%;max-width:440px;padding:0}
+.gate2{display:flex;flex-direction:column;gap:0;color:#fff;font-family:var(--font,Inter,system-ui,sans-serif)}
+.gate2-kick{display:flex;align-items:center;gap:12px;font-size:13px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:#9a9a9a}
+.gate2-kick i{width:10px;height:10px;border-radius:50%;background:#FCC828;flex:none}
+.gate2 h1{margin:26px 0 0;font-size:clamp(44px,9vw,56px);line-height:1;font-weight:800;letter-spacing:-.02em;color:#fff}
+.gate2 p{margin:22px 0 22px;font-size:17px;color:#cfcfcf}
+.gate2-pw{position:relative;display:block}
+.gate2-pw input{width:100%;box-sizing:border-box;height:60px;padding:0 56px 0 18px;border-radius:10px;border:1px solid #4a4a4a;background:#1f1f1f;color:#fff;font:inherit;font-size:18px;box-shadow:none}
+.gate2-pw input::placeholder{color:#7d7d7d}
+.gate2-pw input:focus{outline:none;border-color:#FCC828;box-shadow:0 0 0 3px rgba(252,200,40,.2)}
+.gate2-pw input[aria-invalid="true"]{border-color:#e07a6f}
+.gate2-pw button{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:44px;height:44px;padding:0;display:grid;place-items:center;border:0;border-radius:8px;background:transparent;color:#9a9a9a;box-shadow:none;min-height:0}
+.gate2-pw button:hover{color:#fff;background:#2a2a2a}
+.gate2-pw button svg{margin:0}
+.gate2-err{margin-top:12px;padding:10px 14px;border-radius:8px;background:rgba(224,122,111,.14);color:#f0a59c;font-size:15px}
+.gate2-go{margin-top:16px;height:56px;width:100%;border:0;border-radius:10px;background:#FCC828;color:#222;font:inherit;font-size:18px;font-weight:700;cursor:pointer;box-shadow:none}
+.gate2-go:hover{background:#ffd447}
+.gate2-go:focus-visible{outline:3px solid rgba(252,200,40,.45);outline-offset:2px}
+.gate2-go:disabled{opacity:.75;cursor:progress}
+
+/* Dark mode follows the login gate: #333 greys, yellow only for the main action buttons */
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) button.yellow{background:#FCC828;color:#222;border-color:#FCC828}}
+:root[data-theme="dark"] button.yellow{background:#FCC828;color:#222;border-color:#FCC828}
+:root[data-theme="dark"] .theme-tg{background:#3d3d3d;color:#f2f2f2}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .theme-tg{background:#3d3d3d;color:#f2f2f2}}

@@ -22,37 +22,27 @@ async function load(){
 const PRINT=`<button type="button" id="print" class="pp-print" title="Хэвлэх" aria-label="Хэвлэх">${ic("printer")}</button>`;
 // Forget the password in this tab and drop loaded data from memory
 function logout(){key="";try{sessionStorage.removeItem(KEY)}catch(e){}staff=[];pulse=null;apps=[];bank={};openings=[];editOpen=false;selS=selA=null;view="staff";login()}
+// Login: full-screen dark gate (same look as the other Hunnu internal tools), whatever the light/dark setting
 function login(err){
-  setBand("HR","самбар.","Хүннү Конкрет ХХК-ийн ажилтны үнэлгээний нэгдсэн үр дүн.");
-  $("#view").innerHTML=`<div class="gate">
-    <aside class="gate-side concrete">
-      <div class="gate-kicker">Building Smarter.</div>
-      <h2>Ажилтан бүрийн<br><span>чадварыг нэг дороос.</span></h2>
-      <ol class="gate-list">
-        <li><b>01</b><div><strong>Ажилтны паспорт</strong><small>Мэдлэгийн оноо, ур чадварын радар, удирдлагын үнэлгээ</small></div></li>
-        <li><b>02</b><div><strong>Сэтгэл ханамж</strong><small>Нэргүй нэгдсэн дүн, компанийг санал болгох индекс, албадын харьцуулалт</small></div></li>
-        <li><b>03</b><div><strong>Горилогчид</strong><small>Ажлын анкет, мэдлэгийн шалгалт, ажилд авах шийдвэр</small></div></li>
-      </ol>
-    </aside>
-    <form class="gate-form" id="fLogin" novalidate>
-      <div class="gate-lock" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
-      <h2>Нэвтрэх</h2>
-      <p class="muted">Зөвхөн Хүний нөөцийн алба болон удирдлагад зориулсан хэсэг.</p>
-      <label class="f">Нууц үг
-        <span class="pw"><input type="password" id="pw" autocomplete="current-password" required aria-invalid="${err?"true":"false"}"${err?' aria-describedby="pwErr"':""}><button type="button" id="pwShow" aria-label="Нууц үгийг харуулах" aria-pressed="false">${ic("eye")}Харах</button></span></label>
-      ${err?`<div class="err" id="pwErr" role="alert">${esc(err)}</div>`:""}
-      <button class="primary gate-go" type="submit">${ic("login")}Нэвтрэх</button>
-      <p class="gate-note">Нууц үг зөвхөн энэ таб нээлттэй байх хугацаанд хадгалагдана. Дундын компьютер дээр ажлаа дуусгаад табаа хаана уу.</p>
-    </form>
-  </div>`;
-  $("#pwShow").onclick=e=>{const i=$("#pw"),on=i.type==="password";i.type=on?"text":"password";e.currentTarget.innerHTML=on?ic("eyeOff")+"Нуух":ic("eye")+"Харах";e.currentTarget.setAttribute("aria-pressed",String(on));i.focus()};
-  $("#fLogin").onsubmit=e=>{e.preventDefault();const v=$("#pw").value.trim();if(!v){$("#pw").focus();return}key=v;try{sessionStorage.setItem(KEY,key)}catch(e){}const b=e.target.querySelector(".gate-go");b.disabled=true;b.textContent="Шалгаж байна…";load()};
+  document.body.classList.add("gate-mode");
+  setBand(null);
+  $("#view").innerHTML=`<form class="gate2" id="fLogin" novalidate>
+      <div class="gate2-kick"><i aria-hidden="true"></i>Hunnu Concrete · Хаалттай</div>
+      <h1>Нэвтрэх</h1>
+      <p>HR самбарын нууц үгээ оруулна уу.</p>
+      <span class="gate2-pw"><input type="password" id="pw" placeholder="Нууц үг" aria-label="Нууц үг" autocomplete="current-password" required aria-invalid="${err?"true":"false"}"${err?' aria-describedby="pwErr"':""}><button type="button" id="pwShow" aria-label="Нууц үгийг харуулах" aria-pressed="false">${ic("eye")}</button></span>
+      ${err?`<div class="gate2-err" id="pwErr" role="alert">${esc(err)}</div>`:""}
+      <button class="gate2-go" type="submit">Нэвтрэх</button>
+    </form>`;
+  $("#pwShow").onclick=e=>{const i=$("#pw"),on=i.type==="password";i.type=on?"text":"password";e.currentTarget.innerHTML=ic(on?"eyeOff":"eye");e.currentTarget.setAttribute("aria-pressed",String(on));e.currentTarget.ariaLabel=on?"Нууц үгийг нуух":"Нууц үгийг харуулах";i.focus()};
+  $("#fLogin").onsubmit=e=>{e.preventDefault();const v=$("#pw").value.trim();if(!v){$("#pw").focus();return}key=v;try{sessionStorage.setItem(KEY,key)}catch(e){}const b=e.target.querySelector(".gate2-go");b.disabled=true;b.textContent="Шалгаж байна…";load()};
   if(matchMedia("(hover:hover)").matches)$("#pw").focus();
 }
 function tabs(cur){
   return `<div class="row spread"><nav class="tabs" aria-label="Үр дүнгийн хэсэг">${[["sum","Нэгдсэн анализ","report"],["staff","Ажилтны паспорт","users"],["pulse","Сэтгэл ханамж","heart"],["app","Горилогчид"+(apps.some(a=>a.status==="new")?" ("+apps.filter(a=>a.status==="new").length+")":""),"userPlus"]].map(([v,t,i])=>`<button type="button" data-view="${v}" ${v===cur?'aria-current="page"':""}>${ic(i)}${t}</button>`).join("")}</nav><div class="row">${cur!=="pulse"&&cur!=="sum"?`<button type="button" id="xls">${ic("download")}Excel татах</button>`:""}<button type="button" id="reload">${ic("refresh")}Шинэчлэх</button><button type="button" id="logout">${ic("logout")}Гарах</button></div></div>`;
 }
 function render(){
+  document.body.classList.remove("gate-mode");
   if(role==="rater"){renderRater();return}
   if(view==="sum")renderSummary();else if(view==="pulse")renderPulse();else if(view==="app")renderApps();else renderStaffHr();
   // Leaders: everything is visible, but only the skill-rating buttons save (the server enforces the same)
