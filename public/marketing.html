@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Хүннү Конкрет — Маркетинг</title>
 <meta name="robots" content="noindex,nofollow">
-<link rel="icon" href="assets/logo.png">
+<link rel="icon" href="/talent/assets/logo.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
 <style>
 /* Layout: one column work sheet. Person switch on top, then "what to do" list, then channel tiles, holiday posts, rules, links. Brand greys, yellow only as a small marker. */
@@ -255,7 +255,7 @@ footer{color:var(--mute);font-size:13px}
 </head>
 <body>
 
-<div id="gate" class="gate" hidden><form class="gbox"><img src="assets/logo.png" alt="Hunnu Concrete" class="glogo"><h2>Маркетингийн самбар</h2><p>Нэвтрэхийн тулд нэр, нууц үгээ оруулна уу.</p><label>Таны нэр<input id="gnm" autocomplete="name" placeholder="ж: Бат-Эрдэнэ"></label><label>Нууц үг<input id="gpw" type="password" autocomplete="current-password"></label><label class="su" hidden>HR самбарын түлхүүр (Зөвлөх)<input id="gad" type="password" autocomplete="off"></label><p class="gerr" role="alert"></p><button type="submit">Нэвтрэх</button></form></div>
+<div id="gate" class="gate" hidden><form class="gbox"><img src="/talent/assets/logo.png" alt="Hunnu Concrete" class="glogo"><h2>Маркетингийн самбар</h2><p>Нэвтрэхийн тулд нэр, нууц үгээ оруулна уу.</p><label>Таны нэр<input id="gnm" autocomplete="name" placeholder="ж: Бат-Эрдэнэ"></label><label>Нууц үг<input id="gpw" type="password" autocomplete="current-password"></label><label class="su" hidden>HR самбарын түлхүүр (Зөвлөх)<input id="gad" type="password" autocomplete="off"></label><p class="gerr" role="alert"></p><button type="submit">Нэвтрэх</button></form></div>
 <div id="toast" class="tst" hidden role="status"></div>
 <div class="wrap">
   <header class="top">
@@ -459,7 +459,7 @@ let ST={},CR={},DB=null,busy=false;
 const fmt=iso=>{const d=new Date(iso),p=v=>String(v).padStart(2,'0');return `${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`};
 const KK='mkt-key',NK='mkt-name';
 let KEY=(()=>{try{return sessionStorage.getItem(KK)||''}catch(e){return''}})(),NAME=(()=>{try{return localStorage.getItem(NK)||''}catch(e){return''}})();
-async function api(method,body){const r=await fetch('api/marketing',{method,headers:{'x-mkt-key':KEY,'x-mkt-name':encodeURIComponent(NAME),'content-type':'application/json'},body:body?JSON.stringify(body):undefined});
+async function api(method,body){const r=await fetch('/talent/api/marketing',{method,headers:{'x-mkt-key':KEY,'x-mkt-name':encodeURIComponent(NAME),'content-type':'application/json'},body:body?JSON.stringify(body):undefined});
  const j=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(new Error(j.error||'Алдаа гарлаа'),{status:r.status,setup:!!j.setup});return j}
 function whoFill(){document.querySelectorAll('.who').forEach(e=>{e.textContent=(e.dataset.by?e.dataset.by+' · ':'')+fmt(e.dataset.at)})}
 document.getElementById('tasks').addEventListener('click',async ev=>{const b=ev.target.closest('button[data-k]');if(!b||!DB||busy)return;
@@ -470,7 +470,7 @@ function gate(msg){const g=document.getElementById('gate');g.hidden=false;docume
  const f=g.querySelector('form'),pw=f.querySelector('#gpw'),nm=f.querySelector('#gnm'),er=g.querySelector('.gerr');nm.value=NAME;pw.value='';er.textContent=msg||'';(NAME?pw:nm).focus();
  const su=g.querySelector('.su'),ad=g.querySelector('#gad');su.hidden=!SETUP;g.querySelector('h2').textContent=SETUP?'Самбарын нууц үг тохируулах':'Маркетингийн самбар';g.querySelector('.gbox > p').textContent=SETUP?'Анх удаа: шинэ нууц үгээ (10+ тэмдэгт) болон HR самбарын түлхүүрийг оруулна.':'Нэвтрэхийн тулд нэр, нууц үгээ оруулна уу.';
 f.onsubmit=async e=>{e.preventDefault();const n=nm.value.trim(),p=pw.value.trim();if(!n){nm.focus();return}if(!p){pw.focus();return}
-  if(SETUP){const r=await fetch('api/marketing',{method:'POST',headers:{'x-admin-key':ad.value.trim(),'content-type':'application/json'},body:JSON.stringify({action:'setup',key:p})});const jj=await r.json().catch(()=>({}));if(!r.ok){er.textContent=jj.error||'Алдаа';return}SETUP=false}
+  if(SETUP){const r=await fetch('/talent/api/marketing',{method:'POST',headers:{'x-admin-key':ad.value.trim(),'content-type':'application/json'},body:JSON.stringify({action:'setup',key:p})});const jj=await r.json().catch(()=>({}));if(!r.ok){er.textContent=jj.error||'Алдаа';return}SETUP=false}
   NAME=n;KEY=p;try{localStorage.setItem(NK,n)}catch(x){}const bt=f.querySelector('button');bt.disabled=true;bt.textContent='Шалгаж байна…';
   try{await load();try{sessionStorage.setItem(KK,p)}catch(x){}g.hidden=true;document.body.classList.remove('locked')}catch(x){er.textContent=x.message}finally{bt.disabled=false;bt.textContent='Нэвтрэх'}}}
 let SETUP=false;
