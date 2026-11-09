@@ -255,7 +255,7 @@ footer{color:var(--mute);font-size:13px}
 </head>
 <body>
 
-<div id="gate" class="gate" hidden><form class="gbox"><img src="assets/logo.png" alt="Hunnu Concrete" class="glogo"><h2>Маркетингийн самбар</h2><p>Нэвтрэхийн тулд нэр, нууц үгээ оруулна уу.</p><label>Таны нэр<input id="gnm" autocomplete="name" placeholder="ж: Бат-Эрдэнэ"></label><label>Нууц үг<input id="gpw" type="password" autocomplete="current-password"></label><p class="gerr" role="alert"></p><button type="submit">Нэвтрэх</button></form></div>
+<div id="gate" class="gate" hidden><form class="gbox"><img src="assets/logo.png" alt="Hunnu Concrete" class="glogo"><h2>Маркетингийн самбар</h2><p>Нэвтрэхийн тулд нэр, нууц үгээ оруулна уу.</p><label>Таны нэр<input id="gnm" autocomplete="name" placeholder="ж: Бат-Эрдэнэ"></label><label>Нууц үг<input id="gpw" type="password" autocomplete="current-password"></label><label class="su" hidden>HR самбарын түлхүүр (Зөвлөх)<input id="gad" type="password" autocomplete="off"></label><p class="gerr" role="alert"></p><button type="submit">Нэвтрэх</button></form></div>
 <div id="toast" class="tst" hidden role="status"></div>
 <div class="wrap">
   <header class="top">
@@ -460,7 +460,7 @@ const fmt=iso=>{const d=new Date(iso),p=v=>String(v).padStart(2,'0');return `${p
 const KK='mkt-key',NK='mkt-name';
 let KEY=(()=>{try{return sessionStorage.getItem(KK)||''}catch(e){return''}})(),NAME=(()=>{try{return localStorage.getItem(NK)||''}catch(e){return''}})();
 async function api(method,body){const r=await fetch('api/marketing',{method,headers:{'x-mkt-key':KEY,'x-mkt-name':encodeURIComponent(NAME),'content-type':'application/json'},body:body?JSON.stringify(body):undefined});
- const j=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(new Error(j.error||'Алдаа гарлаа'),{status:r.status});return j}
+ const j=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(new Error(j.error||'Алдаа гарлаа'),{status:r.status,setup:!!j.setup});return j}
 function whoFill(){document.querySelectorAll('.who').forEach(e=>{e.textContent=(e.dataset.by?e.dataset.by+' · ':'')+fmt(e.dataset.at)})}
 document.getElementById('tasks').addEventListener('click',async ev=>{const b=ev.target.closest('button[data-k]');if(!b||!DB||busy)return;
  const k=b.dataset.k,s=b.dataset.s;if((ST[k]&&ST[k].s)===s)return;busy=true;const prev=ST;
@@ -468,10 +468,13 @@ document.getElementById('tasks').addEventListener('click',async ev=>{const b=ev.
  try{const j=await api('POST',{action:'status',id:k,s});ST=j.status||ST;render()}catch(e){ST=prev;render();if(e.status===401)return gate(e.message);alert(e.message)}finally{busy=false}});
 function gate(msg){const g=document.getElementById('gate');g.hidden=false;document.body.classList.add('locked');
  const f=g.querySelector('form'),pw=f.querySelector('#gpw'),nm=f.querySelector('#gnm'),er=g.querySelector('.gerr');nm.value=NAME;pw.value='';er.textContent=msg||'';(NAME?pw:nm).focus();
- f.onsubmit=async e=>{e.preventDefault();const n=nm.value.trim(),p=pw.value.trim();if(!n){nm.focus();return}if(!p){pw.focus();return}
+ const su=g.querySelector('.su'),ad=g.querySelector('#gad');su.hidden=!SETUP;g.querySelector('h2').textContent=SETUP?'Самбарын нууц үг тохируулах':'Маркетингийн самбар';g.querySelector('.gbox > p').textContent=SETUP?'Анх удаа: шинэ нууц үгээ (10+ тэмдэгт) болон HR самбарын түлхүүрийг оруулна.':'Нэвтрэхийн тулд нэр, нууц үгээ оруулна уу.';
+f.onsubmit=async e=>{e.preventDefault();const n=nm.value.trim(),p=pw.value.trim();if(!n){nm.focus();return}if(!p){pw.focus();return}
+  if(SETUP){const r=await fetch('api/marketing',{method:'POST',headers:{'x-admin-key':ad.value.trim(),'content-type':'application/json'},body:JSON.stringify({action:'setup',key:p})});const jj=await r.json().catch(()=>({}));if(!r.ok){er.textContent=jj.error||'Алдаа';return}SETUP=false}
   NAME=n;KEY=p;try{localStorage.setItem(NK,n)}catch(x){}const bt=f.querySelector('button');bt.disabled=true;bt.textContent='Шалгаж байна…';
   try{await load();try{sessionStorage.setItem(KK,p)}catch(x){}g.hidden=true;document.body.classList.remove('locked')}catch(x){er.textContent=x.message}finally{bt.disabled=false;bt.textContent='Нэвтрэх'}}}
-async function load(){const j=await api('GET');ST=j.status||{};CR=j.creds||{};DB=true;drawTiles();render()}
+let SETUP=false;
+async function load(){let j;try{j=await api('GET')}catch(e){if(e.setup){SETUP=true;throw e}throw e}SETUP=false;ST=j.status||{};CR=j.creds||{};DB=true;drawTiles();render()}
 function logout(){KEY='';try{sessionStorage.removeItem(KK)}catch(e){}ST={};CR={};DB=null;drawTiles();render();gate('')}
 const KEYS=['all','bat','mandah','admin','web'];
 let cur='bat';
@@ -513,7 +516,7 @@ document.getElementById('tiles').addEventListener('click',async ev=>{const box=e
 document.getElementById('tiles').addEventListener('submit',async ev=>{const f=ev.target.closest('.cform');if(!f)return;ev.preventDefault();const id=f.closest('.cred').dataset.id,b=f.querySelector('[type=submit]');b.disabled=true;b.textContent='Хадгалж байна…';
  try{const j=await api('POST',{action:'cred',id,u:f.u.value,p:f.p.value,n:f.n.value});CR=j.creds||CR;drawTiles();toast('Хадгалагдлаа')}catch(e){b.disabled=false;b.textContent='Хадгалах';if(e.status===401)return gate(e.message);alert(e.message)}});
 let tT;function toast(m){const t=document.getElementById('toast');t.textContent=m;t.hidden=false;clearTimeout(tT);tT=setTimeout(()=>t.hidden=true,1800)}
-if(KEY)load().catch(e=>gate(e.status===401?'':e.message));else gate('');
+load().then(()=>{}).catch(e=>gate(e.status===401&&!KEY?'':e.setup?'':e.message));
 render();
 </script>
 </body>
