@@ -33,7 +33,7 @@ function renderStaff(){
   return staffDone();
 }
 function staffInfo(){
-  setBand("Ажилтны","үнэлгээ 2026.","Мэдлэг, ур чадвар, сэтгэл ханамжийг нэг дор. Ойролцоогоор 20 минут.");
+  setBand("Ажилтны","үнэлгээ.","Мэдлэг, ур чадвар, сэтгэл ханамжийг нэг дор. Ойролцоогоор 20 минут.");
   const e=T.emp||{};const dept=e.dept||Object.keys(DEPTS)[0];
   $("#view").innerHTML=`<div class="stack" style="gap:24px">
     ${stepper("info")}
