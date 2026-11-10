@@ -164,8 +164,9 @@ body.locked .wrap{display:none}
 .gband p{margin:12px 0 0;color:#d4d6d5;font-size:15px}
 .gmain{flex:1;padding:26px 0 40px}
 .gbox{display:grid;grid-template-columns:1.1fr 1fr;max-width:920px;margin:0 auto;background:var(--paper);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 10px 40px -12px rgba(16,24,40,.18)}
-.gside{background:#333333;color:#fff;padding:36px 32px;display:flex;flex-direction:column;justify-content:center;gap:22px}
-:root[data-theme="dark"] .gside{background:#333333}
+.gside{background:#333333 url(/talent/assets/mkt-side.jpg) center/cover no-repeat;color:#fff;padding:36px 32px;display:flex;flex-direction:column;justify-content:flex-end;gap:14px;min-height:420px;position:relative;isolation:isolate}
+.gside::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(20,20,20,.05) 30%,rgba(20,20,20,.88) 100%)}
+
 .gkick{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#f2c200}
 .gside h2{margin:0;font-size:clamp(22px,3vw,30px);line-height:1.15;letter-spacing:-.02em;color:#fff}
 .gside h2 span{color:#c8cbca}
@@ -195,7 +196,7 @@ body.locked .wrap{display:none}
 .gnote{font-size:12px!important;line-height:1.5!important}
 .gfoot{border-top:1px solid var(--line)}
 .gfoot .gin{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px 16px;padding-block:18px;font-size:13px;color:var(--mute)}
-@media (max-width:760px){.gbox{grid-template-columns:1fr}.gside,.gform{padding:26px 22px}.glist small{display:none}.gin{padding:0 16px}.gtop .gin{height:64px}.glogo{height:26px}}
+@media (max-width:760px){.gbox{grid-template-columns:1fr}.gside{min-height:220px}.gside,.gform{padding:26px 22px}.glist small{display:none}.gin{padding:0 16px}.gtop .gin{height:64px}.glogo{height:26px}}
 .gerr{color:#B3261E!important;min-height:1em}
 .cred{margin:12px 0 0;padding:10px 12px;border-radius:10px;background:var(--bg);display:grid;gap:6px;font-size:13px}
 .crow{display:flex;align-items:center;gap:6px;min-width:0}
