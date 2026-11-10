@@ -39,6 +39,12 @@ export default async (req: Request, ctx: Context) => {
     await saveKey(nk)
     return json({ ok: true })
   }
+  // Task progress only (hashed task ids, state, time; no logins, no names) for Зөвлөх's private overview page
+  if (req.method === "GET" && new URL(req.url).searchParams.has("summary")) {
+    const st = await getObj("mkt-status"), out: Record<string, { s: string, at: string }> = {}
+    for (const [id, v] of Object.entries<any>(st)) if (v?.s) out[id] = { s: String(v.s), at: String(v.at || "") }
+    return new Response(JSON.stringify({ status: out }), { headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "access-control-allow-origin": "*" } })
+  }
   const k = (req.headers.get("x-mkt-key") || "").trim()
   // Opening the page sends no key: answer "log in" without counting it as a wrong try
   if (!k) return json({ error: "Нэвтэрнэ үү." }, 401)
