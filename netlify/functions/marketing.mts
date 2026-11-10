@@ -39,10 +39,12 @@ export default async (req: Request, ctx: Context) => {
     await saveKey(nk)
     return json({ ok: true })
   }
+  const k = (req.headers.get("x-mkt-key") || "").trim()
+  // Opening the page sends no key: answer "log in" without counting it as a wrong try
+  if (!k) return json({ error: "Нэвтэрнэ үү." }, 401)
   const fk = ipKey(ctx), fail: any = (await settingsStore().get(fk, { type: "json" })) || { n: 0, t: 0 }
   if (fail.n >= LOCK_N && Date.now() - fail.t < LOCK_MS) return json({ error: "Олон удаа буруу оруулсан. 15 минутын дараа дахин оролдоно уу." }, 429)
-  const k = (req.headers.get("x-mkt-key") || "").trim()
-  if (!k || !(await keyOk(k))) {
+  if (!(await keyOk(k))) {
     await settingsStore().setJSON(fk, { n: (Date.now() - fail.t < LOCK_MS ? fail.n : 0) + 1, t: Date.now() })
     return json({ error: "Нууц үг буруу байна." }, 401)
   }
