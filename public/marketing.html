@@ -1,6 +1,8 @@
 <!doctype html>
 <html lang="mn">
 <head>
+<script>(function(){var r=document.documentElement;try{var t=localStorage.getItem('theme');if(t)r.dataset.theme=t}catch(e){}r.className+=' pre';try{if(!sessionStorage.getItem('mkt-key'))r.className+=' nokey'}catch(e){r.className+=' nokey'}})()</script>
+<style>html.pre .wrap{display:none}html.pre:not(.nokey) #gate{display:none!important}html.pre.nokey #gate{display:flex!important}html{background:#F2F2F2}@media (prefers-color-scheme:dark){html:not([data-theme="light"]){background:#1f1f1f}}html[data-theme="dark"]{background:#1f1f1f}</style>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Хүннү Конкрет — Маркетинг</title>
@@ -514,7 +516,7 @@ document.getElementById('tasks').addEventListener('click',async ev=>{const b=ev.
  const k=b.dataset.k,s=b.dataset.s;if((ST[k]&&ST[k].s)===s)return;busy=true;const prev=ST;
  ST=Object.assign({},ST,{[k]:{s,at:new Date().toISOString(),by:NAME}});render();
  try{const j=await api('POST',{action:'status',id:k,s});ST=j.status||ST;render()}catch(e){ST=prev;render();if(e.status===401)return gate(e.message);alert(e.message)}finally{busy=false}});
-function gate(msg){const g=document.getElementById('gate');g.hidden=false;document.body.classList.add('locked');
+function gate(msg){const g=document.getElementById('gate');g.hidden=false;document.documentElement.classList.remove('pre');document.body.classList.add('locked');
  const f=g.querySelector('form'),pw=f.querySelector('#gpw'),nm=f.querySelector('#gnm'),er=g.querySelector('.gerr');nm.value=NAME;pw.value='';er.textContent=msg||'';if(matchMedia('(hover:hover)').matches)(NAME?pw:nm).focus();window.scrollTo(0,0);
  const su=g.querySelector('.su'),ad=g.querySelector('#gad');su.hidden=!SETUP;g.querySelector('.gform h2').textContent=SETUP?'Нууц үг тохируулах':'Нэвтрэх';g.querySelector('.gsub').textContent=SETUP?'Анх удаа: шинэ нууц үгээ (10+ тэмдэгт) болон HR самбарын түлхүүрийг оруулна.':'Зөвхөн Маркетингийн албанд зориулсан хэсэг.';
  const sh=g.querySelector('#gsh'),EY=sh.querySelector('svg').outerHTML;pw.type='password';sh.innerHTML=EY+'Харах';sh.onclick=()=>{const on=pw.type==='password';pw.type=on?'text':'password';sh.innerHTML=EY+(on?'Нуух':'Харах');sh.setAttribute('aria-pressed',String(on));pw.focus()};
@@ -565,7 +567,7 @@ document.getElementById('tiles').addEventListener('click',async ev=>{const box=e
 document.getElementById('tiles').addEventListener('submit',async ev=>{const f=ev.target.closest('.cform');if(!f)return;ev.preventDefault();const id=f.closest('.cred').dataset.id,b=f.querySelector('[type=submit]');b.disabled=true;b.textContent='Хадгалж байна…';
  try{const j=await api('POST',{action:'cred',id,u:f.u.value,p:f.p.value,n:f.n.value});CR=j.creds||CR;drawTiles();toast('Хадгалагдлаа')}catch(e){b.disabled=false;b.textContent='Хадгалах';if(e.status===401)return gate(e.message);alert(e.message)}});
 let tT;function toast(m){const t=document.getElementById('toast');t.textContent=m;t.hidden=false;clearTimeout(tT);tT=setTimeout(()=>t.hidden=true,1800)}
-load().then(()=>{}).catch(e=>gate(e.status===401&&!KEY?'':e.setup?'':e.message));
+load().then(()=>{document.documentElement.classList.remove('pre')}).catch(e=>gate(e.status===401&&!KEY?'':e.setup?'':e.message));
 render();
 </script>
 </body>
