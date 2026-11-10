@@ -300,12 +300,12 @@ footer{color:var(--mute);font-size:13px}
 <body>
 
 <div id="gate" class="gate" hidden>
-<header class="gtop"><div class="gin"><img src="/talent/assets/logo.png" alt="Hunnu Concrete" class="glogo"><span class="gtr">Маркетинг самбар<button type="button" class="theme-tg" aria-label="Горим солих"></button></span></div></header>
+<header class="gtop"><div class="gin"><img src="/talent/assets/logo.png" alt="Hunnu Concrete" class="glogo"><span class="gtr"><button type="button" class="theme-tg" aria-label="Горим солих"></button></span></div></header>
 <section class="gband"><div class="gin"><h1>Маркетинг <span>самбар.</span></h1><p>Зөвхөн эрхтэй ажилтанд.</p></div></section>
 <main class="gmain"><div class="gin"><div class="gbox">
-<aside class="gside"><div class="gkick">Building Smarter.</div><h2>Хүннү Конкрет<br><span>Маркетингийн алба.</span></h2>
+<aside class="gside"><div class="gkick">Building Smarter.</div><h2>Хүннү<br><span>Конкрет.</span></h2>
 </aside>
-<form class="gform" novalidate><div class="glock"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div><h2>Нэвтрэх</h2><p class="gsub">Зөвхөн Маркетингийн албанд зориулсан хэсэг.</p>
+<form class="gform" novalidate><div class="glock"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div><h2>Нэвтрэх</h2><p class="gsub">Нэр, нууц үгээ оруулна уу.</p>
 <label>Таны нэр<input id="gnm" autocomplete="name" placeholder="ж: Бат-Эрдэнэ"></label>
 <label>Нууц үг<span class="gpw"><input id="gpw" type="password" autocomplete="current-password"><button type="button" id="gsh" aria-label="Нууц үгийг харуулах" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Харах</button></span></label>
 <label class="su" hidden>HR самбарын түлхүүр (Зөвлөх)<input id="gad" type="password" autocomplete="off"></label>
@@ -518,7 +518,7 @@ document.getElementById('tasks').addEventListener('click',async ev=>{const b=ev.
  try{const j=await api('POST',{action:'status',id:k,s});ST=j.status||ST;render()}catch(e){ST=prev;render();if(e.status===401)return gate(e.message);alert(e.message)}finally{busy=false}});
 function gate(msg){const g=document.getElementById('gate');g.hidden=false;document.documentElement.classList.remove('pre');document.body.classList.add('locked');
  const f=g.querySelector('form'),pw=f.querySelector('#gpw'),nm=f.querySelector('#gnm'),er=g.querySelector('.gerr');nm.value=NAME;pw.value='';er.textContent=msg||'';if(matchMedia('(hover:hover)').matches)(NAME?pw:nm).focus();window.scrollTo(0,0);
- const su=g.querySelector('.su'),ad=g.querySelector('#gad');su.hidden=!SETUP;g.querySelector('.gform h2').textContent=SETUP?'Нууц үг тохируулах':'Нэвтрэх';g.querySelector('.gsub').textContent=SETUP?'Анх удаа: шинэ нууц үгээ (10+ тэмдэгт) болон HR самбарын түлхүүрийг оруулна.':'Зөвхөн Маркетингийн албанд зориулсан хэсэг.';
+ const su=g.querySelector('.su'),ad=g.querySelector('#gad');su.hidden=!SETUP;g.querySelector('.gform h2').textContent=SETUP?'Нууц үг тохируулах':'Нэвтрэх';g.querySelector('.gsub').textContent=SETUP?'Анх удаа: шинэ нууц үгээ (10+ тэмдэгт) болон HR самбарын түлхүүрийг оруулна.':'Нэр, нууц үгээ оруулна уу.';
  const sh=g.querySelector('#gsh'),EY=sh.querySelector('svg').outerHTML;pw.type='password';sh.innerHTML=EY+'Харах';sh.onclick=()=>{const on=pw.type==='password';pw.type=on?'text':'password';sh.innerHTML=EY+(on?'Нуух':'Харах');sh.setAttribute('aria-pressed',String(on));pw.focus()};
 f.onsubmit=async e=>{e.preventDefault();const n=nm.value.trim(),p=pw.value.trim();if(!n){nm.focus();return}if(!p){pw.focus();return}
   if(SETUP){const r=await fetch('/talent/api/marketing',{method:'POST',headers:{'x-admin-key':ad.value.trim(),'content-type':'application/json'},body:JSON.stringify({action:'setup',key:p})});const jj=await r.json().catch(()=>({}));if(!r.ok){er.textContent=jj.error||'Алдаа';return}SETUP=false}
