@@ -28,7 +28,7 @@ const strong = (k: string) => k.length >= 10
 
 // Requests from the marketing team (add/remove content, website errors, fixes). Read and answered by the
 // Зөвлөх's assistant with BOT_KEY (env, never in git) via ?reqs=1 and action "reqset".
-const RQ_CAT = ["web", "board", "social", "other"], RQ_ST = ["new", "doing", "done", "no"]
+const RQ_CAT = ["ch", "todo", "plan", "lead", "rules", "other"]  // board sections only: requests change this board, nothing else, RQ_ST = ["new", "doing", "done", "no"]
 const getReqs = async (): Promise<any[]> => { const v: any = await settingsStore().get("mkt-req", { type: "json" }); return Array.isArray(v) ? v : [] }
 const IMG_RE = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/, IMG_MAX = 1_500_000, IMG_N = 3
 const imgKey = (rid: string, n: number) => `mkt-img-${rid}-${n}`

@@ -381,11 +381,11 @@ footer{color:var(--mute);font-size:13px}
   <section aria-labelledby="h-req">
     <div class="sh"><h2 id="h-req"><span class="hxi"><svg class="hi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-6.4A8 8 0 1 1 21 12z"/><path d="M12 8v4M12 15.5v.01"/></svg></span>Хүсэлт, засвар</h2><small>Ажлын өдөр 2 цаг тутам шалгаж хариулна</small></div>
     <form class="rqf" id="rqf" novalidate>
-      <textarea name="t" maxlength="2000" placeholder="Юу нэмэх, хасах, засах вэ? Жишээ: вэбийн утасны дугаар буруу, самбарт шинэ ажил нэмэх, пост засах…" aria-label="Хүсэлт"></textarea>
-      <div class="rqr"><select name="cat" aria-label="Төрөл"><option value="web">Вэбсайт</option><option value="board">Энэ самбар</option><option value="social">Сошиал суваг</option><option value="other">Бусад</option></select><input name="url" type="url" maxlength="300" placeholder="Холбоос (байвал)" aria-label="Холбоос"><button type="button" class="att" id="rqa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/></svg>Зураг</button><button type="submit">Илгээх</button></div>
+      <textarea name="t" maxlength="2000" placeholder="Энэ самбарт юу нэмэх, хасах, засах вэ? Жишээ: шинэ суваг нэмэх, ажлын текст засах, дүрэм нэмэх…" aria-label="Хүсэлт"></textarea>
+      <div class="rqr"><select name="cat" aria-label="Төрөл"><option value="ch">Сувгууд</option><option value="todo">Хийх ажил</option><option value="plan">Баярын пост</option><option value="lead">Lead ad</option><option value="rules">Дүрэм</option><option value="other">Бусад</option></select><input name="url" type="url" maxlength="300" placeholder="Холбоос (байвал)" aria-label="Холбоос"><button type="button" class="att" id="rqa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/></svg>Зураг</button><button type="submit">Илгээх</button></div>
       <input type="file" id="rqfile" accept="image/*" multiple hidden>
       <div class="rqp" id="rqp"></div>
-      <p class="rqhint">Дэлгэцийн зургаа Ctrl+V (Mac: Cmd+V) дарж шууд буулгаж болно. 3 хүртэл зураг.</p>
+      <p class="rqhint">Зөвхөн энэ самбарын засвар хийгдэнэ. hunnu.asia болон бусад сайтын засвар энд хийгдэхгүй. Дэлгэцийн зургаа Ctrl+V (Mac: Cmd+V) дарж шууд буулгаж болно. 3 хүртэл зураг.</p>
     </form>
     <div class="rqs" id="rqs"></div>
     <div class="lbx" id="lbx" hidden role="dialog" aria-label="Зураг"><button type="button" aria-label="Хаах">×</button><img alt="Хавсаргасан зураг"></div>
@@ -649,7 +649,7 @@ function lbClose(){const lb=document.getElementById('lbx');if(lb.hidden)return;l
 document.getElementById('lbx').addEventListener('click',e=>{if(e.target.tagName!=='IMG')lbClose()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')lbClose()});
 
-const RQC={web:'Вэбсайт',board:'Самбар',social:'Сошиал',other:'Бусад'},RQS={new:['todo','Шинэ'],doing:['doing','Хийгдэж байна'],done:['ok','Хийгдсэн'],no:['no','Хийхгүй']};
+const RQC={ch:'Сувгууд',todo:'Хийх ажил',plan:'Баярын пост',lead:'Lead ad',rules:'Дүрэм',other:'Бусад',web:'Вэбсайт',board:'Самбар',social:'Сошиал'},RQS={new:['todo','Шинэ'],doing:['doing','Хийгдэж байна'],done:['ok','Хийгдсэн'],no:['no','Хийхгүй']};
 function drawReqs(){const el=document.getElementById('rqs');if(!DB){el.innerHTML='';return}
  if(!RQ.length){el.innerHTML='<div class="empty">Хүсэлт алга. Дээр бичээд «Илгээх» дарна.</div>';return}
  el.innerHTML=RQ.map(r=>{const st=RQS[r.s]||RQS.new;const u=/^https?:\/\//i.test(r.url||'')?`<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.url)}</a>`:esc(r.url||'');
