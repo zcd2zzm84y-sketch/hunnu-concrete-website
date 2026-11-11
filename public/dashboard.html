@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="mn">
 <head>
-<script>(function(){var r=document.documentElement;try{var t=localStorage.getItem('theme');if(t)r.dataset.theme=t}catch(e){}r.className+=' pre';try{if(!sessionStorage.getItem('hy-key'))r.className+=' nokey'}catch(e){r.className+=' nokey'}})()</script>
+<script>(function(){var r=document.documentElement;try{var t=localStorage.getItem('theme');if(t)r.dataset.theme=t}catch(e){}r.className+=' pre';try{if(!sessionStorage.getItem('dash-key'))r.className+=' nokey'}catch(e){r.className+=' nokey'}})()</script>
 <style>html.pre .wrap{display:none}html.pre:not(.nokey) #gate{display:none!important}html.pre.nokey #gate{display:flex!important}html{background:#F2F2F2}@media (prefers-color-scheme:dark){html:not([data-theme="light"]){background:#1f1f1f}}html[data-theme="dark"]{background:#1f1f1f}</style>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -372,9 +372,9 @@ ok:'<svg class="si" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke
 wait:'<svg class="si" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="8" cy="8" r="5.6"/><path d="M8 5v3.2l2 1.3"/></svg>'};
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const fmt=iso=>{if(!iso)return'';const d=new Date(iso),p=v=>String(v).padStart(2,'0');return `${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`};
-const KK='hy-key';
+const KK='dash-key';
 let KEY=(()=>{try{return sessionStorage.getItem(KK)||''}catch(e){return''}})(),V=null,busy=false,SETUP=false,poll=null;
-async function api(method,body){const r=await fetch('/talent/api/hyanalt',{method,headers:{'x-hy-key':KEY,'content-type':'application/json'},body:body?JSON.stringify(body):undefined});
+async function api(method,body){const r=await fetch('/talent/api/dashboard',{method,headers:{'x-hy-key':KEY,'content-type':'application/json'},body:body?JSON.stringify(body):undefined});
  const j=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(new Error(j.error||'Алдаа гарлаа'),{status:r.status,setup:!!j.setup});return j}
 const LB={ok:'Дууссан',doing:'Хийж байна',todo:'Хийх',wait:'Хүлээж буй'};
 const ord={doing:0,todo:1,wait:2,ok:3};
@@ -402,7 +402,7 @@ function gate(msg){const g=document.getElementById('gate');g.hidden=false;docume
  const su=g.querySelector('.su'),ad=g.querySelector('#gad');su.hidden=!SETUP;g.querySelector('.gform h2').textContent=SETUP?'Нууц үг тохируулах':'Нэвтрэх';g.querySelector('.gsub').textContent=SETUP?'Анх удаа: шинэ нууц үгээ (10+ тэмдэгт) болон HR самбарын түлхүүрийг оруулна.':'Нууц үгээ оруулна уу.';
  const sh=g.querySelector('#gsh'),EY=sh.querySelector('svg').outerHTML;pw.type='password';sh.innerHTML=EY+'Харах';sh.onclick=()=>{const on=pw.type==='password';pw.type=on?'text':'password';sh.innerHTML=EY+(on?'Нуух':'Харах');sh.setAttribute('aria-pressed',String(on));pw.focus()};
  f.onsubmit=async e=>{e.preventDefault();const p=pw.value.trim();if(!p){pw.focus();return}
-  if(SETUP){const r=await fetch('/talent/api/hyanalt',{method:'POST',headers:{'x-admin-key':ad.value.trim(),'content-type':'application/json'},body:JSON.stringify({action:'setup',key:p})});const jj=await r.json().catch(()=>({}));if(!r.ok){er.textContent=jj.error||'Алдаа';return}SETUP=false}
+  if(SETUP){const r=await fetch('/talent/api/dashboard',{method:'POST',headers:{'x-admin-key':ad.value.trim(),'content-type':'application/json'},body:JSON.stringify({action:'setup',key:p})});const jj=await r.json().catch(()=>({}));if(!r.ok){er.textContent=jj.error||'Алдаа';return}SETUP=false}
   KEY=p;const bt=f.querySelector('.ggo'),bl=bt.querySelector('span');bt.disabled=true;bl.textContent='Шалгаж байна…';
   try{await load();try{sessionStorage.setItem(KK,p)}catch(x){}g.hidden=true;document.body.classList.remove('locked')}catch(x){er.textContent=x.message}finally{bt.disabled=false;bl.textContent='Нэвтрэх'}}}
 function logout(){KEY='';try{sessionStorage.removeItem(KK)}catch(e){}V=null;document.getElementById('ov').innerHTML='';document.getElementById('areas').innerHTML='';gate('')}

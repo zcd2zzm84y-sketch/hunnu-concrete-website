@@ -2,7 +2,7 @@ import type { Config, Context } from "@netlify/functions"
 import { settingsStore, json, clip } from "../lib/store.mts"
 import { createHash, timingSafeEqual, scryptSync, randomBytes } from "node:crypto"
 
-// Зөвлөх's private overview (hunnu.asia/talent/hyanalt.html): live progress of delegated work.
+// Зөвлөх's private overview (hunnu.asia/dashboard): live progress of delegated work.
 // Marketing statuses are read from the marketing board (mkt-status); HR and Зөвлөх tasks are kept here (hy-tasks).
 // Own password (scrypt hash in Blobs, hy-key); first setup needs the HR dashboard key (ADMIN_KEY).
 const sha = (t: string) => createHash("sha256").update(t).digest()
@@ -88,4 +88,4 @@ export default async (req: Request, ctx: Context) => {
   return json(await view())
 }
 
-export const config: Config = { path: "/api/hyanalt", method: ["GET", "POST"] }
+export const config: Config = { path: "/api/dashboard", method: ["GET", "POST"] }
