@@ -269,6 +269,7 @@ body.locked .wrap{display:none}
 .tile .own{font-weight:600}
 .open{font-size:13px;font-weight:600;text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:4px 10px;white-space:nowrap}
 .open:hover{border-color:var(--ink)}
+.ql{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.ql a{font-size:12.5px;font-weight:600;text-decoration:none;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:4px 10px;white-space:nowrap}.ql a:hover{border-color:var(--ink)}
 .tile .more{font-size:12px;color:var(--mute)}
 .tile[open] .more{display:none}
 .tile .list{border-top:1px solid var(--line);padding:10px 16px 14px;display:grid;gap:10px;font-size:14px}
@@ -504,7 +505,7 @@ const P={
 };
 // [name, handle, url, owner, rows:[status, text, owners]]
 const CH=[
- ['Facebook үндсэн хуудас','Hunnu Concrete - Хүннү Конкрет · 5.9K','https://www.facebook.com/836673816358977','bat',[
+ ['Facebook үндсэн хуудас','Hunnu Concrete - Хүннү Конкрет · 5.9K','https://www.facebook.com/HunnuRMC','bat',[
   ['ok','Нэр, cover, bio, мэдээлэл, холбоос, огноо. Portfolio «Хүннү конкрет»-ийн эзэмшилд.'],
   ['ok','Пин пост гарсан (11-04).'],
   ['ok','Username HunnuRMC хэвээр (HunnuConcrete-ийг Meta өгөхгүй).'],
@@ -618,11 +619,13 @@ function render(){
 }
 const GR=[['Сошиал медиа',['Facebook үндсэн хуудас','Messenger, лийд','Instagram','X','YouTube','Google Maps 1.0','Google Maps 2.0','barilga.mn']],['Хүний нөөц',['Facebook HR хуудас','Ажилд орох сайт','zangia.mn']],['Вэб, апп',['Вэбсайт, домэйн','REPORT360 дэлгүүр','Бартер сайт']]];
 const OFF=['barilga.mn'];
+const MBS=(path)=>`https://business.facebook.com/latest/${path}?asset_id=836673816358977&business_id=1271620547695524`;
+const QL={fb:[['Inbox',MBS('inbox/all')],['Лийд',MBS('leads_center')],['Төлөвлөгч',MBS('content_calendar')],['Статистик',MBS('insights')]],ms:[['Inbox',MBS('inbox/all')],['Лийд',MBS('leads_center')]]};
 const CHID=["fb","ms","fbhr","talent","ig","x","yt","gm1","gm2","barilga","web","zangia","r360","barter"];
 const credBox=i=>{const id=CHID[i],c=CR[id]||{};if(!DB)return'';return `<div class="cred" data-id="${id}">${c.u||c.p?`<div class="crow"><span class="cl">Нэвтрэх</span><code class="cv">${esc(c.u||'—')}</code><button type="button" class="cb" data-cp="u" title="Хуулах">${CPI}</button></div><div class="crow"><span class="cl">Нууц үг</span><code class="cv pw" data-on="0">••••••••</code><button type="button" class="cb" data-eye title="Харах">${EYE}</button><button type="button" class="cb" data-cp="p" title="Хуулах">${CPI}</button></div>${c.n?`<div class="cn">${esc(c.n)}</div>`:''}`:'<div class="cn">Нэвтрэх мэдээлэл оруулаагүй.</div>'}<button type="button" class="ced" data-ed>${c.u||c.p?'Засах':'+ Нэр, нууц үг нэмэх'}</button></div>`};
 const tile=(c,i)=>{const rows=c[4],d=rows.filter(r=>r[0]==='ok').length;
  const off=OFF.includes(c[0]);
- return `<details class="tile${off?' off':''}" data-i="${i}"><summary><div class="row1"><h3><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="fill:${IC[CM[i]][1]}"><path d="${IC[CM[i]][0]}"/></svg>${esc(c[0])}</h3><span class="pct">${off?'Идэвхгүй':d+'/'+rows.length}</span></div><div class="h">${esc(c[1])}</div><div class="bar"><i style="width:${Math.round(d/rows.length*100)}%"></i></div><div class="row3"><span>Хариуцагч: <span class="own">${esc(P[c[3]].n)}</span></span><a class="open" href="${c[2]}" target="_blank" rel="noopener">Нээх ↗</a></div>${credBox(i)}<span class="more">Дэлгэрэнгүй ▾</span></summary><div class="list">${rows.map(r=>`<div><span class="st ${S[r[0]][0]}">${S[r[0]][1]}</span><p>${esc(r[1])}${r[2]?`<small>Хэн: ${esc(names(r[2]))}</small>`:''}</p></div>`).join('')}</div></details>`};
+ return `<details class="tile${off?' off':''}" data-i="${i}"><summary><div class="row1"><h3><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="fill:${IC[CM[i]][1]}"><path d="${IC[CM[i]][0]}"/></svg>${esc(c[0])}</h3><span class="pct">${off?'Идэвхгүй':d+'/'+rows.length}</span></div><div class="h">${esc(c[1])}</div><div class="bar"><i style="width:${Math.round(d/rows.length*100)}%"></i></div><div class="row3"><span>Хариуцагч: <span class="own">${esc(P[c[3]].n)}</span></span><a class="open" href="${c[2]}" target="_blank" rel="noopener">Нээх ↗</a></div>${(QL[CHID[i]]||[]).length?`<div class="ql">${QL[CHID[i]].map(([t,u])=>`<a href="${u}" target="_blank" rel="noopener">${t} ↗</a>`).join('')}</div>`:''}${credBox(i)}<span class="more">Дэлгэрэнгүй ▾</span></summary><div class="list">${rows.map(r=>`<div><span class="st ${S[r[0]][0]}">${S[r[0]][1]}</span><p>${esc(r[1])}${r[2]?`<small>Хэн: ${esc(names(r[2]))}</small>`:''}</p></div>`).join('')}</div></details>`};
 function drawTiles(){const op=new Set([...document.querySelectorAll('.tile[open]')].map(t=>t.dataset.i));document.getElementById('tiles').innerHTML=GR.map(([g,ns])=>{const it=CH.map((c,i)=>[c,i]).filter(([c])=>ns.includes(c[0]));return it.length?`<h3 class="gh">${g}<span>${it.length}</span></h3><div class="tiles">${it.map(([c,i])=>tile(c,i)).join('')}</div>`:''}).join('');;document.querySelectorAll('.tile').forEach(t=>{if(op.has(t.dataset.i))t.open=true})}
 drawTiles();
 const CPI='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg>';
