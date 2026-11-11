@@ -30,6 +30,10 @@ const strong = (k: string) => k.length >= 10
 // Зөвлөх's assistant with BOT_KEY (env, never in git) via ?reqs=1 and action "reqset".
 const RQ_CAT = ["web", "board", "social", "other"], RQ_ST = ["new", "doing", "done", "no"]
 const getReqs = async (): Promise<any[]> => { const v: any = await settingsStore().get("mkt-req", { type: "json" }); return Array.isArray(v) ? v : [] }
+const IMG_RE = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/, IMG_MAX = 1_500_000, IMG_N = 3
+const imgKey = (rid: string, n: number) => `mkt-img-${rid}-${n}`
+const dropImgs = async (r: any) => { for (let n = 0; n < (r?.imgs || 0); n++) await settingsStore().delete(imgKey(r.id, n)) }
+const getImg = async (q: string) => { const m = /^(r[0-9a-z]{4,20})-([0-2])$/.exec(q); if (!m) return null; const v: any = await settingsStore().get(imgKey(m[1], +m[2]), { type: "json" }); return v?.d ? json({ d: v.d }) : null }
 const botOk = (req: Request) => { const b = Netlify.env.get("BOT_KEY"), h = (req.headers.get("x-bot-key") || "").trim(); return !!b && !!h && same(h, b) }
 
 export default async (req: Request, ctx: Context) => {
@@ -54,7 +58,11 @@ export default async (req: Request, ctx: Context) => {
   // Assistant access to requests only (no logins, no board password)
   if (req.headers.get("x-bot-key")) {
     if (!botOk(req)) return json({ error: "Түлхүүр буруу." }, 401)
-    if (req.method === "GET") return json({ reqs: await getReqs() })
+    if (req.method === "GET") {
+      const q = new URL(req.url).searchParams.get("img")
+      if (q) return (await getImg(q)) || json({ error: "Зураг олдсонгүй." }, 404)
+      return json({ reqs: await getReqs() })
+    }
     let b: any
     try { b = await req.json() } catch { return json({ error: "Хүсэлт буруу байна." }, 400) }
     if (b?.action !== "reqset") return json({ error: "Үйлдэл буруу." }, 400)
@@ -78,6 +86,9 @@ export default async (req: Request, ctx: Context) => {
   if (fail.n) await settingsStore().delete(fk)
   const who = clip(decodeURIComponent(req.headers.get("x-mkt-name") || ""), 60).trim()
 
+  if (req.method === "GET" && new URL(req.url).searchParams.get("img")) {
+    return (await getImg(new URL(req.url).searchParams.get("img") || "")) || json({ error: "Зураг олдсонгүй." }, 404)
+  }
   if (req.method === "GET") {
     const [creds, status, reqs] = await Promise.all([getObj("mkt-creds"), getObj("mkt-status"), getReqs()])
     return json({ creds, status, reqs })
@@ -109,11 +120,16 @@ export default async (req: Request, ctx: Context) => {
   }
   if (b?.action === "req") {
     const t = clip(b.t, 2000).trim(), cat = String(b.cat || "other")
-    if (t.length < 3) return json({ error: "Хүсэлтээ бичнэ үү." }, 400)
+    if (t.length < 3 && !(Array.isArray(b.imgs) && b.imgs.length)) return json({ error: "Хүсэлтээ бичнэ үү." }, 400)
     if (!RQ_CAT.includes(cat)) return json({ error: "Төрөл буруу." }, 400)
-    const all = await getReqs()
-    all.unshift({ id: "r" + Date.now().toString(36) + randomBytes(2).toString("hex"), cat, t, url: clip(b.url, 300).trim(), by: who, at: new Date().toISOString(), s: "new", reply: "" })
-    const keep = all.filter(x => x.s !== "done" && x.s !== "no").concat(all.filter(x => x.s === "done" || x.s === "no").slice(0, 100))
+    const imgs = (Array.isArray(b.imgs) ? b.imgs : []).slice(0, IMG_N).map(String)
+    if (imgs.some(d => d.length > IMG_MAX || !IMG_RE.test(d))) return json({ error: "Зураг хэт том эсвэл буруу төрөлтэй байна." }, 400)
+    const all = await getReqs(), id = "r" + Date.now().toString(36) + randomBytes(2).toString("hex")
+    for (let n = 0; n < imgs.length; n++) await settingsStore().setJSON(imgKey(id, n), { d: imgs[n] })
+    all.unshift({ id, cat, t, url: clip(b.url, 300).trim(), imgs: imgs.length, by: who, at: new Date().toISOString(), s: "new", reply: "" })
+    const closed = all.filter(x => x.s === "done" || x.s === "no")
+    const keep = all.filter(x => x.s !== "done" && x.s !== "no").concat(closed.slice(0, 100))
+    for (const r of closed.slice(100)) await dropImgs(r)
     await settingsStore().setJSON("mkt-req", keep)
     return json({ ok: true, reqs: keep })
   }
@@ -121,6 +137,7 @@ export default async (req: Request, ctx: Context) => {
     const all = await getReqs(), i = all.findIndex(x => x.id === String(b.id || ""))
     if (i < 0) return json({ error: "Хүсэлт олдсонгүй." }, 404)
     if (all[i].s !== "new") return json({ error: "Эхэлсэн хүсэлтийг устгах боломжгүй." }, 400)
+    await dropImgs(all[i])
     all.splice(i, 1)
     await settingsStore().setJSON("mkt-req", all)
     return json({ ok: true, reqs: all })

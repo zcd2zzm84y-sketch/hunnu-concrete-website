@@ -207,10 +207,19 @@ body.locked .wrap{display:none}
 .rqf{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:grid;gap:10px;margin:0 0 14px}
 .rqf textarea,.rqf input,.rqf select{font:inherit;font-size:14px;width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
 .rqf textarea{min-height:84px;resize:vertical}
-.rqr{display:grid;grid-template-columns:minmax(0,180px) minmax(0,1fr) auto;gap:8px}
+.rqr{display:grid;grid-template-columns:minmax(0,180px) minmax(0,1fr) auto auto;gap:8px}
+.rqr .att{display:inline-flex;align-items:center;gap:6px;background:var(--paper);color:var(--ink);border:1px solid var(--line);font-weight:600}
+.rqr .att svg{width:16px;height:16px}
+.rqp{display:flex;flex-wrap:wrap;gap:8px}.rqp:empty{display:none}
+.rqp span,.rqim{position:relative;width:88px;height:66px;border-radius:8px;overflow:hidden;border:1px solid var(--line);background:var(--bg);flex:none}
+.rqp img,.rqim img{width:100%;height:100%;object-fit:cover;display:block}
+.rqp button{position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:50%;border:0;background:rgba(0,0,0,.65);color:#fff;font-size:14px;line-height:1;cursor:pointer;padding:0}
+.rqhint{font-size:12px;color:var(--mute);margin:-4px 0 0}
+.rqf.drag{outline:2px dashed var(--mute);outline-offset:-6px}
+.rqims{display:flex;flex-wrap:wrap;gap:8px}.rqim{cursor:zoom-in;padding:0}
 .rqr button{font:inherit;font-weight:700;font-size:14px;padding:10px 18px;border:0;border-radius:10px;background:var(--ink);color:var(--paper);cursor:pointer}
 .rqr button:disabled{opacity:.6;cursor:progress}
-@media (max-width:640px){.rqr{grid-template-columns:1fr}}
+@media (max-width:640px){.rqr{grid-template-columns:1fr 1fr}.rqr select,.rqr input{grid-column:1/-1}}
 .rqs{background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden}
 .rq{padding:12px 16px;border-top:1px solid var(--line);display:grid;gap:6px}.rq:first-child{border-top:0}
 .rq .rh{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12.5px;color:var(--mute)}
@@ -368,7 +377,10 @@ footer{color:var(--mute);font-size:13px}
     <div class="sh"><h2 id="h-req"><span class="hxi"><svg class="hi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-6.4A8 8 0 1 1 21 12z"/><path d="M12 8v4M12 15.5v.01"/></svg></span>Хүсэлт, засвар</h2><small>Ажлын өдөр 2 цаг тутам шалгаж хариулна</small></div>
     <form class="rqf" id="rqf" novalidate>
       <textarea name="t" maxlength="2000" placeholder="Юу нэмэх, хасах, засах вэ? Жишээ: вэбийн утасны дугаар буруу, самбарт шинэ ажил нэмэх, пост засах…" aria-label="Хүсэлт"></textarea>
-      <div class="rqr"><select name="cat" aria-label="Төрөл"><option value="web">Вэбсайт: алдаа, засвар</option><option value="board">Энэ самбар</option><option value="social">Сошиал суваг</option><option value="other">Бусад</option></select><input name="url" type="url" maxlength="300" placeholder="Холбоос (байвал)" aria-label="Холбоос"><button type="submit">Илгээх</button></div>
+      <div class="rqr"><select name="cat" aria-label="Төрөл"><option value="web">Вэбсайт</option><option value="board">Энэ самбар</option><option value="social">Сошиал суваг</option><option value="other">Бусад</option></select><input name="url" type="url" maxlength="300" placeholder="Холбоос (байвал)" aria-label="Холбоос"><button type="button" class="att" id="rqa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/></svg>Зураг</button><button type="submit">Илгээх</button></div>
+      <input type="file" id="rqfile" accept="image/*" multiple hidden>
+      <div class="rqp" id="rqp"></div>
+      <p class="rqhint">Дэлгэцийн зургаа Ctrl+V (Mac: Cmd+V) дарж шууд буулгаж болно. 3 хүртэл зураг.</p>
     </form>
     <div class="rqs" id="rqs"></div>
   </section>
@@ -608,15 +620,30 @@ document.getElementById('tiles').addEventListener('click',async ev=>{const box=e
  if(ev.target.closest('[data-cancel]')){drawTiles();return}});
 document.getElementById('tiles').addEventListener('submit',async ev=>{const f=ev.target.closest('.cform');if(!f)return;ev.preventDefault();const id=f.closest('.cred').dataset.id,b=f.querySelector('[type=submit]');b.disabled=true;b.textContent='Хадгалж байна…';
  try{const j=await api('POST',{action:'cred',id,u:f.u.value,p:f.p.value,n:f.n.value});CR=j.creds||CR;drawTiles();toast('Хадгалагдлаа')}catch(e){b.disabled=false;b.textContent='Хадгалах';if(e.status===401)return gate(e.message);alert(e.message)}});
-let RQ=[];
+let RQ=[],RQI=[];
+const shrink=f=>new Promise((ok,no)=>{const u=URL.createObjectURL(f),im=new Image();im.onload=()=>{URL.revokeObjectURL(u);const w=im.naturalWidth,h=im.naturalHeight;
+ for(const [mx,q] of [[1800,.85],[1400,.8],[1100,.72]]){const k=Math.min(1,mx/Math.max(w,h)),c=document.createElement('canvas');c.width=Math.round(w*k);c.height=Math.round(h*k);const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);const d=c.toDataURL('image/jpeg',q);if(d.length<1400000)return ok(d)}
+ no(new Error('Зураг хэт том байна.'))};im.onerror=()=>{URL.revokeObjectURL(u);no(new Error('Зургийг уншиж чадсангүй.'))};im.src=u});
+function drawPick(){document.getElementById('rqp').innerHTML=RQI.map((d,i)=>`<span><img src="${d}" alt=""><button type="button" data-rm="${i}" aria-label="Хасах">×</button></span>`).join('')}
+async function addFiles(fs){for(const f of fs){if(!/^image\//.test(f.type))continue;if(RQI.length>=3){toast('3 хүртэл зураг');break}try{RQI.push(await shrink(f));drawPick()}catch(e){alert(e.message)}}}
+document.getElementById('rqa').onclick=()=>document.getElementById('rqfile').click();
+document.getElementById('rqfile').onchange=e=>{addFiles([...e.target.files]);e.target.value=''};
+document.getElementById('rqp').onclick=e=>{const b=e.target.closest('[data-rm]');if(b){RQI.splice(+b.dataset.rm,1);drawPick()}};
+document.addEventListener('paste',e=>{if(!DB)return;const fs=[...(e.clipboardData?.files||[])].filter(f=>/^image\//.test(f.type));if(!fs.length)return;const a=document.activeElement;if(a&&a.matches('input,textarea')&&!a.closest('#rqf'))return;e.preventDefault();addFiles(fs);document.getElementById('rqf').scrollIntoView({block:'nearest'})});
+{const f=document.getElementById('rqf');f.addEventListener('dragover',e=>{e.preventDefault();f.classList.add('drag')});f.addEventListener('dragleave',()=>f.classList.remove('drag'));f.addEventListener('drop',e=>{e.preventDefault();f.classList.remove('drag');addFiles([...(e.dataTransfer?.files||[])])})}
+const IMC={};
+async function imgData(q){if(IMC[q])return IMC[q];const r=await fetch('/talent/api/marketing?img='+encodeURIComponent(q),{headers:{'x-mkt-key':KEY}});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'Алдаа');return IMC[q]=j.d}
+function loadThumbs(){document.querySelectorAll('.rqim[data-q]:not([data-ok])').forEach(async b=>{b.dataset.ok=1;try{b.innerHTML=`<img src="${await imgData(b.dataset.q)}" alt="Хавсаргасан зураг">`}catch(e){b.textContent='—'}})}
+document.getElementById('rqs').addEventListener('click',async e=>{const b=e.target.closest('.rqim');if(!b)return;try{const d=await imgData(b.dataset.q),bl=await (await fetch(d)).blob();window.open(URL.createObjectURL(bl),'_blank')}catch(x){alert(x.message)}});
+
 const RQC={web:'Вэбсайт',board:'Самбар',social:'Сошиал',other:'Бусад'},RQS={new:['todo','Шинэ'],doing:['doing','Хийгдэж байна'],done:['ok','Хийгдсэн'],no:['no','Хийхгүй']};
 function drawReqs(){const el=document.getElementById('rqs');if(!DB){el.innerHTML='';return}
  if(!RQ.length){el.innerHTML='<div class="empty">Хүсэлт алга. Дээр бичээд «Илгээх» дарна.</div>';return}
  el.innerHTML=RQ.map(r=>{const st=RQS[r.s]||RQS.new;const u=/^https?:\/\//i.test(r.url||'')?`<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.url)}</a>`:esc(r.url||'');
-  return `<div class="rq" data-id="${esc(r.id)}"><div class="rh"><span class="st ${st[0]}">${st[1]}</span><span>${RQC[r.cat]||''}</span><span>${esc(r.by||'')}${r.by?' · ':''}${fmt(r.at)}</span>${r.s==='new'?'<button type="button" class="rx" data-del>Устгах</button>':''}</div><div class="rt">${esc(r.t)}</div>${r.url?`<div class="rl">${u}</div>`:''}${r.reply?`<div class="ra"><b>Хариу${r.rat?' · '+fmt(r.rat):''}:</b> ${esc(r.reply)}</div>`:''}</div>`}).join('')}
-document.getElementById('rqf').addEventListener('submit',async ev=>{ev.preventDefault();const f=ev.target,b=f.querySelector('button');const t=f.t.value.trim();if(t.length<3){f.t.focus();return}
+  return `<div class="rq" data-id="${esc(r.id)}"><div class="rh"><span class="st ${st[0]}">${st[1]}</span><span>${RQC[r.cat]||''}</span><span>${esc(r.by||'')}${r.by?' · ':''}${fmt(r.at)}</span>${r.s==='new'?'<button type="button" class="rx" data-del>Устгах</button>':''}</div><div class="rt">${esc(r.t)}</div>${r.url?`<div class="rl">${u}</div>`:''}${r.imgs?`<div class="rqims">${Array.from({length:r.imgs},(_,n)=>`<button type="button" class="rqim" data-q="${esc(r.id)}-${n}" aria-label="Зураг ${n+1}"></button>`).join('')}</div>`:''}${r.reply?`<div class="ra"><b>Хариу${r.rat?' · '+fmt(r.rat):''}:</b> ${esc(r.reply)}</div>`:''}</div>`}).join('');loadThumbs()}
+document.getElementById('rqf').addEventListener('submit',async ev=>{ev.preventDefault();const f=ev.target,b=f.querySelector('[type=submit]');const t=f.t.value.trim();if(t.length<3&&!RQI.length){f.t.focus();return}
  b.disabled=true;b.textContent='Илгээж байна…';
- try{const j=await api('POST',{action:'req',t,cat:f.cat.value,url:f.url.value.trim()});RQ=j.reqs||RQ;f.t.value='';f.url.value='';drawReqs();toast('Илгээгдлээ')}catch(e){if(e.status===401)return gate(e.message);alert(e.message)}finally{b.disabled=false;b.textContent='Илгээх'}});
+ try{const j=await api('POST',{action:'req',t,cat:f.cat.value,url:f.url.value.trim(),imgs:RQI});RQ=j.reqs||RQ;f.t.value='';f.url.value='';RQI=[];drawPick();drawReqs();toast('Илгээгдлээ')}catch(e){if(e.status===401)return gate(e.message);alert(e.message)}finally{b.disabled=false;b.textContent='Илгээх'}});
 document.getElementById('rqs').addEventListener('click',async ev=>{const d=ev.target.closest('[data-del]');if(!d)return;const id=d.closest('.rq').dataset.id;if(!confirm('Энэ хүсэлтийг устгах уу?'))return;
  try{const j=await api('POST',{action:'reqdel',id});RQ=j.reqs||[];drawReqs()}catch(e){if(e.status===401)return gate(e.message);alert(e.message)}});
 document.querySelectorAll('.rules details').forEach(d=>d.addEventListener('toggle',()=>{if(d.open)document.querySelectorAll('.rules details[open]').forEach(o=>{if(o!==d)o.open=false})}));
