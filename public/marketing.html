@@ -687,8 +687,8 @@ async function loadFB(fresh){const el=document.getElementById('fbx');if(!DB){el.
  if(j.setup){el.hidden=true;return}
  const p=j.posts||[];
  el.innerHTML=`<div class="fbh">${FBI}Facebook одоо<small>${j.at?fmt(j.at):''}<button type="button" id="fbr">Шинэчлэх</button></small></div>`+
- (j.followers!==undefined||j.unread!==undefined?`<div class="fbn"><div><b>${nf(j.followers)}</b><span>Дагагч</span></div><a class="${j.unread?'hot':''}" href="${MBS('inbox/all')}" target="_blank" rel="noopener"><b>${nf(j.unread)}</b><span>Уншаагүй чат ↗</span></a>${p[0]?`<a href="${esc(p[0].url||'#')}" target="_blank" rel="noopener"><b>${nf(p[0].r)}</b><span>Сүүлийн постын реакц ↗</span></a>`:''}</div>`:'')+
- (p.length?`<div class="fbp">${p.map(x=>`<a href="${esc(x.url||'#')}" target="_blank" rel="noopener"><span class="t">${esc(x.t||'(зураг/видео)')}</span><span>↗</span><span class="m">${fmt(x.at)} · ${nf(x.r)} реакц · ${nf(x.c)} сэтгэгдэл · ${nf(x.s)} хуваалцсан</span></a>`).join('')}</div>`:'')+
+ (j.followers!==undefined||j.unread!==undefined?`<div class="fbn"><div><b>${nf(j.followers)}</b><span>Дагагч</span></div><a class="${j.unread?'hot':''}" href="${MBS('inbox/all')}" target="_blank" rel="noopener"><b>${nf(j.unread)}</b><span>Уншаагүй чат ↗</span></a>${p[0]&&p[0].r!==undefined?`<a href="${esc(p[0].url||'#')}" target="_blank" rel="noopener"><b>${nf(p[0].r)}</b><span>Сүүлийн постын реакц ↗</span></a>`:''}</div>`:'')+
+ (p.length?`<div class="fbp">${p.map(x=>`<a href="${esc(x.url||'#')}" target="_blank" rel="noopener"><span class="t">${esc(x.t||'(зураг/видео)')}</span><span>↗</span><span class="m">${[fmt(x.at),x.r!==undefined?nf(x.r)+' реакц':'',x.c!==undefined?nf(x.c)+' сэтгэгдэл':'',nf(x.s)+' хуваалцсан'].filter(Boolean).join(' · ')}</span></a>`).join('')}</div>`:'')+
  (j.err?`<div class="fbe">Зарим мэдээлэл ирсэнгүй${j.stale?' (хуучин тоо харагдаж байна)':''}.</div>`:'');
  el.hidden=false;document.getElementById('fbr').onclick=e=>{e.target.disabled=true;e.target.textContent='…';loadFB(true)}}
 let tT;function toast(m){const t=document.getElementById('toast');t.textContent=m;t.hidden=false;clearTimeout(tT);tT=setTimeout(()=>t.hidden=true,1800)}

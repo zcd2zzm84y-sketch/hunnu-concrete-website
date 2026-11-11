@@ -55,8 +55,15 @@ const fbStats = async (force = false) => {
   const out: any = { at: new Date().toISOString() }
   const tasks: Promise<void>[] = [
     fbGet(FB_PAGE + "?fields=followers_count,fan_count", tok).then(j => { out.followers = j.followers_count ?? j.fan_count ?? null }),
-    fbGet(FB_PAGE + "/published_posts?fields=message,created_time,permalink_url,reactions.summary(true).limit(0),comments.summary(true).limit(0),shares&limit=3", tok).then(j => {
-      out.posts = (j.data || []).map((p: any) => ({ t: clip(p.message || "", 140), at: p.created_time, url: p.permalink_url, r: p.reactions?.summary?.total_count ?? 0, c: p.comments?.summary?.total_count ?? 0, s: p.shares?.count ?? 0 }))
+    // Reaction/comment counts on post fields need pages_read_user_content (not granted on purpose).
+    // Posts come without them; reactions are filled best-effort from post insights (read_insights).
+    fbGet(FB_PAGE + "/published_posts?fields=id,message,created_time,permalink_url,shares&limit=3", tok).then(async j => {
+      const d = j.data || []
+      out.posts = d.map((p: any) => ({ t: clip(p.message || "", 140), at: p.created_time, url: p.permalink_url, s: p.shares?.count ?? 0 }))
+      await Promise.allSettled(d.map((p: any, i: number) => fbGet(p.id + "/insights?metric=post_reactions_by_type_total", tok).then(x => {
+        const v = x?.data?.[0]?.values?.[0]?.value
+        if (v && typeof v === "object") out.posts[i].r = Object.values(v).reduce((a: number, n: any) => a + (Number(n) || 0), 0)
+      })))
     }),
     fbGet(FB_PAGE + "/conversations?fields=unread_count,updated_time&limit=50", tok).then(j => {
       const d = j.data || []; out.unread = d.filter((x: any) => x.unread_count > 0).length
