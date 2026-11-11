@@ -221,6 +221,10 @@ body.locked .wrap{display:none}
 .lbx button{position:absolute;top:14px;right:14px;width:44px;height:44px;border-radius:50%;border:0;background:#fff;color:#111;font-size:26px;line-height:1;cursor:pointer}
 .tile.off{opacity:.5;filter:grayscale(1)}.tile.off:hover,.tile.off[open]{opacity:.8}
 .tile.off .pct{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.rqdone{border-top:1px solid var(--line)}.rqdone:first-child{border-top:0}
+.rqdone>summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;font-size:13.5px;font-weight:600;color:var(--mute)}
+.rqdone>summary::-webkit-details-marker{display:none}.rqdone[open] .chv{transform:rotate(180deg)}
+.rqdone .rq{opacity:.85}
 .rqims{display:flex;flex-wrap:wrap;gap:8px}.rqim{cursor:zoom-in;padding:0}
 .rqr button{font:inherit;font-weight:700;font-size:14px;padding:10px 18px;border:0;border-radius:10px;background:var(--ink);color:var(--paper);cursor:pointer}
 .rqr button:disabled{opacity:.6;cursor:progress}
@@ -652,8 +656,10 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')lbClose()});
 const RQC={ch:'Сувгууд',todo:'Хийх ажил',plan:'Баярын пост',lead:'Lead ad',rules:'Дүрэм',other:'Бусад',web:'Вэбсайт',board:'Самбар',social:'Сошиал'},RQS={new:['todo','Шинэ'],doing:['doing','Хийгдэж байна'],done:['ok','Хийгдсэн'],no:['no','Хийхгүй']};
 function drawReqs(){const el=document.getElementById('rqs');if(!DB){el.innerHTML='';return}
  if(!RQ.length){el.innerHTML='<div class="empty">Хүсэлт алга. Дээр бичээд «Илгээх» дарна.</div>';return}
- el.innerHTML=RQ.map(r=>{const st=RQS[r.s]||RQS.new;const u=/^https?:\/\//i.test(r.url||'')?`<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.url)}</a>`:esc(r.url||'');
-  return `<div class="rq" data-id="${esc(r.id)}"><div class="rh"><span class="st ${st[0]}">${st[1]}</span><span>${RQC[r.cat]||''}</span><span>${esc(r.by||'')}${r.by?' · ':''}${fmt(r.at)}</span>${r.s==='new'?'<button type="button" class="rx" data-del>Устгах</button>':''}</div><div class="rt">${esc(r.t)}</div>${r.url?`<div class="rl">${u}</div>`:''}${r.imgs?`<div class="rqims">${Array.from({length:r.imgs},(_,n)=>`<button type="button" class="rqim" data-q="${esc(r.id)}-${n}" aria-label="Зураг ${n+1}"></button>`).join('')}</div>`:''}${r.reply?`<div class="ra"><b>Хариу${r.rat?' · '+fmt(r.rat):''}:</b> ${esc(r.reply)}</div>`:''}</div>`}).join('');loadThumbs()}
+ const row=r=>{const st=RQS[r.s]||RQS.new;const u=/^https?:\/\//i.test(r.url||'')?`<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.url)}</a>`:esc(r.url||'');
+  return `<div class="rq" data-id="${esc(r.id)}"><div class="rh"><span class="st ${st[0]}">${st[1]}</span><span>${RQC[r.cat]||''}</span><span>${esc(r.by||'')}${r.by?' · ':''}${fmt(r.at)}</span>${r.s==='new'?'<button type="button" class="rx" data-del>Устгах</button>':''}</div><div class="rt">${esc(r.t)}</div>${r.url?`<div class="rl">${u}</div>`:''}${r.imgs?`<div class="rqims">${Array.from({length:r.imgs},(_,n)=>`<button type="button" class="rqim" data-q="${esc(r.id)}-${n}" aria-label="Зураг ${n+1}"></button>`).join('')}</div>`:''}${r.reply?`<div class="ra"><b>Хариу${r.rat?' · '+fmt(r.rat):''}:</b> ${esc(r.reply)}</div>`:''}</div>`};
+ const op=RQ.filter(r=>r.s==='new'||r.s==='doing'),cl=RQ.filter(r=>r.s==='done'||r.s==='no'),was=!!document.querySelector('#rqs .rqdone[open]');
+ el.innerHTML=(op.length?op.map(row).join(''):'<div class="empty">Нээлттэй хүсэлт алга.</div>')+(cl.length?`<details class="rqdone"${was?' open':''}><summary><span>Хийгдсэн, хаагдсан (${cl.length})</span><svg class="chv" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>${cl.map(row).join('')}</details>`:'');loadThumbs()}
 document.getElementById('rqf').addEventListener('submit',async ev=>{ev.preventDefault();const f=ev.target,b=f.querySelector('[type=submit]');const t=f.t.value.trim();if(t.length<3&&!RQI.length){f.t.focus();return}
  b.disabled=true;b.textContent='Илгээж байна…';
  try{const j=await api('POST',{action:'req',t,cat:f.cat.value,url:f.url.value.trim(),imgs:RQI});RQ=j.reqs||RQ;f.t.value='';f.url.value='';RQI=[];drawPick();drawReqs();toast('Илгээгдлээ')}catch(e){if(e.status===401)return gate(e.message);alert(e.message)}finally{b.disabled=false;b.textContent='Илгээх'}});
