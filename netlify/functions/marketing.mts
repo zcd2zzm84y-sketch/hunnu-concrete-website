@@ -35,6 +35,40 @@ const IMG_RE = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/, IMG_MAX =
 const imgKey = (rid: string, n: number) => `mkt-img-${rid}-${n}`
 const dropImgs = async (r: any) => { for (let n = 0; n < (r?.imgs || 0); n++) await settingsStore().delete(imgKey(r.id, n)) }
 const getImg = async (q: string) => { const m = /^(r[0-9a-z]{4,20})-([0-2])$/.exec(q); if (!m) return null; const v: any = await settingsStore().get(imgKey(m[1], +m[2]), { type: "json" }); return v?.d ? json({ d: v.d }) : null }
+
+// Facebook page numbers (read-only). FB_PAGE_TOKEN (env, never in git) = page access token with
+// pages_read_engagement + pages_messaging. Cached 15 min in Blobs so the board does not hit Graph API on every open.
+const FB_PAGE = "836673816358977", GRAPH = "https://graph.facebook.com/v21.0/"
+const fbGet = async (path: string, tok: string) => {
+  const r = await fetch(GRAPH + path + (path.includes("?") ? "&" : "?") + "access_token=" + encodeURIComponent(tok))
+  const j: any = await r.json().catch(() => ({}))
+  if (!r.ok || j.error) throw new Error(j?.error?.message || "Graph " + r.status)
+  return j
+}
+const fbStats = async (force = false) => {
+  const raw = Netlify.env.get("FB_PAGE_TOKEN")
+  if (!raw) return { setup: true }
+  const c: any = await settingsStore().get("mkt-fb", { type: "json" })
+  if (!force && c?.at && Date.now() - Date.parse(c.at) < 15 * 60 * 1000) return c
+  // A system-user token also works: ask Graph for the page's own token first (falls back to the given token).
+  const tok = await fbGet(FB_PAGE + "?fields=access_token", raw).then(j => j.access_token || raw).catch(() => raw)
+  const out: any = { at: new Date().toISOString() }
+  const tasks: Promise<void>[] = [
+    fbGet(FB_PAGE + "?fields=followers_count,fan_count", tok).then(j => { out.followers = j.followers_count ?? j.fan_count ?? null }),
+    fbGet(FB_PAGE + "/published_posts?fields=message,created_time,permalink_url,reactions.summary(true).limit(0),comments.summary(true).limit(0),shares&limit=3", tok).then(j => {
+      out.posts = (j.data || []).map((p: any) => ({ t: clip(p.message || "", 140), at: p.created_time, url: p.permalink_url, r: p.reactions?.summary?.total_count ?? 0, c: p.comments?.summary?.total_count ?? 0, s: p.shares?.count ?? 0 }))
+    }),
+    fbGet(FB_PAGE + "/conversations?fields=unread_count,updated_time&limit=50", tok).then(j => {
+      const d = j.data || []; out.unread = d.filter((x: any) => x.unread_count > 0).length
+    }),
+  ]
+  const res = await Promise.allSettled(tasks)
+  const errs = res.filter(r => r.status === "rejected").map((r: any) => String(r.reason?.message || r.reason))
+  if (errs.length === tasks.length) { if (c?.at) return { ...c, stale: true, err: errs[0] }; return { err: errs[0] } }
+  if (errs.length) out.err = errs[0]
+  await settingsStore().setJSON("mkt-fb", out)
+  return out
+}
 const botOk = (req: Request) => { const b = Netlify.env.get("BOT_KEY"), h = (req.headers.get("x-bot-key") || "").trim(); return !!b && !!h && same(h, b) }
 
 export default async (req: Request, ctx: Context) => {
@@ -90,6 +124,7 @@ export default async (req: Request, ctx: Context) => {
   if (req.method === "GET" && new URL(req.url).searchParams.get("img")) {
     return (await getImg(new URL(req.url).searchParams.get("img") || "")) || json({ error: "Зураг олдсонгүй." }, 404)
   }
+  if (req.method === "GET" && new URL(req.url).searchParams.has("fb")) return json(await fbStats(new URL(req.url).searchParams.get("fb") === "fresh"))
   if (req.method === "GET") {
     const [creds, status, reqs] = await Promise.all([getObj("mkt-creds"), getObj("mkt-status"), getReqs()])
     return json({ creds, status, reqs })

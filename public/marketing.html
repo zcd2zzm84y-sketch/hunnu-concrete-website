@@ -269,6 +269,16 @@ body.locked .wrap{display:none}
 .tile .own{font-weight:600}
 .open{font-size:13px;font-weight:600;text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:4px 10px;white-space:nowrap}
 .open:hover{border-color:var(--ink)}
+.fbx[hidden]{display:none}
+.fbx{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:0 0 14px;display:grid;gap:12px}
+.fbh{display:flex;align-items:center;gap:8px;font-weight:700}.fbh svg{width:18px;height:18px;fill:#0866FF}.fbh small{margin-left:auto;font-weight:500;font-size:12px;color:var(--mute);display:flex;gap:8px;align-items:center}
+.fbh button{font:inherit;font-size:12px;font-weight:600;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;padding:3px 10px;cursor:pointer}
+.fbn{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.fbn a,.fbn div{display:grid;gap:2px;background:var(--bg);border-radius:10px;padding:10px 12px;text-decoration:none;color:var(--ink)}
+.fbn b{font-size:22px;font-variant-numeric:tabular-nums}.fbn span{font-size:12.5px;color:var(--mute)}.fbn a.hot b{color:#B3261E}
+.fbp{display:grid;gap:0}.fbp a{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:8px 0;border-top:1px solid var(--line);text-decoration:none;color:var(--ink);font-size:13.5px}
+.fbp a:first-child{border-top:0}.fbp .m{grid-column:1/-1;font-size:12px;color:var(--mute)}.fbp .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fbe{font-size:12.5px;color:var(--mute)}
 .ql{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.ql a{font-size:12.5px;font-weight:600;text-decoration:none;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:4px 10px;white-space:nowrap}.ql a:hover{border-color:var(--ink)}
 .tile .more{font-size:12px;color:var(--mute)}
 .tile[open] .more{display:none}
@@ -373,6 +383,7 @@ footer{color:var(--mute);font-size:13px}
 
   <section aria-labelledby="h-ch">
     <div class="sh"><h2 id="h-ch"><span class="hxi"><svg class="hi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>Сувгууд</h2><small>Карт дээр дарвал бүх ажил гарна. «Нээх» нь хуудсыг нээнэ.</small></div>
+    <div class="fbx" id="fbx" hidden></div>
     <div id="tiles"></div>
   </section>
 
@@ -592,8 +603,8 @@ f.onsubmit=async e=>{e.preventDefault();const n=nm.value.trim(),p=pw.value.trim(
   NAME=n;KEY=p;try{localStorage.setItem(NK,n)}catch(x){}const bt=f.querySelector('.ggo'),bl=bt.querySelector('span');bt.disabled=true;bl.textContent='Шалгаж байна…';
   try{await load();try{sessionStorage.setItem(KK,p)}catch(x){}g.hidden=true;document.body.classList.remove('locked')}catch(x){er.textContent=x.message}finally{bt.disabled=false;bl.textContent='Нэвтрэх'}}}
 let SETUP=false;
-async function load(){let j;try{j=await api('GET')}catch(e){if(e.setup){SETUP=true;throw e}throw e}SETUP=false;ST=j.status||{};CR=j.creds||{};RQ=j.reqs||[];DB=true;drawTiles();render();drawReqs()}
-function logout(){KEY='';try{sessionStorage.removeItem(KK)}catch(e){}ST={};CR={};RQ=[];DB=null;drawTiles();render();drawReqs();gate('')}
+async function load(){let j;try{j=await api('GET')}catch(e){if(e.setup){SETUP=true;throw e}throw e}SETUP=false;ST=j.status||{};CR=j.creds||{};RQ=j.reqs||[];DB=true;drawTiles();render();drawReqs();loadFB()}
+function logout(){KEY='';try{sessionStorage.removeItem(KK)}catch(e){}ST={};CR={};RQ=[];DB=null;drawTiles();render();drawReqs();loadFB();gate('')}
 const KEYS=['all','bat','mandah','admin','web'];
 let cur='bat';
 function cnt(k){return open.filter(x=>k==='all'||x.r[2].includes(k)).length}
@@ -669,6 +680,17 @@ document.getElementById('rqf').addEventListener('submit',async ev=>{ev.preventDe
 document.getElementById('rqs').addEventListener('click',async ev=>{const d=ev.target.closest('[data-del]');if(!d)return;const id=d.closest('.rq').dataset.id;if(!confirm('Энэ хүсэлтийг устгах уу?'))return;
  try{const j=await api('POST',{action:'reqdel',id});RQ=j.reqs||[];drawReqs()}catch(e){if(e.status===401)return gate(e.message);alert(e.message)}});
 document.querySelectorAll('.rules details').forEach(d=>d.addEventListener('toggle',()=>{if(d.open)document.querySelectorAll('.rules details[open]').forEach(o=>{if(o!==d)o.open=false})}));
+const FBI='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M24 12.07C24 5.41 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.04V9.41c0-3.02 1.8-4.7 4.54-4.7 1.31 0 2.68.24 2.68.24v2.97h-1.5c-1.5 0-1.96.93-1.96 1.89v2.26h3.32l-.53 3.5h-2.8V24C19.62 23.1 24 18.1 24 12.07"/></svg>';
+const nf=n=>n==null?'—':Number(n).toLocaleString('en-US');
+async function loadFB(fresh){const el=document.getElementById('fbx');if(!DB){el.hidden=true;return}
+ let j;try{const r=await fetch('/talent/api/marketing?fb='+(fresh?'fresh':'1'),{headers:{'x-mkt-key':KEY}});j=await r.json();if(!r.ok)throw new Error(j.error||'')}catch(e){el.hidden=true;return}
+ if(j.setup){el.hidden=true;return}
+ const p=j.posts||[];
+ el.innerHTML=`<div class="fbh">${FBI}Facebook одоо<small>${j.at?fmt(j.at):''}<button type="button" id="fbr">Шинэчлэх</button></small></div>`+
+ (j.followers!==undefined||j.unread!==undefined?`<div class="fbn"><div><b>${nf(j.followers)}</b><span>Дагагч</span></div><a class="${j.unread?'hot':''}" href="${MBS('inbox/all')}" target="_blank" rel="noopener"><b>${nf(j.unread)}</b><span>Уншаагүй чат ↗</span></a>${p[0]?`<a href="${esc(p[0].url||'#')}" target="_blank" rel="noopener"><b>${nf(p[0].r)}</b><span>Сүүлийн постын реакц ↗</span></a>`:''}</div>`:'')+
+ (p.length?`<div class="fbp">${p.map(x=>`<a href="${esc(x.url||'#')}" target="_blank" rel="noopener"><span class="t">${esc(x.t||'(зураг/видео)')}</span><span>↗</span><span class="m">${fmt(x.at)} · ${nf(x.r)} реакц · ${nf(x.c)} сэтгэгдэл · ${nf(x.s)} хуваалцсан</span></a>`).join('')}</div>`:'')+
+ (j.err?`<div class="fbe">Зарим мэдээлэл ирсэнгүй${j.stale?' (хуучин тоо харагдаж байна)':''}.</div>`:'');
+ el.hidden=false;document.getElementById('fbr').onclick=e=>{e.target.disabled=true;e.target.textContent='…';loadFB(true)}}
 let tT;function toast(m){const t=document.getElementById('toast');t.textContent=m;t.hidden=false;clearTimeout(tT);tT=setTimeout(()=>t.hidden=true,1800)}
 load().then(()=>{document.documentElement.classList.remove('pre')}).catch(e=>gate(e.status===401&&!KEY?'':e.setup?'':e.message));
 render();
