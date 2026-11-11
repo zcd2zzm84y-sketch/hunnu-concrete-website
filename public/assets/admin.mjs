@@ -190,6 +190,7 @@ const tested=a=>(a.max||0)>0;
 const advice=k=>k>=70?{t:"Ярилцлагад урих",k:"good"}:k>=50?{t:"Ярилцлагаар тодруулах",k:"warn"}:{t:"Тэнцээгүй",k:"bad"};
 const ansWrong=a=>(a.questions||[]).map(id=>bank[id]).filter(q=>q&&a.answers?.[q.id]!==q.a);
 let proxFilter=false;
+const SRCN={fb:"Facebook"},srcPill=a=>a.src?` <span class="pill idle">${esc(SRCN[a.src]||a.src)}</span>`:"";
 const proxPill=a=>{const p=PROX[proximity(a.district,a.area)];return p?` <span class="pill ${p[1]}">${p[0]}</span>`:""};
 function renderApps(){
   setBand("Ажил","горилогчид.","Онлайн анкет ирнэ. Тохирох хүнийг оффист урьж, мэдлэгийн шалгалтыг энд эхлүүлээд, ярилцлагын шийдвэрээ тэмдэглэнэ.");
@@ -212,7 +213,7 @@ function renderApps(){
         <label class="f">Төлөвөөр шүүх<select id="af"><option value="">Бүгд</option>${Object.entries(STATUS).map(([k,v])=>`<option value="${k}" ${k===appFilter?"selected":""}>${v[0]} (${cnt(k)})</option>`).join("")}</select></label>
         <label class="consent"><input type="checkbox" id="pxf" ${proxFilter?"checked":""}><span>Зөвхөн Үйлдвэр 2.0-д гэр ойр</span></label>
         <div class="plist">${list.length?list.map(a=>{const k=kPct(a),st=STATUS[a.status]||STATUS.new;return `<button type="button" class="pcard ${a.id===selA?"on":""}" data-aid="${esc(a.id)}">
-          <span class="pc-main"><b>${esc(a.name)}</b><small>${esc(a.position)}</small><small class="lvl">${fmtDate(a.submittedAt)}${proxPill(a)}</small></span>
+          <span class="pc-main"><b>${esc(a.name)}</b><small>${esc(a.position)}</small><small class="lvl">${fmtDate(a.submittedAt)}${proxPill(a)}${srcPill(a)}</small></span>
           <span class="pc-score"><b>${tested(a)?k+"%":"—"}</b></span><span class="pc-pill"><span class="pill ${st[1]}">${st[0]}</span></span>
           <span class="pc-bar"><i style="width:${k}%"></i></span></button>`}).join(""):`<div class="sheet empty">${apps.length?"Энэ төлөвт горилогч алга.":"Одоогоор анкет ирээгүй байна."}</div>`}</div>
       </aside>
@@ -229,7 +230,9 @@ function openingsCard(){
   const open=new Set(openings);
   if(!editOpen)return `<div class="sheet stack"><div class="row spread"><div class="tag"><b>01</b>Нээлттэй ажлын байр (${openings.length})</div><button type="button" id="opEdit">${ic("edit")}Засах</button></div>
     ${openings.length?`<div class="chips">${openings.map(k=>`<span class="chip on">${esc(k.split("|")[1])}</span>`).join("")}</div>`:`<p style="margin:0">Одоогоор нээлттэй ажлын байр алга. Анкетын хуудас «нээлттэй ажлын байр алга» гэж харуулна. «Засах» дарж ажилд авах албан тушаалаа чагтална уу.</p>`}
-    <p class="muted" style="margin:0;font-size:14px">Анкетын холбоос: <b style="color:var(--fg)">${esc(location.host+location.pathname.replace(/admin(\.html)?$/,"")+"apply")}</b></p></div>`;
+    <p class="muted" style="margin:0;font-size:14px">Анкетын холбоос: <b style="color:var(--fg)">${esc(location.host+location.pathname.replace(/admin(\.html)?$/,"")+"apply")}</b>${apps.length?` · Facebook-ээс ирсэн: <b style="color:var(--fg)">${apps.filter(a=>a.src==="fb").length}/${apps.length}</b>`:""}</p>
+    ${openings.length?`<div class="row" style="gap:8px">${openings.map(k=>`<button type="button" data-fbpost="${esc(k)}">${ic("send")}FB пост: ${esc(k.split("|")[1])}</button>`).join("")}</div>`:""}
+    <div id="fbBox"></div></div>`;
   return `<div class="sheet stack"><div class="tag"><b>01</b>Ажилд авах албан тушаалаа чагтална уу</div>
     <div class="opgrid">${Object.entries(DEPTS).map(([d,ps])=>`<fieldset class="opdept"><legend>${esc(d)}</legend>${ps.map(p=>{const k=d+"|"+p[0];return `<label class="opchk"><input type="checkbox" value="${esc(k)}" ${open.has(k)?"checked":""}><span>${esc(p[0])}</span></label>`}).join("")}</fieldset>`).join("")}</div>
     <div class="row"><button type="button" class="primary" id="opSave">${ic("check")}Хадгалах</button><button type="button" id="opCancel">${ic("x")}Болих</button><span id="opMsg" class="muted" aria-live="polite"></span></div></div>`;
@@ -237,6 +240,10 @@ function openingsCard(){
 function bindOpenings(){
   const redraw=()=>{const y=window.scrollY;renderAll();window.scrollTo(0,y)};
   if($("#opEdit"))$("#opEdit").onclick=()=>{editOpen=true;redraw()};
+  document.querySelectorAll("[data-fbpost]").forEach(b=>b.onclick=()=>{const [d,p]=b.dataset.fbpost.split("|"),di=Object.keys(DEPTS).indexOf(d),pi=(DEPTS[d]||[]).findIndex(x=>x[0]===p),url=`https://hunnu.asia/talent/apply?src=fb&job=${di}-${pi}`;
+    const txt=`Hunnu Concrete | Хүннү Конкрет ажилтан авна\n\nАлбан тушаал: ${p}\nАлба: ${d}\n\nАнкетаа онлайнаар 5 минутад бөглөнө үү:\n${url}\n\nТохирох бол Хүний нөөцийн алба утсаар холбогдож, оффист урина.\nЛавлах: 8806 6831`;
+    $("#fbBox").innerHTML=`<div class="stack" style="gap:8px"><textarea id="fbTxt" rows="10" style="width:100%;font:inherit;padding:10px">${esc(txt)}</textarea><div class="row"><button type="button" class="primary" id="fbCopy">${ic("copy")}Хуулах</button><span class="muted" style="font-size:13px">Хуулаад HR-ын Facebook хуудсанд нийтэлнэ. Энэ холбоосоор ирсэн анкет «Facebook» гэж тэмдэглэгдэнэ.</span></div></div>`;
+    $("#fbCopy").onclick=async e=>{try{await navigator.clipboard.writeText($("#fbTxt").value);e.currentTarget.innerHTML=ic("check")+"Хуулсан"}catch(x){$("#fbTxt").select()}}});
   if($("#opCancel"))$("#opCancel").onclick=()=>{editOpen=false;redraw()};
   if($("#opSave"))$("#opSave").onclick=async()=>{
     const list=[...document.querySelectorAll(".opchk input:checked")].map(x=>x.value);

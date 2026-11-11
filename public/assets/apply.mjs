@@ -97,7 +97,7 @@ async function send(ev){
   if(miss){A.err=miss;return keep(form)}
   sending=true;const btn=ev.target.querySelector("[type=submit]");btn.disabled=true;btn.textContent="Илгээж байна…";
   try{
-    const res=await fetch("api/apply",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({applicant:f})});
+    const res=await fetch("api/apply",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({applicant:f,src:SRC})});
     if(!res.ok){const j=await res.json().catch(()=>({}));throw new Error(j.error||("HTTP "+res.status))}
   }catch(e){A.err="Илгээж чадсангүй: "+e.message+" Интернэт холболтоо шалгаад дахин оролдоно уу.";sending=false;return keep(form)}
   clear();A={...fresh(),stage:"done",f:{name:f.name}};sending=false;render();window.scrollTo(0,0);
@@ -107,4 +107,7 @@ function done(){
   $("#view").innerHTML=`<div class="sheet stack"><p>Таны анкет Хүний нөөцийн албанд хүрлээ. Тохирох бол бид таны үлдээсэн утсаар холбогдож, оффист урина. Оффист ${APP_MINUTES} минутын мэдлэгийн богино шалгалт өгөөд, ярилцлагад орно.</p>
     <p class="muted" style="margin:0">Лавлах: Хүний нөөц 8806 6831, munkhmandakh@teso.mn · Компани 7575 4040 · info@hunnu.asia</p></div>`;
 }
+// Links from posts carry ?src=fb (where the applicant came from) and ?job=dept|position (preselected)
+const Q=new URLSearchParams(location.search),SRC=/^[a-z0-9_-]{1,20}$/.test(Q.get("src")||"")?Q.get("src"):"";
+{const m=/^(\d+)-(\d+)$/.exec(Q.get("job")||""),d=m&&Object.keys(DEPTS)[+m[1]],p=d&&DEPTS[d][+m[2]];if(p&&A.stage==="form")A.f={...A.f,dept:d,position:p[0]}}
 loadOpenings().then(render);
