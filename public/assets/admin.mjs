@@ -604,8 +604,9 @@ const shrink=f=>new Promise((ok,no)=>{const u=URL.createObjectURL(f),im=new Imag
 async function imgData(q){if(IMC[q])return IMC[q];const r=await fetch("api/admin?img="+encodeURIComponent(q),{headers:{"x-admin-key":key}});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||"Алдаа");return IMC[q]=j.d}
 function renderReqs(){
   setBand("Хүсэлт,","засвар.","Юу нэмэх, хасах, засахаа бичнэ. Ажлын өдөр 2 цаг тутам шалгаж хариулна.");
-  const list=reqs.map(r=>{const st=RQS[r.s]||RQS.new,u=/^https?:\/\//i.test(r.url||"")?`<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.url)}</a>`:esc(r.url||"");
-    return `<div class="rq" data-id="${esc(r.id)}"><div class="rh"><span class="pill ${st[0]}">${st[1]}</span><span>${RQC[r.cat]||RQC0[r.cat]||""}</span><span>${esc(r.by||"")}${r.by?" · ":""}${fmtAt(r.at)}</span>${r.s==="new"?`<button type="button" class="rx" data-rqdel>${ic("trash")}Устгах</button>`:""}</div><div class="rt">${esc(r.t)}</div>${r.url?`<div class="rl">${u}</div>`:""}${r.imgs?`<div class="rqims">${Array.from({length:r.imgs},(_,n)=>`<button type="button" class="rqim" data-q="${esc(r.id)}-${n}" aria-label="Зураг ${n+1}"></button>`).join("")}</div>`:""}${r.reply?`<div class="ra"><b>Хариу${r.rat?" · "+fmtAt(r.rat):""}:</b> ${esc(r.reply)}</div>`:""}</div>`}).join("");
+  const row=r=>{const st=RQS[r.s]||RQS.new,u=/^https?:\/\//i.test(r.url||"")?`<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.url)}</a>`:esc(r.url||"");
+    return `<div class="rq" data-id="${esc(r.id)}"><div class="rh"><span class="pill ${st[0]}">${st[1]}</span><span>${RQC[r.cat]||RQC0[r.cat]||""}</span><span>${esc(r.by||"")}${r.by?" · ":""}${fmtAt(r.at)}</span>${r.s==="new"?`<button type="button" class="rx" data-rqdel>${ic("trash")}Устгах</button>`:""}</div><div class="rt">${esc(r.t)}</div>${r.url?`<div class="rl">${u}</div>`:""}${r.imgs?`<div class="rqims">${Array.from({length:r.imgs},(_,n)=>`<button type="button" class="rqim" data-q="${esc(r.id)}-${n}" aria-label="Зураг ${n+1}"></button>`).join("")}</div>`:""}${r.reply?`<div class="ra"><b>Хариу${r.rat?" · "+fmtAt(r.rat):""}:</b> ${esc(r.reply)}</div>`:""}</div>`};
+  const isOpen=r=>r.s==="new"||r.s==="doing",open=reqs.filter(isOpen),closed=reqs.filter(r=>!isOpen(r));
   $("#view").innerHTML=`<div class="stack" style="gap:20px">${tabs("req")}
     <form class="rqf sheet" id="rqf" novalidate>
       <textarea name="t" maxlength="2000" placeholder="Юу нэмэх, хасах, засах вэ? Жишээ: анкетын асуулт засах, самбарт шинэ хэсэг нэмэх, ажлын зар..." aria-label="Хүсэлт"></textarea>
@@ -615,7 +616,7 @@ function renderReqs(){
       <p class="rqhint">Дэлгэцийн зургаа Ctrl+V (Mac: Cmd+V) дарж шууд буулгаж болно. 3 хүртэл зураг.</p>
       <p class="rqhint"><b>Зөвхөн HR сайтын (судалгаа, анкет, HR самбар) засвар хийгдэнэ. hunnu.asia болон бусад сайтын засвар энд хийгдэхгүй.</b></p>
     </form>
-    <div class="rqs sheet" id="rqs">${list||'<p class="muted" style="margin:0">Хүсэлт алга. Дээр бичээд «Илгээх» дарна.</p>'}</div></div>`;
+    <div class="rqs sheet" id="rqs">${open.map(row).join("")||'<p class="muted" style="margin:0">Нээлттэй хүсэлт алга.</p>'}${closed.length?`<details class="rqdone"><summary>Хийгдсэн, хаагдсан (${closed.length})${ic("chev")}</summary>${closed.map(row).join("")}</details>`:""}</div></div>`;
   bindTabs();
   const drawPick=()=>{$("#rqp").innerHTML=RQI.map((d,i)=>`<span><img src="${d}" alt=""><button type="button" data-rm="${i}" aria-label="Хасах">×</button></span>`).join("")};drawPick();
   const addFiles=async fs=>{for(const f of fs){if(!/^image\//.test(f.type))continue;if(RQI.length>=3){alert("3 хүртэл зураг");break}try{RQI.push(await shrink(f));drawPick()}catch(e){alert(e.message)}}};

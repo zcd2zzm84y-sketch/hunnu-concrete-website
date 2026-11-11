@@ -650,3 +650,9 @@ footer .inner a:hover{color:var(--fg);text-decoration:underline;text-underline-o
 .rq .rx{margin-left:auto;font-size:12px;padding:4px 8px;min-height:0}
 .rqs>p{padding:16px}
 @media (max-width:640px){.rqr{grid-template-columns:1fr 1fr}.rqr select,.rqr input{grid-column:1/-1}}
+.rqdone{border-top:1px solid var(--line)}
+.rqdone>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;font-weight:700;color:var(--muted)}
+.rqdone>summary::-webkit-details-marker{display:none}
+.rqdone>summary svg{width:18px;height:18px;transition:transform .15s}
+.rqdone[open]>summary svg{transform:rotate(180deg)}
+.rqdone .rq{border-top:1px solid var(--line)}
