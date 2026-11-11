@@ -1,6 +1,7 @@
 import type { Config } from "@netlify/functions"
 import { staffStore, pulseStore, applicantStore, settingsStore, getOpenings, isPosition, summarizePulse, json, clip, STATUS } from "../lib/store.mts"
 import { KMAP, draw } from "../lib/bank.mjs"
+import { requestList, botOk } from "../lib/requests.mts"
 import { COMP } from "../../public/assets/data.mjs"
 import { createHash, randomBytes } from "node:crypto"
 
