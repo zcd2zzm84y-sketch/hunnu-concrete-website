@@ -204,6 +204,22 @@ body.locked .wrap{display:none}
 .gfoot .gin{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px 16px;padding-block:18px;font-size:13px;color:var(--mute)}
 @media (max-width:760px){.gbox{grid-template-columns:1fr}.gside{min-height:0}.gart{max-width:240px}.gside,.gform{padding:26px 22px}.glist small{display:none}.gin{padding:0 16px}.gtop .gin{height:64px}.glogo{height:26px}}
 .gerr{color:#B3261E!important;min-height:1em}
+.rqf{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:grid;gap:10px;margin:0 0 14px}
+.rqf textarea,.rqf input,.rqf select{font:inherit;font-size:14px;width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+.rqf textarea{min-height:84px;resize:vertical}
+.rqr{display:grid;grid-template-columns:minmax(0,180px) minmax(0,1fr) auto;gap:8px}
+.rqr button{font:inherit;font-weight:700;font-size:14px;padding:10px 18px;border:0;border-radius:10px;background:var(--ink);color:var(--paper);cursor:pointer}
+.rqr button:disabled{opacity:.6;cursor:progress}
+@media (max-width:640px){.rqr{grid-template-columns:1fr}}
+.rqs{background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.rq{padding:12px 16px;border-top:1px solid var(--line);display:grid;gap:6px}.rq:first-child{border-top:0}
+.rq .rh{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12.5px;color:var(--mute)}
+.rq .rt{white-space:pre-wrap;overflow-wrap:anywhere}
+.rq .rl{font-size:13px;overflow-wrap:anywhere;color:var(--mute)}
+.rq .ra{font-size:13.5px;background:var(--bg);border-radius:9px;padding:8px 10px;white-space:pre-wrap;overflow-wrap:anywhere}
+.rq .ra b{font-weight:700}
+.rq .rx{margin-left:auto;font:inherit;font-size:12px;border:0;background:none;color:var(--mute);text-decoration:underline;cursor:pointer;padding:0}
+.st.no{background:var(--todobg);color:var(--mute)}
 .cred{margin:12px 0 0;padding:10px 12px;border-radius:10px;background:var(--bg);display:grid;gap:6px;font-size:13px}
 .crow{display:flex;align-items:center;gap:6px;min-width:0}
 .cl{color:var(--mute);width:62px;flex:none;font-size:12px}
@@ -342,6 +358,15 @@ footer{color:var(--mute);font-size:13px}
     <div class="tasks" id="tasks"></div>
   </section>
 
+  <section aria-labelledby="h-req">
+    <div class="sh"><h2 id="h-req"><span class="hxi"><svg class="hi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-6.4A8 8 0 1 1 21 12z"/><path d="M12 8v4M12 15.5v.01"/></svg></span>Хүсэлт, засвар</h2><small>Ажлын өдөр 2 цаг тутам шалгаж хариулна</small></div>
+    <form class="rqf" id="rqf" novalidate>
+      <textarea name="t" maxlength="2000" placeholder="Юу нэмэх, хасах, засах вэ? Жишээ: вэбийн утасны дугаар буруу, самбарт шинэ ажил нэмэх, пост засах…" aria-label="Хүсэлт"></textarea>
+      <div class="rqr"><select name="cat" aria-label="Төрөл"><option value="web">Вэбсайт: алдаа, засвар</option><option value="board">Энэ самбар</option><option value="social">Сошиал суваг</option><option value="other">Бусад</option></select><input name="url" type="url" maxlength="300" placeholder="Холбоос (байвал)" aria-label="Холбоос"><button type="submit">Илгээх</button></div>
+    </form>
+    <div class="rqs" id="rqs"></div>
+  </section>
+
   <section aria-labelledby="h-plan">
     <div class="sh"><h2 id="h-plan"><span class="hxi"><svg class="hi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>Баярын пост</h2><small>08:30-д FB + X · Бат-Эрдэнэ</small></div>
     <div class="hol"><div class="hd"><div class="dt"><b>10</b><span>11-р сар</span></div><div class="hb"><div class="hn">Их Эзэн Чингис хааны өдөр</div><div class="hx">FB, X-д товлогдсон. Бат-Эрдэнэ гарсныг шалгана.</div></div><span class="st ok hs" data-pub="2026-11-10"><svg class="si2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg>Товлогдсон</span></div><div class="hd"><div class="dt"><b>26</b><span>11-р сар</span></div><div class="hb"><div class="hn">Бүгд Найрамдах Улс тунхагласан өдөр</div><div class="hx">FB, X-д товлогдсон. Бат-Эрдэнэ гарсныг шалгана.</div></div><span class="st ok hs" data-pub="2026-11-26"><svg class="si2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg>Товлогдсон</span></div><div class="hd"><div class="dt"><b>10</b><span>12-р сар</span></div><div class="hb"><div class="hn">Ардчилал, хүний эрхийн өдөр</div><div class="hx">X-д товлогдсон. FB-д 11-11-нээс хойш товлоно (видео, текстийг Зөвлөхөөс авна).</div></div><span class="st todo hs"><svg class="si2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 10h18M12 14v4M10 16h4"/></svg>FB-д товлох</span></div><div class="hd"><div class="dt"><b>29</b><span>12-р сар</span></div><div class="hb"><div class="hn">Үндэсний эрх чөлөө, тусгаар тогтнолоо сэргээсний баяр</div><div class="hx">X-д товлогдсон. FB-д 11-30-наас хойш товлоно (видео, текстийг Зөвлөхөөс авна).</div></div><span class="st todo hs"><svg class="si2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 10h18M12 14v4M10 16h4"/></svg>FB-д товлох</span></div><div class="hd"><div class="dt"><b>01</b><span>01-р сар</span></div><div class="hb"><div class="hn">Шинэ жил</div><div class="hx">Дизайн батлагдаагүй. 12-10-нд Зөвлөхөөр батлуулна.</div></div><span class="st wait hs"><svg class="si2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Батлуулах</span></div></div>
@@ -383,13 +408,13 @@ footer{color:var(--mute);font-size:13px}
   <section aria-labelledby="h-rules">
     <div class="sh"><h2 id="h-rules"><span class="hxi"><svg class="hi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></svg></span>Дүрэм</h2><small>Пост гаргахаас өмнө уншина</small></div>
     <div class="rules">
-      <details open><summary><span class="ri"><svg class="hi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></span><span class="rt">Батлах</span><svg class="chv" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><ul>
+      <details><summary><span class="ri"><svg class="hi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></span><span class="rt">Батлах</span><svg class="chv" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><ul>
         <li>Энгийн постыг Бат-Эрдэнэ өөрөө батлаад нийтэлнэ, баримтыг 100% шалгана.</li>
         <li>Boost, шинэ дизайн, албан мэдэгдэл, үнэ, шинэ суваг Зөвлөхөөр батлуулна.</li>
         <li>Эрх олгох, хасахыг зөвхөн Зөвлөх хийнэ.</li>
         <li>Сард нэг удаа 15 минут Зөвлөхөд тайлагнана: юу гарсан, лийд хэд ирсэн.</li>
         <li>Нийтлэгдсэн постыг зөвшөөрөлгүй устгахгүй.</li></ul></details>
-      <details open><summary><span class="ri"><svg class="hi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-6.4A8 8 0 1 1 21 12z"/></svg></span><span class="rt">Messenger-ээр захиалга бүртгэх</span><svg class="chv" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><ul>
+      <details><summary><span class="ri"><svg class="hi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-6.4A8 8 0 1 1 21 12z"/></svg></span><span class="rt">Messenger-ээр захиалга бүртгэх</span><svg class="chv" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><ul>
         <li>Хэзээ: харилцагч марк, м³, хаяг, огноо, помп хэрэгтэй эсэхийг баталсны дараа.</li>
         <li>Чатын баруун талд «Create order» дарна.</li>
         <li>Product name: марк (жишээ нь M300).</li>
@@ -534,8 +559,8 @@ f.onsubmit=async e=>{e.preventDefault();const n=nm.value.trim(),p=pw.value.trim(
   NAME=n;KEY=p;try{localStorage.setItem(NK,n)}catch(x){}const bt=f.querySelector('.ggo'),bl=bt.querySelector('span');bt.disabled=true;bl.textContent='Шалгаж байна…';
   try{await load();try{sessionStorage.setItem(KK,p)}catch(x){}g.hidden=true;document.body.classList.remove('locked')}catch(x){er.textContent=x.message}finally{bt.disabled=false;bl.textContent='Нэвтрэх'}}}
 let SETUP=false;
-async function load(){let j;try{j=await api('GET')}catch(e){if(e.setup){SETUP=true;throw e}throw e}SETUP=false;ST=j.status||{};CR=j.creds||{};DB=true;drawTiles();render()}
-function logout(){KEY='';try{sessionStorage.removeItem(KK)}catch(e){}ST={};CR={};DB=null;drawTiles();render();gate('')}
+async function load(){let j;try{j=await api('GET')}catch(e){if(e.setup){SETUP=true;throw e}throw e}SETUP=false;ST=j.status||{};CR=j.creds||{};RQ=j.reqs||[];DB=true;drawTiles();render();drawReqs()}
+function logout(){KEY='';try{sessionStorage.removeItem(KK)}catch(e){}ST={};CR={};RQ=[];DB=null;drawTiles();render();drawReqs();gate('')}
 const KEYS=['all','bat','mandah','admin','web'];
 let cur='bat';
 function cnt(k){return open.filter(x=>k==='all'||x.r[2].includes(k)).length}
@@ -575,6 +600,18 @@ document.getElementById('tiles').addEventListener('click',async ev=>{const box=e
  if(ev.target.closest('[data-cancel]')){drawTiles();return}});
 document.getElementById('tiles').addEventListener('submit',async ev=>{const f=ev.target.closest('.cform');if(!f)return;ev.preventDefault();const id=f.closest('.cred').dataset.id,b=f.querySelector('[type=submit]');b.disabled=true;b.textContent='Хадгалж байна…';
  try{const j=await api('POST',{action:'cred',id,u:f.u.value,p:f.p.value,n:f.n.value});CR=j.creds||CR;drawTiles();toast('Хадгалагдлаа')}catch(e){b.disabled=false;b.textContent='Хадгалах';if(e.status===401)return gate(e.message);alert(e.message)}});
+let RQ=[];
+const RQC={web:'Вэбсайт',board:'Самбар',social:'Сошиал',other:'Бусад'},RQS={new:['todo','Шинэ'],doing:['doing','Хийгдэж байна'],done:['ok','Хийгдсэн'],no:['no','Хийхгүй']};
+function drawReqs(){const el=document.getElementById('rqs');if(!DB){el.innerHTML='';return}
+ if(!RQ.length){el.innerHTML='<div class="empty">Хүсэлт алга. Дээр бичээд «Илгээх» дарна.</div>';return}
+ el.innerHTML=RQ.map(r=>{const st=RQS[r.s]||RQS.new;const u=/^https?:\/\//i.test(r.url||'')?`<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.url)}</a>`:esc(r.url||'');
+  return `<div class="rq" data-id="${esc(r.id)}"><div class="rh"><span class="st ${st[0]}">${st[1]}</span><span>${RQC[r.cat]||''}</span><span>${esc(r.by||'')}${r.by?' · ':''}${fmt(r.at)}</span>${r.s==='new'?'<button type="button" class="rx" data-del>Устгах</button>':''}</div><div class="rt">${esc(r.t)}</div>${r.url?`<div class="rl">${u}</div>`:''}${r.reply?`<div class="ra"><b>Хариу${r.rat?' · '+fmt(r.rat):''}:</b> ${esc(r.reply)}</div>`:''}</div>`}).join('')}
+document.getElementById('rqf').addEventListener('submit',async ev=>{ev.preventDefault();const f=ev.target,b=f.querySelector('button');const t=f.t.value.trim();if(t.length<3){f.t.focus();return}
+ b.disabled=true;b.textContent='Илгээж байна…';
+ try{const j=await api('POST',{action:'req',t,cat:f.cat.value,url:f.url.value.trim()});RQ=j.reqs||RQ;f.t.value='';f.url.value='';drawReqs();toast('Илгээгдлээ')}catch(e){if(e.status===401)return gate(e.message);alert(e.message)}finally{b.disabled=false;b.textContent='Илгээх'}});
+document.getElementById('rqs').addEventListener('click',async ev=>{const d=ev.target.closest('[data-del]');if(!d)return;const id=d.closest('.rq').dataset.id;if(!confirm('Энэ хүсэлтийг устгах уу?'))return;
+ try{const j=await api('POST',{action:'reqdel',id});RQ=j.reqs||[];drawReqs()}catch(e){if(e.status===401)return gate(e.message);alert(e.message)}});
+document.querySelectorAll('.rules details').forEach(d=>d.addEventListener('toggle',()=>{if(d.open)document.querySelectorAll('.rules details[open]').forEach(o=>{if(o!==d)o.open=false})}));
 let tT;function toast(m){const t=document.getElementById('toast');t.textContent=m;t.hidden=false;clearTimeout(tT);tT=setTimeout(()=>t.hidden=true,1800)}
 load().then(()=>{document.documentElement.classList.remove('pre')}).catch(e=>gate(e.status===401&&!KEY?'':e.setup?'':e.message));
 render();

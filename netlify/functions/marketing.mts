@@ -26,6 +26,12 @@ const keyOk = async (k: string): Promise<boolean | null> => {
 const saveKey = async (k: string) => { const salt = randomBytes(16).toString("hex"); await settingsStore().setJSON("mkt-key", { salt, hash: hashKey(k, salt), at: new Date().toISOString() }) }
 const strong = (k: string) => k.length >= 10
 
+// Requests from the marketing team (add/remove content, website errors, fixes). Read and answered by the
+// Зөвлөх's assistant with BOT_KEY (env, never in git) via ?reqs=1 and action "reqset".
+const RQ_CAT = ["web", "board", "social", "other"], RQ_ST = ["new", "doing", "done", "no"]
+const getReqs = async (): Promise<any[]> => { const v: any = await settingsStore().get("mkt-req", { type: "json" }); return Array.isArray(v) ? v : [] }
+const botOk = (req: Request) => { const b = Netlify.env.get("BOT_KEY"), h = (req.headers.get("x-bot-key") || "").trim(); return !!b && !!h && same(h, b) }
+
 export default async (req: Request, ctx: Context) => {
   const configured = await keyOk("probe")
   if (configured === null) {
@@ -45,6 +51,21 @@ export default async (req: Request, ctx: Context) => {
     for (const [id, v] of Object.entries<any>(st)) if (v?.s) out[id] = { s: String(v.s), at: String(v.at || "") }
     return new Response(JSON.stringify({ status: out }), { headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "access-control-allow-origin": "*" } })
   }
+  // Assistant access to requests only (no logins, no board password)
+  if (req.headers.get("x-bot-key")) {
+    if (!botOk(req)) return json({ error: "Түлхүүр буруу." }, 401)
+    if (req.method === "GET") return json({ reqs: await getReqs() })
+    let b: any
+    try { b = await req.json() } catch { return json({ error: "Хүсэлт буруу байна." }, 400) }
+    if (b?.action !== "reqset") return json({ error: "Үйлдэл буруу." }, 400)
+    const all = await getReqs(), r = all.find(x => x.id === String(b.id || ""))
+    if (!r) return json({ error: "Хүсэлт олдсонгүй." }, 404)
+    if (b.s !== undefined) { if (!RQ_ST.includes(String(b.s))) return json({ error: "Төлөв буруу." }, 400); r.s = String(b.s) }
+    if (b.reply !== undefined) r.reply = clip(b.reply, 1000).trim()
+    r.rat = new Date().toISOString()
+    await settingsStore().setJSON("mkt-req", all)
+    return json({ ok: true, req: r })
+  }
   const k = (req.headers.get("x-mkt-key") || "").trim()
   // Opening the page sends no key: answer "log in" without counting it as a wrong try
   if (!k) return json({ error: "Нэвтэрнэ үү." }, 401)
@@ -58,8 +79,8 @@ export default async (req: Request, ctx: Context) => {
   const who = clip(decodeURIComponent(req.headers.get("x-mkt-name") || ""), 60).trim()
 
   if (req.method === "GET") {
-    const [creds, status] = await Promise.all([getObj("mkt-creds"), getObj("mkt-status")])
-    return json({ creds, status })
+    const [creds, status, reqs] = await Promise.all([getObj("mkt-creds"), getObj("mkt-status"), getReqs()])
+    return json({ creds, status, reqs })
   }
   let b: any
   try { b = await req.json() } catch { return json({ error: "Хүсэлт буруу байна." }, 400) }
@@ -85,6 +106,24 @@ export default async (req: Request, ctx: Context) => {
     all[id] = { s, at: new Date().toISOString(), by: who }
     await settingsStore().setJSON("mkt-status", all)
     return json({ ok: true, status: all })
+  }
+  if (b?.action === "req") {
+    const t = clip(b.t, 2000).trim(), cat = String(b.cat || "other")
+    if (t.length < 3) return json({ error: "Хүсэлтээ бичнэ үү." }, 400)
+    if (!RQ_CAT.includes(cat)) return json({ error: "Төрөл буруу." }, 400)
+    const all = await getReqs()
+    all.unshift({ id: "r" + Date.now().toString(36) + randomBytes(2).toString("hex"), cat, t, url: clip(b.url, 300).trim(), by: who, at: new Date().toISOString(), s: "new", reply: "" })
+    const keep = all.filter(x => x.s !== "done" && x.s !== "no").concat(all.filter(x => x.s === "done" || x.s === "no").slice(0, 100))
+    await settingsStore().setJSON("mkt-req", keep)
+    return json({ ok: true, reqs: keep })
+  }
+  if (b?.action === "reqdel") {
+    const all = await getReqs(), i = all.findIndex(x => x.id === String(b.id || ""))
+    if (i < 0) return json({ error: "Хүсэлт олдсонгүй." }, 404)
+    if (all[i].s !== "new") return json({ error: "Эхэлсэн хүсэлтийг устгах боломжгүй." }, 400)
+    all.splice(i, 1)
+    await settingsStore().setJSON("mkt-req", all)
+    return json({ ok: true, reqs: all })
   }
   return json({ error: "Үйлдэл буруу." }, 400)
 }
