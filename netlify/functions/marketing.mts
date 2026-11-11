@@ -6,7 +6,7 @@ import { createHash, timingSafeEqual, scryptSync, randomBytes } from "node:crypt
 // Access only with MARKETING_KEY (env). Logins live in Netlify Blobs, never in the page or git.
 const sha = (t: string) => createHash("sha256").update(t).digest()
 const same = (a: string, b: string) => timingSafeEqual(sha(a), sha(b))
-const CH_IDS = ["fb", "ms", "fbhr", "talent", "ig", "x", "yt", "gm1", "gm2", "barilga", "web", "zangia", "r360"]
+const CH_IDS = ["fb", "ms", "fbhr", "talent", "ig", "x", "yt", "gm1", "gm2", "barilga", "web", "zangia", "r360", "barter"]
 const ST = ["todo", "doing", "ok"]
 const LOCK_N = 8, LOCK_MS = 15 * 60 * 1000
 
