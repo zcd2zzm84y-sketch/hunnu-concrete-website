@@ -667,3 +667,9 @@ footer .inner a:hover{color:var(--fg);text-decoration:underline;text-underline-o
 .hr-todo-g small{color:var(--muted);font-size:13px}
 .hr-todo.ok{border-color:var(--good);background:var(--good-soft)}.hr-todo.ok h3{color:var(--good);margin:0}
 @media print{.hr-todo{display:none}}
+
+.lbx{position:fixed;inset:0;z-index:1000;background:rgba(20,20,20,.88);display:flex;align-items:center;justify-content:center;padding:56px 16px 16px}
+.lbx img{max-width:100%;max-height:100%;object-fit:contain;border-radius:6px;background:#fff;box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.lbx-x{position:absolute;top:12px;right:12px;display:inline-flex;align-items:center;gap:6px;background:#333333;color:#fff;border:1px solid #6f7268;border-radius:999px;padding:8px 14px;font:inherit;cursor:pointer}
+.lbx-x:hover,.lbx-x:focus-visible{border-color:#f2c300;outline:none}
+.lbx-x svg{width:18px;height:18px}

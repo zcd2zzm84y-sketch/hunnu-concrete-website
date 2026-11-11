@@ -2,6 +2,7 @@ import {DEPTS,FAMILY,COMP,ANCHOR,PULSE,MIN_GROUP,PROX,proximity,HEADCOUNT,APP_N_
 import {interviewGuide,stageGuide,REJECT,assess} from "./interview.mjs";
 import {analyze,matchRoster} from "./analysis.mjs";
 import {$,esc,avg,fmtDate,mmss,lvl,initials,setBand,gauge,radarMulti,ic} from "./ui.mjs";
+function lightbox(src){document.querySelector(".lbx")?.remove();const w=document.createElement("div");w.className="lbx";w.setAttribute("role","dialog");w.setAttribute("aria-modal","true");w.setAttribute("aria-label","Зураг");w.innerHTML=`<button type="button" class="lbx-x" aria-label="Хаах">${ic("x")}Хаах</button><img alt="Хавсаргасан зураг">`;w.querySelector("img").src=src;const prev=document.activeElement,close=()=>{w.remove();document.removeEventListener("keydown",key);prev?.focus?.()},key=e=>{if(e.key==="Escape")close()};w.onclick=e=>{if(e.target===w||e.target.closest(".lbx-x"))close()};document.addEventListener("keydown",key);document.body.appendChild(w);w.querySelector(".lbx-x").focus()}
 
 const KEY="hunnu-admin-key";
 let key=(()=>{try{return sessionStorage.getItem(KEY)||""}catch(e){return""}})();
@@ -646,7 +647,7 @@ function renderReqs(){
   f.onsubmit=async ev=>{ev.preventDefault();const b=f.querySelector("[type=submit]"),t=f.t.value.trim();if(t.length<3&&!RQI.length){f.t.focus();return}
     b.disabled=true;try{const j=await api("POST",{action:"req",t,cat:f.cat.value,url:f.url.value.trim(),imgs:RQI});reqs=j.reqs||reqs;RQI=[];render()}catch(e){if(e.auth)return login(e.message);alert(e.message);b.disabled=false}};
   document.querySelectorAll(".rqim[data-q]").forEach(async b=>{try{b.innerHTML=`<img src="${await imgData(b.dataset.q)}" alt="Хавсаргасан зураг">`}catch(e){b.textContent="—"}});
-  $("#rqs").onclick=async e=>{const im=e.target.closest(".rqim");if(im){try{const bl=await (await fetch(await imgData(im.dataset.q))).blob();window.open(URL.createObjectURL(bl),"_blank")}catch(x){alert(x.message)}return}
+  $("#rqs").onclick=async e=>{const im=e.target.closest(".rqim");if(im){try{lightbox(await imgData(im.dataset.q))}catch(x){alert(x.message)}return}
     const d=e.target.closest("[data-rqdel]");if(!d||!confirm("Энэ хүсэлтийг устгах уу?"))return;
     try{const j=await api("POST",{action:"reqdel",id:d.closest(".rq").dataset.id});reqs=j.reqs||[];render()}catch(x){if(x.auth)return login(x.message);alert(x.message)}};
 }
