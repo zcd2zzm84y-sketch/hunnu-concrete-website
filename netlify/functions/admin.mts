@@ -19,7 +19,7 @@ const roleOf = async (req: Request): Promise<{ role: string, rater?: any } | nul
   return rater ? { role: "rater", rater } : null
 }
 
-const HRQ = requestList("hr", ["web", "board", "social", "other"])
+const HRQ = requestList("hr", ["sum", "staff", "pulse", "app", "contacts", "web", "board", "social", "other"])
 
 async function readAll(store: ReturnType<typeof staffStore>) {
   const { blobs } = await store.list()

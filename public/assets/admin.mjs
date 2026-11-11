@@ -596,7 +596,7 @@ function renderContacts(){
 }
 
 // «Хүсэлт, засвар»: HR writes what to add or fix (with up to 3 screenshots); the Зөвлөх's assistant answers here
-const RQC={web:"Вэбсайт",board:"HR самбар",social:"Сошиал суваг",other:"Бусад"},RQS={new:["idle","Шинэ"],doing:["warn","Хийгдэж байна"],done:["good","Хийгдсэн"],no:["bad","Хийхгүй"]},IMC={};
+const RQC={sum:"Нэгдсэн анализ",staff:"Ажилтны паспорт",pulse:"Сэтгэл ханамж",app:"Горилогчид",contacts:"Холбоо барих",web:"Судалгаа, анкетын хуудас",other:"Бусад"},RQC0={board:"HR самбар",social:"Сошиал суваг"},RQS={new:["idle","Шинэ"],doing:["warn","Хийгдэж байна"],done:["good","Хийгдсэн"],no:["bad","Хийхгүй"]},IMC={};
 const fmtAt=t=>{const d=new Date(t);return isNaN(d)?"":fmtDay(t)+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")};
 const shrink=f=>new Promise((ok,no)=>{const u=URL.createObjectURL(f),im=new Image();im.onload=()=>{URL.revokeObjectURL(u);const w=im.naturalWidth,h=im.naturalHeight;
   for(const [mx,q] of [[1800,.85],[1400,.8],[1100,.72]]){const k=Math.min(1,mx/Math.max(w,h)),c=document.createElement("canvas");c.width=Math.round(w*k);c.height=Math.round(h*k);const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);const d=c.toDataURL("image/jpeg",q);if(d.length<1400000)return ok(d)}
@@ -605,11 +605,11 @@ async function imgData(q){if(IMC[q])return IMC[q];const r=await fetch("api/admin
 function renderReqs(){
   setBand("Хүсэлт,","засвар.","Юу нэмэх, хасах, засахаа бичнэ. Ажлын өдөр 2 цаг тутам шалгаж хариулна.");
   const list=reqs.map(r=>{const st=RQS[r.s]||RQS.new,u=/^https?:\/\//i.test(r.url||"")?`<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.url)}</a>`:esc(r.url||"");
-    return `<div class="rq" data-id="${esc(r.id)}"><div class="rh"><span class="pill ${st[0]}">${st[1]}</span><span>${RQC[r.cat]||""}</span><span>${esc(r.by||"")}${r.by?" · ":""}${fmtAt(r.at)}</span>${r.s==="new"?`<button type="button" class="rx" data-rqdel>${ic("trash")}Устгах</button>`:""}</div><div class="rt">${esc(r.t)}</div>${r.url?`<div class="rl">${u}</div>`:""}${r.imgs?`<div class="rqims">${Array.from({length:r.imgs},(_,n)=>`<button type="button" class="rqim" data-q="${esc(r.id)}-${n}" aria-label="Зураг ${n+1}"></button>`).join("")}</div>`:""}${r.reply?`<div class="ra"><b>Хариу${r.rat?" · "+fmtAt(r.rat):""}:</b> ${esc(r.reply)}</div>`:""}</div>`}).join("");
+    return `<div class="rq" data-id="${esc(r.id)}"><div class="rh"><span class="pill ${st[0]}">${st[1]}</span><span>${RQC[r.cat]||RQC0[r.cat]||""}</span><span>${esc(r.by||"")}${r.by?" · ":""}${fmtAt(r.at)}</span>${r.s==="new"?`<button type="button" class="rx" data-rqdel>${ic("trash")}Устгах</button>`:""}</div><div class="rt">${esc(r.t)}</div>${r.url?`<div class="rl">${u}</div>`:""}${r.imgs?`<div class="rqims">${Array.from({length:r.imgs},(_,n)=>`<button type="button" class="rqim" data-q="${esc(r.id)}-${n}" aria-label="Зураг ${n+1}"></button>`).join("")}</div>`:""}${r.reply?`<div class="ra"><b>Хариу${r.rat?" · "+fmtAt(r.rat):""}:</b> ${esc(r.reply)}</div>`:""}</div>`}).join("");
   $("#view").innerHTML=`<div class="stack" style="gap:20px">${tabs("req")}
     <form class="rqf sheet" id="rqf" novalidate>
       <textarea name="t" maxlength="2000" placeholder="Юу нэмэх, хасах, засах вэ? Жишээ: анкетын асуулт засах, самбарт шинэ хэсэг нэмэх, ажлын зар..." aria-label="Хүсэлт"></textarea>
-      <div class="rqr"><select name="cat" aria-label="Төрөл">${Object.entries(RQC).map(([k,v])=>`<option value="${k}"${k==="board"?" selected":""}>${v}</option>`).join("")}</select><input name="url" type="url" maxlength="300" placeholder="Холбоос (байвал)" aria-label="Холбоос"><button type="button" id="rqa">${ic("image")}Зураг</button><button type="submit" class="primary">${ic("send")}Илгээх</button></div>
+      <div class="rqr"><select name="cat" aria-label="Төрөл">${Object.entries(RQC).map(([k,v])=>`<option value="${k}">${v}</option>`).join("")}</select><input name="url" type="url" maxlength="300" placeholder="Холбоос (байвал)" aria-label="Холбоос"><button type="button" id="rqa">${ic("image")}Зураг</button><button type="submit" class="primary">${ic("send")}Илгээх</button></div>
       <input type="file" id="rqfile" accept="image/*" multiple hidden>
       <div class="rqp" id="rqp"></div>
       <p class="rqhint">Дэлгэцийн зургаа Ctrl+V (Mac: Cmd+V) дарж шууд буулгаж болно. 3 хүртэл зураг.</p>
