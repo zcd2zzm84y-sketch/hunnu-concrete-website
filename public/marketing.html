@@ -141,7 +141,7 @@ h2{display:flex;align-items:center;gap:10px}
 .hs{display:inline-flex;align-items:center;gap:5px}
 .si2{width:13px;height:13px}
 @media (max-width:640px){.facts{grid-template-columns:1fr 1fr;gap:8px}.facts div{padding:12px}}
-.tbr{display:flex;gap:8px;align-items:center}
+.tbr{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
 .lo{font:inherit;font-size:13px;font-weight:600;height:38px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
 body.locked .wrap{display:none}
 .gate{min-height:100vh;display:flex;flex-direction:column;background:var(--bg)}
@@ -324,7 +324,7 @@ footer{color:var(--mute);font-size:13px}
 <div id="toast" class="tst" hidden role="status"></div>
 <div class="wrap">
   <header class="top">
-    <div class="tbar"><div class="brand">Хүннү Конкрет · Маркетинг</div><span class="tbr"><button type="button" class="lo" id="lo">Гарах</button><button type="button" class="theme-tg" aria-label="Горим солих"></button></span></div>
+    <div class="tbar"><div class="brand">Хүннү Конкрет · Маркетинг</div><span class="tbr"><button type="button" class="lo" id="rk">Нууц үг солих</button><button type="button" class="lo" id="lo">Гарах</button><button type="button" class="theme-tg" aria-label="Горим солих"></button></span></div>
     <h1>Сошиал сувгууд</h1>
     <p>Компанийн бүх сошиал, вэб сувгийг Маркетингийн алба нэг газраас хариуцна. Суваг бүрийн нэвтрэх нэр, нууц үг картан дээрээ байна.</p>
   </header>
@@ -430,6 +430,8 @@ const paint=()=>{const d=dark();bs.forEach(b=>{b.innerHTML=d?S:M;b.setAttribute(
 bs.forEach(b=>b.addEventListener('click',()=>{const n=dark()?'light':'dark';r.dataset.theme=n;try{localStorage.setItem('theme',n)}catch(e){}paint()}));
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',paint);paint()})();
 document.getElementById('lo').addEventListener('click',()=>logout());
+document.getElementById('rk').addEventListener('click',async()=>{const n=prompt('Самбарын шинэ нууц үг (10+ тэмдэгт). Бүх хэрэглэгч үүгээр нэвтэрнэ:');if(n===null)return;const k=n.trim();if(k.length<10)return alert('Нууц үг дор хаяж 10 тэмдэгт байна.');
+ try{await api('POST',{action:'rekey',key:k});KEY=k;try{sessionStorage.setItem(KK,k)}catch(e){}toast('Нууц үг солигдлоо')}catch(e){if(e.status===401)return gate(e.message);alert(e.message)}});
 
 const P={
  bat:{n:'Бат-Эрдэнэ',full:'Б.Бат-Эрдэнэ',role:'Маркетингийн менежер · 9309 0906',
