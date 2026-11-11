@@ -16,6 +16,7 @@ const IC={
   left:'<path d="M19 12H5M12 19l-7-7 7-7"/>',
   right:'<path d="M5 12h14M12 5l7 7-7 7"/>',
   play:'<path d="M7 4.5v15l12-7.5z"/>',
+  image:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/>',
   send:'<path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/>',
   flag:'<path d="M4 22V4M4 4h12l-2 4 2 4H4"/>',
   check:'<path d="M20 6 9 17l-5-5"/>',

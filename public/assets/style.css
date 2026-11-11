@@ -629,3 +629,24 @@ footer .inner a:hover{color:var(--fg);text-decoration:underline;text-underline-o
 .c-ppl summary{cursor:pointer;font-weight:600;margin-bottom:8px}
 .c-sig{display:flex;flex-direction:column;gap:3px;border-left:3px solid #f2c200;padding:2px 0 2px 14px;margin:6px 0 10px;font-size:14px}
 .c-steps{margin:4px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:1.5}
+/* «Хүсэлт, засвар» tab */
+.rqf{display:grid;gap:10px}
+.rqf textarea,.rqf input,.rqf select{font:inherit;font-size:14px;width:100%;padding:10px 12px;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+.rqf textarea{min-height:96px;resize:vertical}
+.rqr{display:grid;grid-template-columns:minmax(0,180px) minmax(0,1fr) auto auto;gap:8px}
+.rqp{display:flex;flex-wrap:wrap;gap:8px}.rqp:empty{display:none}
+.rqp span,.rqim{position:relative;width:88px;height:66px;overflow:hidden;border:1px solid var(--line);background:var(--sunk);flex:none}
+.rqp img,.rqim img{width:100%;height:100%;object-fit:cover;display:block}
+.rqp button{position:absolute;top:3px;right:3px;width:22px;height:22px;min-height:0;border-radius:50%;border:0;background:rgba(0,0,0,.65);color:#fff;font-size:14px;line-height:1;cursor:pointer;padding:0}
+.rqhint{font-size:12px;color:var(--muted);margin:-4px 0 0}
+.rqf.drag{outline:2px dashed var(--muted);outline-offset:-6px}
+.rqims{display:flex;flex-wrap:wrap;gap:8px}.rqim{cursor:zoom-in;padding:0;min-height:0}
+.rqs{padding:0!important}
+.rq{padding:12px 16px;border-top:1px solid var(--line);display:grid;gap:6px}.rq:first-child{border-top:0}
+.rq .rh{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
+.rq .rt{white-space:pre-wrap;overflow-wrap:anywhere}
+.rq .rl{font-size:13px;overflow-wrap:anywhere;color:var(--muted)}
+.rq .ra{font-size:13.5px;background:var(--sunk);padding:8px 10px;white-space:pre-wrap;overflow-wrap:anywhere}
+.rq .rx{margin-left:auto;font-size:12px;padding:4px 8px;min-height:0}
+.rqs>p{padding:16px}
+@media (max-width:640px){.rqr{grid-template-columns:1fr 1fr}.rqr select,.rqr input{grid-column:1/-1}}

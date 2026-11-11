@@ -18,6 +18,8 @@ const roleOf = async (req: Request): Promise<{ role: string, rater?: any } | nul
   return rater ? { role: "rater", rater } : null
 }
 
+const HRQ = requestList("hr", ["web", "board", "social", "other"])
+
 async function readAll(store: ReturnType<typeof staffStore>) {
   const { blobs } = await store.list()
   const rows = await Promise.all(blobs.map(b => store.get(b.key, { type: "json" })))
@@ -39,6 +41,8 @@ const scores = (src: any) => {
 }
 
 export default async (req: Request) => {
+  // Assistant access to the «Хүсэлт, засвар» list only
+  if (req.headers.get("x-bot-key")) return botOk(req) ? HRQ.bot(req) : json({ error: "Түлхүүр буруу." }, 401)
   const who = await roleOf(req)
   if (!who) return json({ error: "Нууц үг буруу байна." }, 401)
   const role = who.role
@@ -58,8 +62,9 @@ export default async (req: Request) => {
     await staffStore().setJSON(id, next)
     return json({ ok: true, row: { id, name: cur.name, position: cur.position, dept: cur.dept, mgr: next.mgr } })
   }
+  if (req.method === "GET" && new URL(req.url).searchParams.get("img")) return HRQ.img(new URL(req.url).searchParams.get("img") || "")
   if (req.method === "GET") {
-    const [rows, pulse, apps, openings, roster, sims, people] = await Promise.all([readAll(staffStore()), readAll(pulseStore()), readAll(applicantStore()), getOpenings(), settingsStore().get("roster", { type: "json" }), getSims(), settingsStore().get("people", { type: "json" })])
+    const [rows, pulse, apps, openings, roster, sims, people, reqs] = await Promise.all([readAll(staffStore()), readAll(pulseStore()), readAll(applicantStore()), getOpenings(), settingsStore().get("roster", { type: "json" }), getSims(), settingsStore().get("people", { type: "json" }), HRQ.all()])
     const newest = (a: any, b: any) => b.submittedAt - a.submittedAt
     rows.sort(newest); apps.sort(newest)
     apps.forEach((a: any) => { if (a.exam) a.exam = { issuedAt: a.exam.issuedAt, startedAt: a.exam.startedAt } })
@@ -67,11 +72,13 @@ export default async (req: Request) => {
     const ids = new Set([...rows, ...apps].flatMap((r: any) => r.questions || []))
     const bank = Object.fromEntries([...ids].filter(id => KMAP[id]).map(id => [id, KMAP[id]]))
     const raters = role === "admin" ? (await getRaters()).map(r => ({ id: r.id, label: r.label, depts: r.depts, code: r.code || "", createdAt: r.createdAt })) : []
-    return json({ role, staff: rows, pulse: summarizePulse(pulse), applicants: apps, bank, openings, roster: Array.isArray(roster) ? roster : [], raters, sims, people: Array.isArray(people) ? people : [] })
+    return json({ role, staff: rows, pulse: summarizePulse(pulse), applicants: apps, bank, openings, roster: Array.isArray(roster) ? roster : [], raters, sims, people: Array.isArray(people) ? people : [], reqs })
   }
   let body: any
   try { body = await req.json() } catch { return json({ error: "Хүсэлт буруу байна." }, 400) }
   const mgrOnly = body?.action === "update" && body?.kind !== "app" && body?.patch && typeof body.patch === "object" && Object.keys(body.patch).every(k => k === "mgr")
+  if (role === "admin" && body?.action === "req") return HRQ.add(body, "HR")
+  if (role === "admin" && body?.action === "reqdel") return HRQ.del(body)
   if (role === "manager" && !mgrOnly) return json({ error: "Удирдлагын эрхээр зөвхөн ур чадварын үнэлгээ оруулна." }, 403)
   if (body?.action === "openings") {
     const list = [...new Set((Array.isArray(body.openings) ? body.openings : []).map(String).filter(isPosition))]

@@ -5,7 +5,7 @@ import {$,esc,avg,fmtDate,mmss,lvl,initials,setBand,gauge,radarMulti,ic} from ".
 
 const KEY="hunnu-admin-key";
 let key=(()=>{try{return sessionStorage.getItem(KEY)||""}catch(e){return""}})();
-let staff=[],pulse=null,apps=[],bank={},openings=[],roster=[],raters=[],sims={},people=[],peopleEdit=false,raterLabel="",newCode=null,rosterEdit=false,editOpen=false,selS=null,selA=null,appFilter="",deptFilter="",msg="",view=["sum","staff","pulse","app","contacts"].includes(location.hash.slice(1))?location.hash.slice(1):"sum";
+let staff=[],pulse=null,apps=[],bank={},openings=[],roster=[],raters=[],sims={},people=[],reqs=[],RQI=[],peopleEdit=false,raterLabel="",newCode=null,rosterEdit=false,editOpen=false,selS=null,selA=null,appFilter="",deptFilter="",msg="",view=["sum","staff","pulse","app","contacts","req"].includes(location.hash.slice(1))?location.hash.slice(1):"sum";
 
 async function api(method,body){
   const res=await fetch("api/admin",{method,headers:{"x-admin-key":key,"content-type":"application/json"},body:body?JSON.stringify(body):undefined});
@@ -16,7 +16,7 @@ async function api(method,body){
 }
 let role="admin";
 async function load(){
-  try{const j=await api("GET");role=j.role||"admin";document.body.classList.toggle("role-manager",role==="manager");staff=j.staff;pulse=j.pulse;apps=j.applicants||[];bank=j.bank||{};openings=j.openings||[];roster=j.roster||[];raters=j.raters||[];sims=j.sims||{};people=j.people||[];raterLabel=j.label||"";applyNames();msg="";if(!selS&&staff.length)selS=staff[0].id;if(!selA&&apps.length)selA=apps[0].id;render()}
+  try{const j=await api("GET");role=j.role||"admin";document.body.classList.toggle("role-manager",role==="manager");staff=j.staff;pulse=j.pulse;apps=j.applicants||[];bank=j.bank||{};openings=j.openings||[];roster=j.roster||[];reqs=j.reqs||[];raters=j.raters||[];sims=j.sims||{};people=j.people||[];raterLabel=j.label||"";applyNames();msg="";if(!selS&&staff.length)selS=staff[0].id;if(!selA&&apps.length)selA=apps[0].id;render()}
   catch(e){if(e.auth)return login(e.message);msg="Ачаалж чадсангүй: "+e.message;render()}
 }
 const PRINT=`<button type="button" id="print" class="pp-print" title="Хэвлэх" aria-label="Хэвлэх">${ic("printer")}</button>`;
@@ -50,7 +50,7 @@ function login(err){
   if(matchMedia("(hover:hover)").matches)$("#pw").focus();
 }
 function tabs(cur){
-  return `<div class="row spread"><nav class="tabs" aria-label="Үр дүнгийн хэсэг">${[["sum","Нэгдсэн анализ","report"],["staff","Ажилтны паспорт","users"],["pulse","Сэтгэл ханамж","heart"],["app","Горилогчид"+(apps.some(a=>a.status==="new")?" ("+apps.filter(a=>a.status==="new").length+")":""),"userPlus"],["contacts","Холбоо барих","phone"]].map(([v,t,i])=>`<button type="button" data-view="${v}" ${v===cur?'aria-current="page"':""}>${ic(i)}${t}</button>`).join("")}</nav><div class="row">${cur==="staff"||cur==="app"?`<button type="button" id="xls">${ic("download")}Excel татах</button>`:""}<button type="button" id="reload">${ic("refresh")}Шинэчлэх</button><button type="button" id="logout">${ic("logout")}Гарах</button></div></div>`;
+  return `<div class="row spread"><nav class="tabs" aria-label="Үр дүнгийн хэсэг">${[["sum","Нэгдсэн анализ","report"],["staff","Ажилтны паспорт","users"],["pulse","Сэтгэл ханамж","heart"],["app","Горилогчид"+(apps.some(a=>a.status==="new")?" ("+apps.filter(a=>a.status==="new").length+")":""),"userPlus"],["contacts","Холбоо барих","phone"],...(role==="admin"?[["req","Хүсэлт, засвар"+(reqs.some(r=>r.s==="new"||r.s==="doing")?" ("+reqs.filter(r=>r.s==="new"||r.s==="doing").length+")":""),"chat"]]:[])].map(([v,t,i])=>`<button type="button" data-view="${v}" ${v===cur?'aria-current="page"':""}>${ic(i)}${t}</button>`).join("")}</nav><div class="row">${cur==="staff"||cur==="app"?`<button type="button" id="xls">${ic("download")}Excel татах</button>`:""}<button type="button" id="reload">${ic("refresh")}Шинэчлэх</button><button type="button" id="logout">${ic("logout")}Гарах</button></div></div>`;
 }
 function bindTabs(){
   document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>{view=b.dataset.view;history.replaceState(null,"","#"+view);render()});
@@ -59,7 +59,7 @@ function bindTabs(){
 }
 function render(){
   if(role==="rater"){renderRater();return}
-  if(view==="sum")renderSummary();else if(view==="pulse")renderPulse();else if(view==="app")renderApps();else if(view==="contacts")renderContacts();else renderStaffHr();
+  if(view==="sum")renderSummary();else if(view==="pulse")renderPulse();else if(view==="app")renderApps();else if(view==="contacts")renderContacts();else if(view==="req"&&role==="admin")renderReqs();else renderStaffHr();
   // Leaders: everything is visible, but only the skill-rating buttons save (the server enforces the same)
   if(role==="manager"){document.querySelectorAll("#view textarea,#view input[type=text]").forEach(e=>e.readOnly=true);const t=document.querySelector("nav.tabs");if(t&&!$("#roleNote"))t.closest(".row").insertAdjacentHTML("afterend",'<div class="note" id="roleNote">Удирдлагын эрх: үр дүнг харах, ажилтны ур чадварыг 1–5 үнэлэх. Бусад мэдээллийг өөрчлөхгүй.</div>')}
   bindTabs();
@@ -593,4 +593,41 @@ function renderContacts(){
   const sv=$("#pplSave");if(sv)sv.onclick=async()=>{
     const list=$("#pplTxt").value.split("\n").map(l=>l.split("|").map(x=>x.trim())).filter(a=>a.some(Boolean)).map(a=>a.length>=3?{dept:a[0],name:a[1],position:a[2]}:{dept:"",name:a[0],position:a[1]||""});
     try{const j=await api("POST",{action:"people",people:list});people=j.people;peopleEdit=false;render()}catch(err){if(err.auth)return login(err.message);$("#pplMsg").textContent="Хадгалж чадсангүй: "+err.message}};
+}
+
+// «Хүсэлт, засвар»: HR writes what to add or fix (with up to 3 screenshots); the Зөвлөх's assistant answers here
+const RQC={web:"Вэбсайт",board:"HR самбар",social:"Сошиал суваг",other:"Бусад"},RQS={new:["idle","Шинэ"],doing:["warn","Хийгдэж байна"],done:["good","Хийгдсэн"],no:["bad","Хийхгүй"]},IMC={};
+const fmtAt=t=>{const d=new Date(t);return isNaN(d)?"":fmtDay(t)+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")};
+const shrink=f=>new Promise((ok,no)=>{const u=URL.createObjectURL(f),im=new Image();im.onload=()=>{URL.revokeObjectURL(u);const w=im.naturalWidth,h=im.naturalHeight;
+  for(const [mx,q] of [[1800,.85],[1400,.8],[1100,.72]]){const k=Math.min(1,mx/Math.max(w,h)),c=document.createElement("canvas");c.width=Math.round(w*k);c.height=Math.round(h*k);const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);const d=c.toDataURL("image/jpeg",q);if(d.length<1400000)return ok(d)}
+  no(new Error("Зураг хэт том байна."))};im.onerror=()=>{URL.revokeObjectURL(u);no(new Error("Зургийг уншиж чадсангүй."))};im.src=u});
+async function imgData(q){if(IMC[q])return IMC[q];const r=await fetch("api/admin?img="+encodeURIComponent(q),{headers:{"x-admin-key":key}});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||"Алдаа");return IMC[q]=j.d}
+function renderReqs(){
+  setBand("Хүсэлт,","засвар.","Юу нэмэх, хасах, засахаа бичнэ. Ажлын өдөр 2 цаг тутам шалгаж хариулна.");
+  const list=reqs.map(r=>{const st=RQS[r.s]||RQS.new,u=/^https?:\/\//i.test(r.url||"")?`<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.url)}</a>`:esc(r.url||"");
+    return `<div class="rq" data-id="${esc(r.id)}"><div class="rh"><span class="pill ${st[0]}">${st[1]}</span><span>${RQC[r.cat]||""}</span><span>${esc(r.by||"")}${r.by?" · ":""}${fmtAt(r.at)}</span>${r.s==="new"?`<button type="button" class="rx" data-rqdel>${ic("trash")}Устгах</button>`:""}</div><div class="rt">${esc(r.t)}</div>${r.url?`<div class="rl">${u}</div>`:""}${r.imgs?`<div class="rqims">${Array.from({length:r.imgs},(_,n)=>`<button type="button" class="rqim" data-q="${esc(r.id)}-${n}" aria-label="Зураг ${n+1}"></button>`).join("")}</div>`:""}${r.reply?`<div class="ra"><b>Хариу${r.rat?" · "+fmtAt(r.rat):""}:</b> ${esc(r.reply)}</div>`:""}</div>`}).join("");
+  $("#view").innerHTML=`<div class="stack" style="gap:20px">${tabs("req")}
+    <form class="rqf sheet" id="rqf" novalidate>
+      <textarea name="t" maxlength="2000" placeholder="Юу нэмэх, хасах, засах вэ? Жишээ: анкетын асуулт засах, самбарт шинэ хэсэг нэмэх, ажлын зар..." aria-label="Хүсэлт"></textarea>
+      <div class="rqr"><select name="cat" aria-label="Төрөл">${Object.entries(RQC).map(([k,v])=>`<option value="${k}"${k==="board"?" selected":""}>${v}</option>`).join("")}</select><input name="url" type="url" maxlength="300" placeholder="Холбоос (байвал)" aria-label="Холбоос"><button type="button" id="rqa">${ic("image")}Зураг</button><button type="submit" class="primary">${ic("send")}Илгээх</button></div>
+      <input type="file" id="rqfile" accept="image/*" multiple hidden>
+      <div class="rqp" id="rqp"></div>
+      <p class="rqhint">Дэлгэцийн зургаа Ctrl+V (Mac: Cmd+V) дарж шууд буулгаж болно. 3 хүртэл зураг.</p>
+    </form>
+    <div class="rqs sheet" id="rqs">${list||'<p class="muted" style="margin:0">Хүсэлт алга. Дээр бичээд «Илгээх» дарна.</p>'}</div></div>`;
+  bindTabs();
+  const drawPick=()=>{$("#rqp").innerHTML=RQI.map((d,i)=>`<span><img src="${d}" alt=""><button type="button" data-rm="${i}" aria-label="Хасах">×</button></span>`).join("")};drawPick();
+  const addFiles=async fs=>{for(const f of fs){if(!/^image\//.test(f.type))continue;if(RQI.length>=3){alert("3 хүртэл зураг");break}try{RQI.push(await shrink(f));drawPick()}catch(e){alert(e.message)}}};
+  $("#rqa").onclick=()=>$("#rqfile").click();
+  $("#rqfile").onchange=e=>{addFiles([...e.target.files]);e.target.value=""};
+  $("#rqp").onclick=e=>{const b=e.target.closest("[data-rm]");if(b){RQI.splice(+b.dataset.rm,1);drawPick()}};
+  const f=$("#rqf");
+  f.onpaste=e=>{const fs=[...(e.clipboardData?.files||[])].filter(x=>/^image\//.test(x.type));if(fs.length){e.preventDefault();addFiles(fs)}};
+  f.ondragover=e=>{e.preventDefault();f.classList.add("drag")};f.ondragleave=()=>f.classList.remove("drag");f.ondrop=e=>{e.preventDefault();f.classList.remove("drag");addFiles([...(e.dataTransfer?.files||[])])};
+  f.onsubmit=async ev=>{ev.preventDefault();const b=f.querySelector("[type=submit]"),t=f.t.value.trim();if(t.length<3&&!RQI.length){f.t.focus();return}
+    b.disabled=true;try{const j=await api("POST",{action:"req",t,cat:f.cat.value,url:f.url.value.trim(),imgs:RQI});reqs=j.reqs||reqs;RQI=[];render()}catch(e){if(e.auth)return login(e.message);alert(e.message);b.disabled=false}};
+  document.querySelectorAll(".rqim[data-q]").forEach(async b=>{try{b.innerHTML=`<img src="${await imgData(b.dataset.q)}" alt="Хавсаргасан зураг">`}catch(e){b.textContent="—"}});
+  $("#rqs").onclick=async e=>{const im=e.target.closest(".rqim");if(im){try{const bl=await (await fetch(await imgData(im.dataset.q))).blob();window.open(URL.createObjectURL(bl),"_blank")}catch(x){alert(x.message)}return}
+    const d=e.target.closest("[data-rqdel]");if(!d||!confirm("Энэ хүсэлтийг устгах уу?"))return;
+    try{const j=await api("POST",{action:"reqdel",id:d.closest(".rq").dataset.id});reqs=j.reqs||[];render()}catch(x){if(x.auth)return login(x.message);alert(x.message)}};
 }
