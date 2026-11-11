@@ -479,8 +479,8 @@ document.getElementById('rk').addEventListener('click',async()=>{const n=prompt(
  try{await api('POST',{action:'rekey',key:k});KEY=k;try{sessionStorage.setItem(KK,k)}catch(e){}toast('Нууц үг солигдлоо')}catch(e){if(e.status===401)return gate(e.message);alert(e.message)}});
 
 const P={
- bat:{n:'Бат-Эрдэнэ',full:'Б.Бат-Эрдэнэ',role:'Маркетингийн менежер · 9309 0906',
-  rights:['FB, Messenger: хуудсанд бүрэн эрхтэй. Portfolio урилгаа хүлээж авна.','Instagram, X: Зөвлөх нэвтрэлтийг биечлэн өгнө, дараа нь нууц үгээ солино.','YouTube: Manager эрх (Зөвлөх өгнө).','Maps: hunnurmc.official@gmail.com профайлд Manager болгож нэмнэ.'],
+ bat:{n:'Бат-Эрдэнэ, Тэмүүлэн',full:'Б.Бат-Эрдэнэ, Тэмүүлэн',role:'Маркетинг · 9309 0906',
+  rights:['FB, Messenger: хуудсанд бүрэн эрхтэй. Portfolio урилгаа хүлээж авна.','Тэмүүлэн: сувгуудын эрхийг Зөвлөх олгоно.','Instagram, X: Зөвлөх нэвтрэлтийг биечлэн өгнө, дараа нь нууц үгээ солино.','YouTube: Manager эрх (Зөвлөх өгнө).','Maps: hunnurmc.official@gmail.com профайлд Manager болгож нэмнэ.'],
   regular:['Inbox › Leads-ийг 7 хоногт 1 удаа шалгаж HOT лийдэд залгах.','Захиалга баталсан чатад Messenger «Create order»-оор урьдчилж бүртгэх (Дүрэм хэсгийг харна).','Баярын постууд товлогдсон эсэхийг шалгах.','Бүх boost-ыг Бат-Эрдэнэ хийнэ.','maps2.0-v2 зургууд батлагдаагүй, тавихгүй.']},
  mandah:{n:'Мандах',full:'Мандах',role:'Хүний нөөц · 8806 6831',
   rights:['FB HR: mandah.jonon@gmail.com руу урилга явсан (12-06 хүртэл). Хүлээж авмагц Админ эрх олгоно.','ХН самбарын түлхүүр Мандахад өгөгдсөн.'],
@@ -588,12 +588,12 @@ function render(){
  const pe=document.getElementById('person');
  if(cur==='all'){pe.hidden=true}else{const p=P[cur];pe.hidden=false;
   const chs=CH.filter(c=>c[3]===cur).map(c=>c[0]);
-  pe.innerHTML=`<div class="ph"><div class="av">БЭ</div><div><h3>${esc(p.full)}</h3><div class="role">Маркетингийн менежер · <a href="tel:93090906">9309 0906</a></div></div><span class="cnt">${CH.length} суваг</span></div><div class="cols"><div class="pc"><h4>Эрх</h4><ul>${p.rights.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div><div class="pc"><h4>Тогтмол ажил</h4><ul class="chk">${p.regular.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div></div>`;}
+  pe.innerHTML=`<div class="ph"><div class="av">МК</div><div><h3>${esc(p.full)}</h3><div class="role">Маркетинг · <a href="tel:93090906">9309 0906</a> · энэ самбарыг хамт ашиглана</div></div><span class="cnt">${CH.length} суваг</span></div><div class="cols"><div class="pc"><h4>Эрх</h4><ul>${p.rights.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div><div class="pc"><h4>Тогтмол ажил</h4><ul class="chk">${p.regular.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div></div>`;}
  const list=open.filter(x=>cur==='all'||x.r[2].includes(cur)).map(x=>Object.assign({},x,{k:tid(x.r[1]),v:ST[tid(x.r[1])]||null}));
  const sv=x=>x.v?x.v.s:(x.r[0]==='wait'?'wait':'todo');
  const ord={doing:0,todo:1,wait:2,ok:3};list.sort((a,b)=>ord[sv(a)]-ord[sv(b)]);
  const n={ok:0,doing:0,todo:0,wait:0};list.forEach(x=>n[sv(x)]++);
- document.getElementById('todo-n').textContent='Бат-Эрдэнэ төлөвийг өөрөө сонгоно';
+ document.getElementById('todo-n').textContent='Бат-Эрдэнэ, Тэмүүлэн төлөвийг өөрөө сонгоно';
  const T=list.length||1;
  document.getElementById('sum').innerHTML=`<div class="pt"><b>${n.ok} <small>/ ${list.length} дууссан</small></b><div class="lg"><span class="c-ok">${SI.ok}Дууссан ${n.ok}</span><span class="c-doing">${SI.doing}Хийж байна ${n.doing}</span><span>${SI.todo}Эхлээгүй ${n.todo+n.wait}</span></div></div><div class="pbar"><i class="i-ok" style="width:${n.ok/T*100}%"></i><i class="i-doing" style="width:${n.doing/T*100}%"></i></div>`;
  const row=x=>{const {c,r}=x,s0=sv(x),on=k=>s0===k||(k==='todo'&&s0==='wait');
