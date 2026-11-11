@@ -393,8 +393,18 @@ function renderSummary(){
   const tbl=(cols,rows)=>`<table class="sum-tbl"><thead><tr>${cols.map(c=>`<th>${c}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
   const kpi=(icon,label,val,cls,sub,delta)=>`<div class="kpi">${ic(icon)}<div><span class="kpi-l">${label}</span><b class="kpi-v ${cls}">${val}</b><span class="kpi-s">${sub}${delta||""}</span></div></div>`;
   const pr=Math.round(Math.min(n,target)/target*100);
+  // HR's open work, shown large at the top so delays are visible (survey opened 2026.11.02)
+  const DAY=864e5,since=t=>Math.max(0,Math.floor((Date.now()-new Date(t).getTime())/DAY));
+  const newApps=apps.filter(a=>(a.status||"new")==="new"),oldApp=newApps.length?Math.max(...newApps.map(a=>since(a.submittedAt))):0;
+  const todo=[
+    notDone.length&&[notDone.length,"ажилтан үнэлгээгээ бөглөөгүй",`Эхэлснээс хойш ${since("2026-11-02")} хоног`],
+    n&&n-mgrDone>0&&[n-mgrDone,"ажилтанд удирдлагын 1–5 үнэлгээ дутуу",raters.length?`${raters.length} даргад код өгсөн`:"Даргуудад код үүсгээгүй"],
+    newApps.length&&[newApps.length,"горилогчийн анкетыг шийдээгүй",`Хамгийн удаан нь ${oldApp} хоног хүлээж байна`]
+  ].filter(Boolean);
+  const hrBox=todo.length?`<section class="hr-todo"><h3>${ic("alert")}HR-ын хийгдээгүй ажил</h3><div class="hr-todo-g">${todo.map(([v,t,sub])=>`<div><b>${v}</b><span>${t}</span><small>${sub}</small></div>`).join("")}</div></section>`:`<section class="hr-todo ok"><h3>${ic("check")}HR-ын ажил бүрэн хийгдсэн</h3></section>`;
   $("#view").innerHTML=`<div class="stack" style="gap:24px">${tabs("sum")}
   ${msg?`<div class="err">${esc(msg)}</div>`:""}
+  ${role==="admin"||role==="manager"?hrBox:""}
   <article class="passport sum"><header class="pp-head">${PRINT}<div class="pp-id"><div><div class="pp-kicker">Нэгдсэн анализ · ${fmtDate(Date.now())}</div><h2>Ажилтны үнэлгээ: ${n} хүн (${target}-аас ${pr}%)</h2>
     <div class="pp-meta">${prev?`Харьцуулалт: ${fmtDay(prev.at)}-нд ${prev.n} хүнтэй байсан.`:"Дараагийн өдөр нээхэд өнөөдрийнхтэй харьцуулна."}</div></div></div></header>
   ${!n?`<div class="pp-sec"><p>Одоогоор бөглөсөн ажилтан алга.</p></div>${rosterSec(notDone,unmatched)}`:`

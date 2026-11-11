@@ -656,3 +656,14 @@ footer .inner a:hover{color:var(--fg);text-decoration:underline;text-underline-o
 .rqdone>summary svg{width:18px;height:18px;transition:transform .15s}
 .rqdone[open]>summary svg{transform:rotate(180deg)}
 .rqdone .rq{border-top:1px solid var(--line)}
+/* HR's open work, large at the top of the combined analysis */
+.hr-todo{border:2px solid var(--bad);background:var(--bad-soft);padding:18px 20px;border-radius:3px}
+.hr-todo h3{display:flex;align-items:center;gap:10px;margin:0 0 14px;font-size:20px;color:var(--bad)}
+.hr-todo h3 .ic{width:24px;height:24px}
+.hr-todo-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.hr-todo-g>div{display:flex;flex-direction:column;gap:2px;background:var(--surface);padding:14px 16px;border-radius:3px}
+.hr-todo-g b{font-size:44px;line-height:1;color:var(--bad)}
+.hr-todo-g span{font-weight:700;font-size:15px}
+.hr-todo-g small{color:var(--muted);font-size:13px}
+.hr-todo.ok{border-color:var(--good);background:var(--good-soft)}.hr-todo.ok h3{color:var(--good);margin:0}
+@media print{.hr-todo{display:none}}
