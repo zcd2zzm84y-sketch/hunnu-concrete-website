@@ -613,7 +613,7 @@ function renderReqs(){
       <input type="file" id="rqfile" accept="image/*" multiple hidden>
       <div class="rqp" id="rqp"></div>
       <p class="rqhint">Дэлгэцийн зургаа Ctrl+V (Mac: Cmd+V) дарж шууд буулгаж болно. 3 хүртэл зураг.</p>
-      <p class="rqhint"><b>Зөвхөн энэ самбарын засвар хийгдэнэ. hunnu.asia болон бусад сайтын засвар энд хийгдэхгүй.</b></p>
+      <p class="rqhint"><b>Зөвхөн HR сайтын (судалгаа, анкет, HR самбар) засвар хийгдэнэ. hunnu.asia болон бусад сайтын засвар энд хийгдэхгүй.</b></p>
     </form>
     <div class="rqs sheet" id="rqs">${list||'<p class="muted" style="margin:0">Хүсэлт алга. Дээр бичээд «Илгээх» дарна.</p>'}</div></div>`;
   bindTabs();
