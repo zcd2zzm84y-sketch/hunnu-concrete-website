@@ -305,6 +305,12 @@ footer{color:var(--mute);font-size:13px}
 .facts small{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
 .facts b{font-size:15px}
 .facts span{font-size:13px;color:var(--mute)}
+.fold{background:var(--paper);border:1px solid var(--line);border-radius:12px}
+.fold>summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;font-weight:700}
+.fold>summary::-webkit-details-marker{display:none}
+.fold[open] .chv{transform:rotate(180deg)}
+.fold .fbody{padding:0 16px 16px;display:grid;gap:12px}
+.fold .facts div,.fold .card{background:var(--bg)}
 .lead2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;align-items:start}
 .card{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:10px;min-width:0}
 .card h3{font-size:16px}
@@ -375,6 +381,7 @@ footer{color:var(--mute);font-size:13px}
 
   <section aria-labelledby="h-lead">
     <div class="sh"><h2 id="h-lead"><span class="hxi"><svg class="hi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11v2a1 1 0 0 0 1 1h3l5 4V6L7 10H4a1 1 0 0 0-1 1z"/><path d="M16 9a3 3 0 0 1 0 6M19 6a7 7 0 0 1 0 12"/></svg></span>Lead ad (захиалгын маягт)</h2><small>Эхлүүлэх, төсвийг Зөвлөх батална</small></div>
+    <details class="fold"><summary><span>Дараа жил хэрэгжинэ. Дэлгэрэнгүйг харах</span><svg class="chv" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div class="fbody">
     <div class="facts">
       <div><span class="fi"><svg class="hi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="m16 10 6-3v10l-6-3"/></svg></span><small>Зар</small><b>FB + Instagram</b><span>9:16 видео, «Building Smarter.»</span></div>
       <div><span class="fi"><svg class="hi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg></span><small>Хэнд</small><b>УБ + 30 км</b><span>25–60 нас, барилга, үл хөдлөх</span></div>
@@ -403,6 +410,7 @@ footer{color:var(--mute);font-size:13px}
         </ol>
       </div>
     </div>
+    </div></details>
   </section>
 
   <section aria-labelledby="h-rules">
