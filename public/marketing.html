@@ -544,7 +544,8 @@ const CH=[
   ['todo','Профайлд hunnu.asia холбоос нэмэх (зөвхөн утасны апп-аас).',['bat']]]],
  ['X','@HunnuRMC · Premium','https://x.com/HunnuRMC','bat',[
   ['ok','Профайл, header, пин пост, дагах жагсаалт.'],
-  ['wait','@HunnuConcrete болгох. 11-10-нд дахин оролдох.',['bat']],
+  ['ok','Цэнхэр тэмдэг буцаж ирсэн, акаунт баталгаажсан (11-11).'],
+  ['todo','Username-ийг @HunnuConcrete болгох: Settings › Your account › Account information › Username. Солиход цэнхэр тэмдэг түр алга болж, X шалгасны дараа буцаж ирнэ. «Taken» гэвэл 1–2 долоо хоногийн дараа дахин оролдоно.',['bat']],
   ['todo','Нэр солигдвол FB, вэб, Maps дахь x.com холбоосыг солих.',['bat','web']]]],
  ['YouTube','@HunnuConcrete','https://www.youtube.com/@HunnuConcrete','bat',[
   ['ok','Нэр, handle, banner шинэчлэгдсэн.'],
@@ -588,7 +589,7 @@ const S={ok:['ok','Хийгдсэн'],wait:['wait','Хүлээж буй'],todo:[
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const names=o=>(o||[]).map(k=>P[k].n).join(', ');
 // Channels waiting on the other side (Google review, X handle): no logins or tasks until the date, then they reopen by themselves
-const HOLD={'X':['2026-11-25','X шинэ нэрийн (@HunnuConcrete) шийдвэр'],'Google Maps 1.0':['2026-11-25','Google-ийн нэрийн шалгалт'],'Google Maps 2.0':['2026-11-25','Google-ийн шалгалт']};
+const HOLD={'Google Maps 1.0':['2026-11-25','Google-ийн нэрийн шалгалт'],'Google Maps 2.0':['2026-11-25','Google-ийн шалгалт']};
 const held=n=>HOLD[n]&&new Date()<new Date(HOLD[n][0]+'T00:00:00+08:00')?HOLD[n]:null;
 const open=[];CH.forEach(c=>{if(held(c[0]))return;c[4].forEach(r=>{if(r[0]!=='ok')open.push({c,r})})});
 const SI={todo:'<svg class="si" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="5.6"/></svg>',
